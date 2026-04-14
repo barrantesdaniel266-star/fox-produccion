@@ -2415,3 +2415,4 @@ function DetailModal({order,onClose}){
     </Modal>
   );
 }
+
