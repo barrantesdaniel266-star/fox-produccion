@@ -131,43 +131,19 @@ const exportExcel = rows => {
     const est=stat[o.status]||o.status||"";
     const fc=fmtDate(o.timestamp)||"";
     const fcomp=o.completedAt?fmtDate(o.completedAt):"";
+    // Siempre repetir datos de la orden en CADA fila de producto
     if(items.length===0){
       data.push([o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"",est,fc,fcomp,"","","","","","","","","","","","",""]);
     } else {
       items.forEach(it=>{
         data.push([
-          o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"",est,fc,fcomp,
-          labelProducto(it.producto)||"",stat[it.status]||it.status||"",it.machineLabel||"",
-          it.metros||"",it.ancho||"",it.alto||"",it.abertura||"",
-          it.calibre||"",it.calibreInterno||"",it.color||"",
-          it.grosor||"",it.largo||"",it.cantidad||"",
+          o.orden, o.cliente||"", o.sede||"", o.vendedoraName||"", est, fc, fcomp,
+          labelProducto(it.producto)||"", stat[it.status]||it.status||"", it.machineLabel||"",
+          it.metros||"", it.ancho||"", it.alto||"", it.abertura||"",
+          it.calibre||"", it.calibreInterno||"", it.color||"",
+          it.grosor||"", it.largo||"", it.cantidad||"",
         ]);
       });
-    }
-  });
-  const csv=[headers,...data].map(r=>r.map(q).join(sep)).join("\r\n");
-  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download=`Fox_Ordenes_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();URL.revokeObjectURL(a.href);
-};
-  const headers=["No.Orden","Cliente","Sede","Creado por","Estado Orden","Creado","Completado","Producto","Estado Item","Máquina","M²","Ancho","Alto","Abertura","Calibre","Cal.Interno","Color","Grosor","Largo","Cantidad"];
-  const data=[];
-  rows.forEach(o=>{
-    const items=normalizeItems(o);
-    const orderStatus=stat[o.status]||o.status;
-    if(items.length===0){
-      data.push([o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"—",orderStatus,fmtDate(o.timestamp),o.completedAt?fmtDate(o.completedAt):"—","—","—","—","—","—","—","—","—","—","—","—","—","—"]);
-    } else {
-      items.forEach(it=>data.push([
-        o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"",orderStatus,
-        fmtDate(o.timestamp),o.completedAt?fmtDate(o.completedAt):"",
-        labelProducto(it.producto)||"",stat[it.status]||it.status||"",it.machineLabel||"",
-        it.metros||"",it.ancho||"",it.alto||"",it.abertura||"",
-        it.calibre||"",it.calibreInterno||"",it.color||"",
-        it.grosor||"",it.largo||"",it.cantidad||"",
-      ]));
     }
   });
   const csv=[headers,...data].map(r=>r.map(q).join(sep)).join("\r\n");
@@ -272,15 +248,15 @@ function Shell({user,onLogout,orders}){
   const isG=user.role==="gerencia";
   const isViewer=user.role==="viewer";
 
-  // Auto-logout 30 min. TV (viewer) nunca cierra sesion.
+  // Auto-logout por inactividad (30 min). Viewer (TV) nunca cierra sesion.
   useEffect(()=>{
     if(isViewer) return;
     const TIMEOUT=30*60*1000;
-    let t=setTimeout(()=>{alert("Sesion cerrada por inactividad (30 min).");onLogout();},TIMEOUT);
-    const r=()=>{clearTimeout(t);t=setTimeout(()=>{alert("Sesion cerrada por inactividad (30 min).");onLogout();},TIMEOUT);};
+    let timer=setTimeout(()=>{ alert("Sesion cerrada por inactividad (30 min)."); onLogout(); },TIMEOUT);
+    const reset=()=>{ clearTimeout(timer); timer=setTimeout(()=>{ alert("Sesion cerrada por inactividad (30 min)."); onLogout(); },TIMEOUT); };
     const ev=["mousedown","keydown","touchstart","click"];
-    ev.forEach(e=>window.addEventListener(e,r,{passive:true}));
-    return()=>{clearTimeout(t);ev.forEach(e=>window.removeEventListener(e,r));};
+    ev.forEach(e=>window.addEventListener(e,reset,{passive:true}));
+    return()=>{ clearTimeout(timer); ev.forEach(e=>window.removeEventListener(e,reset)); };
   },[isViewer,onLogout]);
 
   // Todas las órdenes que NO están completadas (al menos 1 item pendiente)
@@ -403,12 +379,12 @@ function Shell({user,onLogout,orders}){
           onNew={()=>!isViewer&&setModal({t:"new"})}/>}
         {tab==="queue"&&<QueueTab orders={queueOrders} allOrders={orders} isG={isG&&!isViewer}
           onNew={()=>!isViewer&&setModal({t:"new"})}
-          onAssignOrder={o=>setModal({t:"assignOrder",order:o})}
-          onDel={isG?(r=>{if(window.confirm(`¿Confirmas eliminar la orden #${r}?`))removeOrder(r);}):null}
+          onAssignOrder={o=>!isViewer&&setModal({t:"assignOrder",order:o})}
+          onDel={isG&&!isViewer?(r=>{if(window.confirm(`¿Confirmas eliminar la orden #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
           onEdit={o=>!isViewer&&setModal({t:"edit",order:o})}/>}
-        {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG}
-          onDel={isG?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
+        {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG&&!isViewer}
+          onDel={isG&&!isViewer?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}/>}
       </div>
 
