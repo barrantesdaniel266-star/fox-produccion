@@ -17,6 +17,7 @@ const USERS = {
   "rafael":          { password:"Fox2026*",        name:"Rafael",         role:"gerencia",  sede:"Ambas Sedes" },
   "natalia":         { password:"Fox2026*",        name:"Natalia",        role:"gerencia",  sede:"Ambas Sedes" },
   "jefe.planta":     { password:"Fox2026*",        name:"Jefe de Planta", role:"gerencia",  sede:"Ambas Sedes" },
+  "tv.planta":       { password:"FoxTV2026",        name:"Pantalla Planta", role:"viewer",   sede:"Ambas Sedes" },
 };
 
 const MACHINES = [
@@ -121,85 +122,59 @@ const resumenItem = it => {
 
 const exportExcel = rows => {
   const stat={queue:"En Cola",active:"En Produccion",completed:"Completada"};
-  const sep = ";";
-  const q = v => '"' + String(v==null||v===undefined?"":v).replace(/"/g,'""') + '"';
-
-  const headers = ["No. Orden","Cliente","Sede","Creado por","Estado Orden","Fecha Creación","Fecha Completado","Producto","Estado Producto","Maquina","M²","Ancho (m)","Alto (m)","Abertura","Calibre","Cal. Interno","Color","Grosor","Largo (m)","Cantidad"];
-
-  const dataRows = [];
-  rows.forEach(o => {
-    const items = normalizeItems(o);
-    const estadoOrden = stat[o.status]||o.status||"";
-    const fechaCreacion = fmtDate(o.timestamp)||"";
-    const fechaCompletado = o.completedAt ? fmtDate(o.completedAt) : "";
-
-    if(items.length === 0){
-      dataRows.push([o.orden, o.cliente||"", o.sede||"", o.vendedoraName||"", estadoOrden, fechaCreacion, fechaCompletado, "", "", "", "", "", "", "", "", "", "", "", "", ""]);
+  const sep=";";
+  const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+  const headers=["No.Orden","Cliente","Sede","Creado por","Estado Orden","Fecha Creacion","Fecha Completado","Producto","Estado Producto","Maquina","M2","Ancho(m)","Alto(m)","Abertura","Calibre","Cal.Interno","Color","Grosor","Largo(m)","Cantidad"];
+  const data=[];
+  rows.forEach(o=>{
+    const items=normalizeItems(o);
+    const est=stat[o.status]||o.status||"";
+    const fc=fmtDate(o.timestamp)||"";
+    const fcomp=o.completedAt?fmtDate(o.completedAt):"";
+    if(items.length===0){
+      data.push([o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"",est,fc,fcomp,"","","","","","","","","","","","",""]);
     } else {
-      // Repetir datos de la orden en CADA fila para que no haya gaps
-      items.forEach(it => {
-        dataRows.push([
-          o.orden,
-          o.cliente||"",
-          o.sede||"",
-          o.vendedoraName||"",
-          estadoOrden,
-          fechaCreacion,
-          fechaCompletado,
-          labelProducto(it.producto)||"",
-          stat[it.status]||it.status||"",
-          it.machineLabel||"",
-          it.metros||"",
-          it.ancho||"",
-          it.alto||"",
-          it.abertura||"",
-          it.calibre||"",
-          it.calibreInterno||"",
-          it.color||"",
-          it.grosor||"",
-          it.largo||"",
-          it.cantidad||"",
+      items.forEach(it=>{
+        data.push([
+          o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"",est,fc,fcomp,
+          labelProducto(it.producto)||"",stat[it.status]||it.status||"",it.machineLabel||"",
+          it.metros||"",it.ancho||"",it.alto||"",it.abertura||"",
+          it.calibre||"",it.calibreInterno||"",it.color||"",
+          it.grosor||"",it.largo||"",it.cantidad||"",
         ]);
       });
     }
   });
-
-  const csv = [headers, ...dataRows].map(row => row.map(q).join(sep)).join("\r\n");
-  const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `Fox_Ordenes_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  const csv=[headers,...data].map(r=>r.map(q).join(sep)).join("\r\n");
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`Fox_Ordenes_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();URL.revokeObjectURL(a.href);
 };
-  const cols=["No.Orden","Cliente","Sede","Creado por","Estado Orden","Creado","Completado","Producto","Estado Item","Máquina","M²","Ancho","Alto","Abertura","Calibre","Cal.Interno","Color","Grosor","Largo","Cantidad"];
-  const rowsData=[];
+  const headers=["No.Orden","Cliente","Sede","Creado por","Estado Orden","Creado","Completado","Producto","Estado Item","Máquina","M²","Ancho","Alto","Abertura","Calibre","Cal.Interno","Color","Grosor","Largo","Cantidad"];
+  const data=[];
   rows.forEach(o=>{
     const items=normalizeItems(o);
     const orderStatus=stat[o.status]||o.status;
     if(items.length===0){
-      rowsData.push([o.orden,o.cliente,o.sede,o.vendedoraName||"—",orderStatus,fmtDate(o.timestamp),o.completedAt?fmtDate(o.completedAt):"—","—","—","—","—","—","—","—","—","—","—","—","—","—"]);
+      data.push([o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"—",orderStatus,fmtDate(o.timestamp),o.completedAt?fmtDate(o.completedAt):"—","—","—","—","—","—","—","—","—","—","—","—","—","—"]);
     } else {
-      items.forEach((it,idx)=>rowsData.push([
-        idx===0?o.orden:"", idx===0?o.cliente:"", idx===0?o.sede:"",
-        idx===0?(o.vendedoraName||"—"):"", idx===0?orderStatus:"",
-        idx===0?fmtDate(o.timestamp):"", idx===0?(o.completedAt?fmtDate(o.completedAt):"—"):"",
-        labelProducto(it.producto)||"—", stat[it.status]||it.status||"—",
-        it.machineLabel||"—",
-        it.metros||"", it.ancho||"", it.alto||"", it.abertura||"",
-        it.calibre||"", it.calibreInterno||"", it.color||"",
-        it.grosor||"", it.largo||"", it.cantidad||"",
+      items.forEach(it=>data.push([
+        o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"",orderStatus,
+        fmtDate(o.timestamp),o.completedAt?fmtDate(o.completedAt):"",
+        labelProducto(it.producto)||"",stat[it.status]||it.status||"",it.machineLabel||"",
+        it.metros||"",it.ancho||"",it.alto||"",it.abertura||"",
+        it.calibre||"",it.calibreInterno||"",it.color||"",
+        it.grosor||"",it.largo||"",it.cantidad||"",
       ]));
     }
   });
-  const thStyle='background:#1a1a1a;color:#fff;padding:8px 10px;font-weight:700;font-size:11px;text-align:left;border:1px solid #333;';
-  const tdStyle=(i,isFirst)=>`padding:7px 10px;font-size:11px;border:1px solid #e2e8f0;background:${isFirst?'#fef2f2':i%2===0?'#fff':'#f8fafc'};`;
-  const ths=cols.map(h=>`<th style="${thStyle}">${h}</th>`).join('');
-  const trs=rowsData.map((r,i)=>'<tr>'+r.map((c,ci)=>`<td style="${tdStyle(i,ci===0&&String(c))}">${c===''?'':(c===undefined?'—':c)}</td>`).join('')+'</tr>').join('');
-  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>table{border-collapse:collapse;font-family:Arial,sans-serif;width:100%}</style></head><body><h2 style="font-family:Arial;color:#1a1a1a;margin-bottom:16px">Mallas y Alambres Fox — Reporte de Producción ${new Date().toLocaleDateString('es-CO')}</h2><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></body></html>`;
-  const blob=new Blob(['\ufeff'+html],{type:'application/vnd.ms-excel;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=`Fox_Reporte_${new Date().toISOString().slice(0,10)}.xls`;
+  const csv=[headers,...data].map(r=>r.map(q).join(sep)).join("\r\n");
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`Fox_Ordenes_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();URL.revokeObjectURL(a.href);
 };
 
@@ -295,6 +270,18 @@ function Shell({user,onLogout,orders}){
   const [modal,setModal]=useState(null);
   const [saving,setSaving]=useState(false);
   const isG=user.role==="gerencia";
+  const isViewer=user.role==="viewer";
+
+  // Auto-logout 30 min. TV (viewer) nunca cierra sesion.
+  useEffect(()=>{
+    if(isViewer) return;
+    const TIMEOUT=30*60*1000;
+    let t=setTimeout(()=>{alert("Sesion cerrada por inactividad (30 min).");onLogout();},TIMEOUT);
+    const r=()=>{clearTimeout(t);t=setTimeout(()=>{alert("Sesion cerrada por inactividad (30 min).");onLogout();},TIMEOUT);};
+    const ev=["mousedown","keydown","touchstart","click"];
+    ev.forEach(e=>window.addEventListener(e,r,{passive:true}));
+    return()=>{clearTimeout(t);ev.forEach(e=>window.removeEventListener(e,r));};
+  },[isViewer,onLogout]);
 
   // Todas las órdenes que NO están completadas (al menos 1 item pendiente)
   const queueOrders=orders.filter(o=>deriveOrderStatus(normalizeItems(o))!=="completed");
@@ -411,15 +398,15 @@ function Shell({user,onLogout,orders}){
 
       <div style={{maxWidth:1280,margin:"0 auto",padding:16}}>
         {tab==="machines"&&<MachinesTab machines={MACHINES} orders={orders} user={user} isG={isG}
-          onItemClick={(ord,it,idx)=>setModal({t:"complete",order:ord,item:it,itemIndex:idx})}
-          onAssignFree={mid=>setModal({t:"pickItem",machineId:mid})}
-          onNew={()=>setModal({t:"new"})}/>}
-        {tab==="queue"&&<QueueTab orders={queueOrders} allOrders={orders} isG={isG}
-          onNew={()=>setModal({t:"new"})}
+          onItemClick={(ord,it,idx)=>!isViewer&&setModal({t:"complete",order:ord,item:it,itemIndex:idx})}
+          onAssignFree={mid=>!isViewer&&setModal({t:"pickItem",machineId:mid})}
+          onNew={()=>!isViewer&&setModal({t:"new"})}/>}
+        {tab==="queue"&&<QueueTab orders={queueOrders} allOrders={orders} isG={isG&&!isViewer}
+          onNew={()=>!isViewer&&setModal({t:"new"})}
           onAssignOrder={o=>setModal({t:"assignOrder",order:o})}
           onDel={isG?(r=>{if(window.confirm(`¿Confirmas eliminar la orden #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
-          onEdit={o=>setModal({t:"edit",order:o})}/>}
+          onEdit={o=>!isViewer&&setModal({t:"edit",order:o})}/>}
         {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG}
           onDel={isG?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}/>}
