@@ -121,6 +121,56 @@ const resumenItem = it => {
 
 const exportExcel = rows => {
   const stat={queue:"En Cola",active:"En Produccion",completed:"Completada"};
+  // Usar punto y coma como separador (estándar en Excel en español)
+  const sep = ";";
+  const q = v => '"' + String(v==null||v===undefined?"":v).replace(/"/g,'""') + '"';
+
+  const headers = ["No. Orden","Cliente","Sede","Creado por","Estado","Fecha Creación","Fecha Completado","Producto","Estado Producto","Maquina","M²","Ancho (m)","Alto (m)","Abertura","Calibre","Cal. Interno","Color","Grosor","Largo (m)","Cantidad"];
+
+  const dataRows = [];
+  rows.forEach(o => {
+    const items = normalizeItems(o);
+    const estadoOrden = stat[o.status]||o.status||"";
+    const fechaCreacion = fmtDate(o.timestamp)||"";
+    const fechaCompletado = o.completedAt ? fmtDate(o.completedAt) : "";
+    if(items.length === 0){
+      dataRows.push([o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"",estadoOrden,fechaCreacion,fechaCompletado,"","","","","","","","","","","","",""]);
+    } else {
+      items.forEach((it, idx) => {
+        dataRows.push([
+          idx===0 ? o.orden : "",
+          idx===0 ? (o.cliente||"") : "",
+          idx===0 ? (o.sede||"") : "",
+          idx===0 ? (o.vendedoraName||"") : "",
+          idx===0 ? estadoOrden : "",
+          idx===0 ? fechaCreacion : "",
+          idx===0 ? fechaCompletado : "",
+          labelProducto(it.producto)||"",
+          stat[it.status]||it.status||"",
+          it.machineLabel||"",
+          it.metros||"",
+          it.ancho||"",
+          it.alto||"",
+          it.abertura||"",
+          it.calibre||"",
+          it.calibreInterno||"",
+          it.color||"",
+          it.grosor||"",
+          it.largo||"",
+          it.cantidad||"",
+        ]);
+      });
+    }
+  });
+
+  const csv = [headers, ...dataRows].map(row => row.map(q).join(sep)).join("\r\n");
+  const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Fox_Ordenes_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
   const cols=["No.Orden","Cliente","Sede","Creado por","Estado Orden","Creado","Completado","Producto","Estado Item","Máquina","M²","Ancho","Alto","Abertura","Calibre","Cal.Interno","Color","Grosor","Largo","Cantidad"];
   const rowsData=[];
   rows.forEach(o=>{
