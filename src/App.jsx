@@ -1251,4 +1251,4 @@ function DetailModal({order,onClose}){
       <button onClick={onClose} style={{width:"100%",background:DARK,border:"none",borderRadius:10,padding:"11px",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer"}}>Cerrar</button>
     </Modal>
   );
-}mport { useState, useEffect, useCallback } from "react";
+}
