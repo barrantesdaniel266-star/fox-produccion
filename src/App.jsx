@@ -121,11 +121,10 @@ const resumenItem = it => {
 
 const exportExcel = rows => {
   const stat={queue:"En Cola",active:"En Produccion",completed:"Completada"};
-  // Usar punto y coma como separador (estándar en Excel en español)
   const sep = ";";
   const q = v => '"' + String(v==null||v===undefined?"":v).replace(/"/g,'""') + '"';
 
-  const headers = ["No. Orden","Cliente","Sede","Creado por","Estado","Fecha Creación","Fecha Completado","Producto","Estado Producto","Maquina","M²","Ancho (m)","Alto (m)","Abertura","Calibre","Cal. Interno","Color","Grosor","Largo (m)","Cantidad"];
+  const headers = ["No. Orden","Cliente","Sede","Creado por","Estado Orden","Fecha Creación","Fecha Completado","Producto","Estado Producto","Maquina","M²","Ancho (m)","Alto (m)","Abertura","Calibre","Cal. Interno","Color","Grosor","Largo (m)","Cantidad"];
 
   const dataRows = [];
   rows.forEach(o => {
@@ -133,18 +132,20 @@ const exportExcel = rows => {
     const estadoOrden = stat[o.status]||o.status||"";
     const fechaCreacion = fmtDate(o.timestamp)||"";
     const fechaCompletado = o.completedAt ? fmtDate(o.completedAt) : "";
+
     if(items.length === 0){
-      dataRows.push([o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"",estadoOrden,fechaCreacion,fechaCompletado,"","","","","","","","","","","","",""]);
+      dataRows.push([o.orden, o.cliente||"", o.sede||"", o.vendedoraName||"", estadoOrden, fechaCreacion, fechaCompletado, "", "", "", "", "", "", "", "", "", "", "", "", ""]);
     } else {
-      items.forEach((it, idx) => {
+      // Repetir datos de la orden en CADA fila para que no haya gaps
+      items.forEach(it => {
         dataRows.push([
-          idx===0 ? o.orden : "",
-          idx===0 ? (o.cliente||"") : "",
-          idx===0 ? (o.sede||"") : "",
-          idx===0 ? (o.vendedoraName||"") : "",
-          idx===0 ? estadoOrden : "",
-          idx===0 ? fechaCreacion : "",
-          idx===0 ? fechaCompletado : "",
+          o.orden,
+          o.cliente||"",
+          o.sede||"",
+          o.vendedoraName||"",
+          estadoOrden,
+          fechaCreacion,
+          fechaCompletado,
           labelProducto(it.producto)||"",
           stat[it.status]||it.status||"",
           it.machineLabel||"",
