@@ -187,7 +187,7 @@ export default function App(){
 function Splash({error}){
   return(
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:DARK,gap:16}}>
-      <img src={{logoUrl}} style={{width:90,height:90,borderRadius:16}} alt="Fox"/>
+      <img src={logoUrl} style={{width:90,height:90,borderRadius:16}} alt="Fox"/>
       {error?(
         <div style={{textAlign:"center",color:"#f87171",maxWidth:320,padding:"0 16px"}}>
           <p style={{fontWeight:700,marginBottom:8}}>Error de conexión con Firebase</p>
@@ -212,7 +212,7 @@ function Login({onLogin}){
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:`linear-gradient(160deg,${DARK} 0%,#2d1010 100%)`,padding:16}}>
       <div style={{textAlign:"center",marginBottom:28,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
         <div style={{width:120,height:120,borderRadius:24,overflow:"hidden",boxShadow:`0 0 48px rgba(232,38,42,.5)`}}>
-          <img src={{logoUrl}} style={{width:"100%",height:"100%",objectFit:"cover"}} alt="Fox"/>
+          <img src={logoUrl} style={{width:"100%",height:"100%",objectFit:"cover"}} alt="Fox"/>
         </div>
         <h1 style={{color:"#fff",fontSize:22,fontWeight:900,margin:0}}>Mallas y Alambres Fox</h1>
         <p style={{color:"#f87171",fontSize:13,margin:0}}>Sistema de Gestión de Producción · Bogotá</p>
@@ -322,7 +322,7 @@ function Shell({user,onLogout,orders}){
       <div style={{background:DARK}}>
         <div style={{maxWidth:1280,margin:"0 auto",padding:"0 16px",display:"flex",alignItems:"center",justifyContent:"space-between",height:56}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <img src={{logoUrl}} style={{width:38,height:38,borderRadius:9,flexShrink:0}} alt="Fox"/>
+            <img src={logoUrl} style={{width:38,height:38,borderRadius:9,flexShrink:0}} alt="Fox"/>
             <div>
               <div style={{fontSize:13,fontWeight:800,color:"#fff",lineHeight:1.2}}>Mallas y Alambres Fox</div>
               <div style={{fontSize:10,color:"#f87171"}}>Gestión de Producción · Bogotá</div>
@@ -747,7 +747,8 @@ const newEmptyItem=()=>({_key:Date.now()+Math.random(),producto:"",calibre:"",ca
 function NewOrderModal({user,onClose,onCreate}){
   const isG=user.role==="gerencia";
   const [orden,setOrden]=useState("");const [cliente,setCliente]=useState("");
-  const [sedeTarget,setSedeTarget]=useState(isG?"Centro":user.sede);
+  const canSelectSede=isG||user.sede==="Santa Lucia";
+  const [sedeTarget,setSedeTarget]=useState(canSelectSede?"Centro":user.sede);
   const [items,setItems]=useState([newEmptyItem()]);
   const [err,setErr]=useState("");const [loading,setLoading]=useState(false);
   const updateItem=(i,v)=>setItems(prev=>prev.map((x,idx)=>idx===i?v:x));
@@ -767,7 +768,7 @@ function NewOrderModal({user,onClose,onCreate}){
   };
   return(
     <Modal title="Crear Nueva Orden" onClose={onClose} maxWidth={580}>
-      {isG?(
+      {canSelectSede?(
         <div style={{marginBottom:14}}>
           <label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:6}}>Sede destino *</label>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
