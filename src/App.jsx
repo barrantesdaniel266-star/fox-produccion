@@ -177,6 +177,7 @@ const exportExcel = rows => {
   a.download=`Fox_Ordenes_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();URL.revokeObjectURL(a.href);
 };
+
 // ═══ ESTILOS ═══════════════════════════════════════════════
 const inp={width:"100%",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"10px 14px",fontSize:14,color:"#1e293b",outline:"none",boxSizing:"border-box"};
 const btnR={background:RED,border:"none",borderRadius:10,padding:"11px 20px",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer"};
