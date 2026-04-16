@@ -122,36 +122,42 @@ const resumenItem = it => {
 
 const exportExcel = rows => {
   const stat={queue:"En Cola",active:"En Produccion",completed:"Completada"};
-  const sep=";";
-  const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
-  const headers=["No.Orden","Cliente","Sede","Creado por","Estado Orden","Fecha Creacion","Fecha Completado","Producto","Estado Producto","Maquina","M2","Ancho(m)","Alto(m)","Abertura","Calibre","Cal.Interno","Color","Grosor","Largo(m)","Cantidad"];
+  const TAB="\t";
+  const clean=v=>String(v==null?"":v).replace(/\t/g," ").replace(/\r?\n/g," ").trim();
+  const headers=[
+    "No.Orden","Cliente","Sede","Creado por","Estado Orden",
+    "Fecha Creacion","Fecha Completado",
+    "Producto","Estado Producto","Maquina",
+    "M2","Ancho(m)","Alto(m)","Abertura",
+    "Calibre","Cal.Interno","Color","Grosor","Largo(m)","Cantidad"
+  ];
   const data=[];
   rows.forEach(o=>{
     const items=normalizeItems(o);
     const est=stat[o.status]||o.status||"";
     const fc=fmtDate(o.timestamp)||"";
     const fcomp=o.completedAt?fmtDate(o.completedAt):"";
-    // Siempre repetir datos de la orden en CADA fila de producto
     if(items.length===0){
       data.push([o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"",est,fc,fcomp,"","","","","","","","","","","","",""]);
     } else {
       items.forEach(it=>{
         data.push([
-          o.orden, o.cliente||"", o.sede||"", o.vendedoraName||"", est, fc, fcomp,
-          labelProducto(it.producto)||"", stat[it.status]||it.status||"", it.machineLabel||"",
-          it.metros||"", it.ancho||"", it.alto||"", it.abertura||"",
-          it.calibre||"", it.calibreInterno||"", it.color||"",
-          it.grosor||"", it.largo||"", it.cantidad||"",
+          o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"",est,fc,fcomp,
+          labelProducto(it.producto)||"",stat[it.status]||it.status||"",it.machineLabel||"",
+          it.metros||"",it.ancho||"",it.alto||"",it.abertura||"",
+          it.calibre||"",it.calibreInterno||"",it.color||"",
+          it.grosor||"",it.largo||"",it.cantidad||"",
         ]);
       });
     }
   });
-  const csv=[headers,...data].map(r=>r.map(q).join(sep)).join("\r\n");
-  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+  const tsv=[headers,...data].map(row=>row.map(clean).join(TAB)).join("\r\n");
+  const blob=new Blob(["\uFEFF"+tsv],{type:"text/tab-separated-values;charset=utf-8"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
-  a.download=`Fox_Ordenes_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();URL.revokeObjectURL(a.href);
+  a.download=`Fox_Ordenes_${new Date().toISOString().slice(0,10)}.tsv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 };
 
 // ═══ ESTILOS ═══════════════════════════════════════════════
