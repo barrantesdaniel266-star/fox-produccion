@@ -530,7 +530,7 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
           </div>
         </div>
         <span style={{background:"rgba(0,0,0,.22)",color:"#fff",borderRadius:999,padding:"2px 10px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>
-          {busy?`${entries.length} ACTIVO${entries.length>1?"S":""}`:\"LIBRE\"}
+          {busy?`${entries.length} ACTIVO${entries.length>1?"S":""}`:"LIBRE"}
         </span>
       </div>
       {/* Cuerpo */}
