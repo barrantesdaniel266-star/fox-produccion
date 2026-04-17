@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fox Producción — Pantalla Planta</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0f172a;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #f8fafc;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .header {
+    background: #1a1a1a;
+    padding: 14px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 3px solid #E8262A;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo {
+    width: 50px; height: 50px; border-radius: 12px;
+    background: #E8262A; display: flex; align-items: center;
+    justify-content: center; font-size: 24px; font-weight: 900; color: #fff;
+  }
+  .header-title { font-size: 22px; font-weight: 800; color: #fff; }
+  .header-sub { font-size: 13px; color: #f87171; }
+  .header-clock { font-size: 30px; font-weight: 900; color: #fff; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+  .header-date { font-size: 13px; color: #64748b; text-align: right; margin-top: 2px; }
+  .stats-bar {
+    background: #1e293b; padding: 12px 32px;
+    display: flex; gap: 36px; align-items: center;
+    border-bottom: 1px solid #334155;
+  }
+  .stat { display: flex; align-items: center; gap: 8px; }
+  .stat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .stat-label { font-size: 14px; color: #94a3b8; }
+  .stat-value { font-size: 20px; font-weight: 900; }
+  .last-update { margin-left: auto; font-size: 12px; color: #475569; }
+  .main { padding: 24px 32px; }
+  .section-title {
+    font-size: 12px; font-weight: 700; color: #475569;
+    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after { content:''; flex:1; height:1px; background:#1e293b; }
+  .machines-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 14px; margin-bottom: 32px;
+  }
+  .machine-card {
+    border-radius: 16px; overflow: hidden;
+    border: 2px solid #334155; background: #1e293b;
+    transition: border-color 0.4s, box-shadow 0.4s;
+  }
+  .machine-card.busy { border-color: #E8262A; box-shadow: 0 0 20px rgba(232,38,42,0.15); }
+  .machine-card.free { border-color: #16a34a; }
+  .machine-header { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .machine-header.busy { background: linear-gradient(135deg, #E8262A, #b91c1c); }
+  .machine-header.free { background: linear-gradient(135deg, #16a34a, #15803d); }
+  .machine-name { font-size: 16px; font-weight: 800; color: #fff; }
+  .machine-sede { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+  .machine-badge {
+    background: rgba(0,0,0,0.25); color: #fff;
+    border-radius: 999px; padding: 3px 12px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+  }
+  .machine-body { padding: 14px; }
+  .machine-free-wrap { text-align: center; padding: 20px 0; }
+  .machine-free-icon { font-size: 32px; color: #16a34a; font-weight: 900; }
+  .machine-free-sub { font-size: 14px; color: #475569; margin-top: 4px; }
+  .product-item {
+    background: #0f172a; border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 8px;
+    border-left: 3px solid #E8262A;
+  }
+  .product-item:last-child { margin-bottom: 0; }
+  .product-badge {
+    display: inline-block; border-radius: 999px;
+    padding: 2px 10px; font-size: 12px; font-weight: 700; margin-bottom: 5px;
+  }
+  .product-top { display: flex; justify-content: space-between; align-items: baseline; }
+  .product-order { font-size: 22px; font-weight: 900; color: #fff; }
+  .product-time { font-size: 12px; color: #475569; }
+  .product-client { font-size: 14px; color: #cbd5e1; font-weight: 600; margin-bottom: 2px; }
+  .product-params { font-size: 12px; color: #64748b; }
+  .queue-wrap { background: #1e293b; border-radius: 14px; overflow: hidden; border: 1px solid #334155; }
+  .queue-table { width: 100%; border-collapse: collapse; }
+  .queue-table th {
+    background: #162032; padding: 10px 14px;
+    font-size: 11px; font-weight: 700; color: #64748b;
+    text-transform: uppercase; letter-spacing: 0.5px; text-align: left;
+  }
+  .queue-table td { padding: 11px 14px; border-top: 1px solid #0f172a; vertical-align: middle; }
+  .queue-table tr:hover td { background: #162032; }
+  .q-num { font-size: 18px; font-weight: 900; color: #fff; }
+  .q-client { font-size: 15px; font-weight: 600; color: #e2e8f0; }
+  .sede-pill { display: inline-block; border-radius: 6px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+  .sede-centro { background: #1d4ed8; color: #fff; }
+  .sede-santa  { background: #7c3aed; color: #fff; }
+  .status-pill { border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+  .st-queue  { background: #1e3a5f; color: #60a5fa; }
+  .st-active { background: #4c0519; color: #fb7185; }
+  .no-data { text-align: center; padding: 48px; color: #475569; font-size: 16px; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .spinner { width:52px; height:52px; border:4px solid #1e293b; border-top-color:#E8262A; border-radius:50%; animation:spin 1s linear infinite; }
+  .loading { display:flex; align-items:center; justify-content:center; min-height:70vh; flex-direction:column; gap:16px; }
+  .error-box { background:#4c0519; border:1px solid #be185d; border-radius:14px; padding:24px; text-align:center; color:#fda4af; font-size:15px; margin:32px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">F</div>
+    <div>
+      <div class="header-title">Mallas y Alambres Fox</div>
+      <div class="header-sub">Panel de Produccion en Tiempo Real</div>
+    </div>
+  </div>
+  <div style="text-align:right">
+    <div class="header-clock" id="clock">--:--:--</div>
+    <div class="header-date" id="dateStr">--</div>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat"><div class="stat-dot" style="background:#16a34a"></div><span class="stat-label">Maquinas libres</span><span class="stat-value" id="sFree" style="color:#4ade80">--</span></div>
+  <div class="stat"><div class="stat-dot" style="background:#E8262A"></div><span class="stat-label">Items en produccion</span><span class="stat-value" id="sActive" style="color:#f87171">--</span></div>
+  <div class="stat"><div class="stat-dot" style="background:#60a5fa"></div><span class="stat-label">Ordenes en cola</span><span class="stat-value" id="sQueue" style="color:#60a5fa">--</span></div>
+  <div class="stat"><div class="stat-dot" style="background:#a3e635"></div><span class="stat-label">Completadas</span><span class="stat-value" id="sDone" style="color:#a3e635">--</span></div>
+  <span class="last-update" id="lastUpdate">Conectando...</span>
+</div>
+
+<div class="main" id="main">
+  <div class="loading"><div class="spinner"></div><div style="color:#64748b;font-size:16px">Conectando con Firebase...</div></div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+import { getFirestore, collection, query, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyABPktv7Jfpc9UjmFl13QzrsSwVK34zCO0",
+  authDomain:        "fox-produccion.firebaseapp.com",
+  projectId:         "fox-produccion",
+  storageBucket:     "fox-produccion.firebasestorage.app",
+  messagingSenderId: "614815300879",
+  appId:             "1:614815300879:web:137a1e22a35e6ced7ed27a"
+};
+
+const MACHINES = [
+  {id:"C1",  label:"C-1",  name:"Maquina 1", sede:"Centro"},
+  {id:"C2",  label:"C-2",  name:"Maquina 2", sede:"Centro"},
+  {id:"SL1", label:"SL-1", name:"Maquina 1", sede:"Santa Lucia"},
+  {id:"SL2", label:"SL-2", name:"Maquina 2", sede:"Santa Lucia"},
+  {id:"SL3", label:"SL-3", name:"Maquina 3", sede:"Santa Lucia"},
+  {id:"SL4", label:"SL-4", name:"Maquina 4", sede:"Santa Lucia"},
+  {id:"SL5", label:"SL-5", name:"Maquina 5", sede:"Santa Lucia"},
+];
+const PRODS = {
+  eslabonada:{label:"Malla Eslabonada",color:"#3b82f6",bg:"#eff6ff"},
+  pvc:       {label:"Malla PVC",       color:"#16a34a",bg:"#f0fdf4"},
+  postes:    {label:"Postes",          color:"#b45309",bg:"#fffbeb"},
+  tubos:     {label:"Tubos",           color:"#7c3aed",bg:"#f5f3ff"},
+};
+
+const lp = id => PRODS[id]?.label || id || '';
+const ip = id => PRODS[id] || {color:'#64748b', bg:'#1e293b'};
+
+function normalizeItems(o) {
+  const base = o.status === 'completed' ? 'completed' : o.status === 'active' ? 'active' : 'queue';
+  if (Array.isArray(o.items) && o.items.length) {
+    return o.items.map(it => ({
+      ...it,
+      status:       it.status       !== undefined ? it.status       : base,
+      machineId:    it.machineId    !== undefined ? it.machineId    : (o.machineId    || null),
+      machineLabel: it.machineLabel !== undefined ? it.machineLabel : (o.machineLabel || null),
+      assignedAt:   it.assignedAt   !== undefined ? it.assignedAt   : (o.assignedAt   || null),
+    }));
+  }
+  if (o.producto) return [{...o, status:base, machineId:o.machineId||null}];
+  return [];
+}
+
+function deriveStatus(items) {
+  if (!items?.length) return 'queue';
+  if (items.every(i => i.status === 'completed')) return 'completed';
+  if (items.some(i  => i.status === 'active' || i.status === 'completed')) return 'active';
+  return 'queue';
+}
+
+function timeAgo(ts) {
+  if (!ts) return '';
+  const m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 1) return 'ahora';
+  if (m < 60) return m + ' min';
+  const h = Math.floor(m / 60);
+  return h < 24 ? h + 'h' : Math.floor(h/24) + 'd';
+}
+
+function resumen(it) {
+  if (!it?.producto) return '';
+  const p = [];
+  if (it.producto === 'eslabonada' || it.producto === 'pvc') {
+    if (it.metros)           p.push(it.metros + 'm\u00b2');
+    if (it.ancho && it.alto) p.push(it.ancho + '\u00d7' + it.alto + 'm');
+    if (it.abertura)         p.push('Ab:' + it.abertura);
+    if (it.calibre)          p.push('Cal:' + it.calibre);
+    if (it.color)            p.push(it.color);
+  } else {
+    if (it.calibre)  p.push('Cal:' + it.calibre);
+    if (it.grosor)   p.push(it.grosor + '"');
+    if (it.largo)    p.push(it.largo + 'm');
+    if (it.cantidad) p.push(it.cantidad + 'un');
+  }
+  return p.join(' \u00b7 ');
+}
+
+function tick() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    n.toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  document.getElementById('dateStr').textContent =
+    n.toLocaleDateString('es-CO', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
+tick(); setInterval(tick, 1000);
+
+function render(orders) {
+  const allItems  = orders.flatMap(o => normalizeItems(o));
+  const active    = allItems.filter(it => it.status === 'active');
+  const queueOrds = orders.filter(o => deriveStatus(normalizeItems(o)) !== 'completed');
+  const doneOrds  = orders.filter(o => deriveStatus(normalizeItems(o)) === 'completed');
+  const freeMachs = MACHINES.filter(m => !active.some(it => it.machineId === m.id));
+
+  document.getElementById('sFree').textContent   = freeMachs.length;
+  document.getElementById('sActive').textContent  = active.length;
+  document.getElementById('sQueue').textContent   = queueOrds.length;
+  document.getElementById('sDone').textContent    = doneOrds.length;
+  document.getElementById('lastUpdate').textContent =
+    'Actualizado: ' + new Date().toLocaleTimeString('es-CO');
+
+  let html = '';
+
+  html += '<div class="section-title">Estado de Maquinas</div>';
+  html += '<div class="machines-grid">';
+
+  MACHINES.forEach(function(m) {
+    const mItems = active.filter(function(it) { return it.machineId === m.id; });
+    const busy   = mItems.length > 0;
+
+    html += '<div class="machine-card ' + (busy ? 'busy' : 'free') + '">';
+    html += '<div class="machine-header ' + (busy ? 'busy' : 'free') + '">'
+          + '<div>'
+          + '<div class="machine-name">' + m.name + ' \u00b7 ' + m.label + '</div>'
+          + '<div class="machine-sede">Sede ' + m.sede + '</div>'
+          + '</div>'
+          + '<div class="machine-badge">'
+          + (busy ? mItems.length + ' ACTIVO' + (mItems.length > 1 ? 'S' : '') : 'LIBRE')
+          + '</div></div>';
+    html += '<div class="machine-body">';
+
+    if (busy) {
+      mItems.forEach(function(it) {
+        var parent = null;
+        for (var i = 0; i < orders.length; i++) {
+          var its = normalizeItems(orders[i]);
+          if (its.some(function(x) { return x.machineId === m.id && x.assignedAt === it.assignedAt; })) {
+            parent = orders[i]; break;
+          }
+        }
+        var info = ip(it.producto);
+        html += '<div class="product-item">'
+              + '<span class="product-badge" style="background:' + info.bg + ';color:' + info.color + '">' + lp(it.producto) + '</span>'
+              + '<div class="product-top">'
+              + '<div class="product-order">#' + (parent ? parent.orden : '?') + '</div>'
+              + '<div class="product-time pulse">' + timeAgo(it.assignedAt) + '</div>'
+              + '</div>'
+              + '<div class="product-client">' + (parent ? parent.cliente : '') + '</div>'
+              + '<div class="product-params">' + resumen(it) + '</div>'
+              + '</div>';
+      });
+    } else {
+      html += '<div class="machine-free-wrap">'
+            + '<div class="machine-free-icon">\u2713</div>'
+            + '<div class="machine-free-sub">Disponible</div>'
+            + '</div>';
+    }
+
+    html += '</div></div>';
+  });
+  html += '</div>';
+
+  if (queueOrds.length) {
+    html += '<div class="section-title">Cola de Ordenes</div>';
+    html += '<div class="queue-wrap"><table class="queue-table">'
+          + '<thead><tr>'
+          + '<th>No. Orden</th><th>Cliente</th><th>Sede</th>'
+          + '<th>Productos</th><th>Estado</th><th>Vendedora</th>'
+          + '</tr></thead><tbody>';
+
+    queueOrds.slice(0, 25).forEach(function(o) {
+      var items = normalizeItems(o);
+      var st    = deriveStatus(items);
+      var sedeClass = o.sede === 'Centro' ? 'centro' : 'santa';
+      var stLbl = st === 'active' ? 'En Producci\u00f3n' : 'En Cola';
+      var stCls = st === 'active' ? 'st-active' : 'st-queue';
+      var prods = [...new Set(items.map(function(it) { return lp(it.producto); }))].join(', ') || '\u2014';
+      html += '<tr>'
+            + '<td class="q-num">#' + o.orden + '</td>'
+            + '<td class="q-client">' + (o.cliente || '\u2014') + '</td>'
+            + '<td><span class="sede-pill sede-' + sedeClass + '">' + o.sede + '</span></td>'
+            + '<td style="font-size:13px;color:#94a3b8">' + prods + '</td>'
+            + '<td><span class="status-pill ' + stCls + '">' + stLbl + '</span></td>'
+            + '<td style="font-size:13px;color:#64748b">' + (o.vendedoraName || '\u2014') + '</td>'
+            + '</tr>';
+    });
+    html += '</tbody></table></div>';
+  }
+
+  if (!queueOrds.length && !active.length) {
+    html += '<div class="no-data">\u2705 Sin \u00f3rdenes activas por el momento</div>';
+  }
+
+  document.getElementById('main').innerHTML = html;
+}
+
+try {
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+  const q   = query(collection(db, 'orders'), orderBy('timestamp', 'desc'));
+  onSnapshot(q,
+    function(snap) { render(snap.docs.map(function(d) { return Object.assign({}, d.data(), {_id: d.id}); })); },
+    function(err)  { document.getElementById('main').innerHTML = '<div class="error-box">\u274c Error Firebase: ' + err.message + '</div>'; }
+  );
+} catch(e) {
+  document.getElementById('main').innerHTML = '<div class="error-box">\u274c ' + e.message + '</div>';
+}
+</script>
+</body>
+</html>
