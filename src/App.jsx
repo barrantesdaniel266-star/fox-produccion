@@ -399,6 +399,7 @@ function Shell({user,onLogout,orders}){
       <div style={{maxWidth:1280,margin:"0 auto",padding:16}}>
         {tab==="machines"&&<MachinesTab machines={MACHINES} orders={orders} user={user} isG={isG}
           onItemClick={(ord,it,idx)=>!isViewer&&setModal({t:"complete",order:ord,item:it,itemIndex:idx})}
+          onCompleteItem={(orden,idx)=>!isViewer&&completeItem(orden,idx)}
           onAssignFree={mid=>!isViewer&&setModal({t:"pickItem",machineId:mid})}
           onNew={()=>!isViewer&&setModal({t:"new"})}/>}
         {tab==="queue"&&<QueueTab orders={queueOrders} allOrders={orders} isG={isG&&!isViewer}
@@ -445,7 +446,7 @@ function ProductoBadges({items}){
 }
 
 // ═══ PESTAÑA MÁQUINAS ══════════════════════════════════════
-function MachinesTab({machines,orders,user,isG,onItemClick,onAssignFree,onNew}){
+function MachinesTab({machines,orders,user,isG,onItemClick,onCompleteItem,onAssignFree,onNew}){
   const canRename=user.username==="natalia";
   const [names,setNames]=useState(()=>Object.fromEntries(machines.map(m=>[m.id,m.name])));
   const [editing,setEditing]=useState(null);
@@ -478,7 +479,7 @@ function MachinesTab({machines,orders,user,isG,onItemClick,onAssignFree,onNew}){
                 onStartEdit={()=>setEditing(m.id)}
                 onSaveName={v=>{setNames(n=>({...n,[m.id]:v}));setEditing(null);}}
                 onCancelEdit={()=>setEditing(null)}
-                onItemsDone={(doneList)=>doneList.forEach(e=>onItemClick(e.order,e.item,e.itemIndex))}
+                onItemsDone={(doneList)=>doneList.forEach(e=>onCompleteItem(e.order.orden,e.itemIndex))}
                 onAssignFree={()=>onAssignFree(m.id)}/>;
             })}
           </div>
