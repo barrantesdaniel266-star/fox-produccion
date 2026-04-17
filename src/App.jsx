@@ -27,6 +27,7 @@ const MACHINES = [
   { id:"SL2", label:"SL-2", name:"Maquina 2", sede:"Santa Lucia" },
   { id:"SL3", label:"SL-3", name:"Maquina 3", sede:"Santa Lucia" },
   { id:"SL4", label:"SL-4", name:"Maquina 4", sede:"Santa Lucia" },
+  { id:"SL5", label:"SL-5", name:"Maquina 5", sede:"Santa Lucia" },
 ];
 
 const PRODUCTOS = [
@@ -36,7 +37,7 @@ const PRODUCTOS = [
   { id:"tubos",      label:"Tubos",            color:"#7c3aed", bg:"#f5f3ff" },
 ];
 
-const ABERTURA_SIZES = ['1"','1.5"','2"','2 1/4"','2.5"','3"'];
+const ABERTURA_SIZES = ['1"','1"1/2','2"','2"1/4','2"1/2'];
 const STORAGE_KEY = "fox_orders_v8";
 
 // ═══ UTILIDADES ════════════════════════════════════════════
@@ -89,16 +90,22 @@ const deriveOrderStatus = items => {
   return "queue";
 };
 
-// Dado machineId, devuelve {order, item, itemIndex} o null
-const getMachineItem = (machineId, orders) => {
+// Dado machineId, devuelve [{order, item, itemIndex}] — todos los items activos en esa maquina
+const getMachineItems = (machineId, orders) => {
+  const result=[];
   for (const o of orders){
     const items=normalizeItems(o);
     for (let i=0;i<items.length;i++){
       if(items[i].status==="active"&&items[i].machineId===machineId)
-        return {order:o, item:items[i], itemIndex:i};
+        result.push({order:o, item:items[i], itemIndex:i});
     }
   }
-  return null;
+  return result;
+};
+// Compat: devuelve solo el primero (usado en partes no migradas)
+const getMachineItem = (machineId, orders) => {
+  const all=getMachineItems(machineId,orders);
+  return all.length>0?all[0]:null;
 };
 
 const resumenItem = it => {
@@ -122,8 +129,11 @@ const resumenItem = it => {
 
 const exportExcel = rows => {
   const stat={queue:"En Cola",active:"En Produccion",completed:"Completada"};
+  // Usar tabulacion como separador - Excel lo reconoce universalmente sin importar configuracion regional
   const TAB="\t";
+  // Limpiar el valor: quitar tabs y saltos de linea que rompen el formato
   const clean=v=>String(v==null?"":v).replace(/\t/g," ").replace(/\r?\n/g," ").trim();
+
   const headers=[
     "No.Orden","Cliente","Sede","Creado por","Estado Orden",
     "Fecha Creacion","Fecha Completado",
@@ -131,6 +141,7 @@ const exportExcel = rows => {
     "M2","Ancho(m)","Alto(m)","Abertura",
     "Calibre","Cal.Interno","Color","Grosor","Largo(m)","Cantidad"
   ];
+
   const data=[];
   rows.forEach(o=>{
     const items=normalizeItems(o);
@@ -138,20 +149,27 @@ const exportExcel = rows => {
     const fc=fmtDate(o.timestamp)||"";
     const fcomp=o.completedAt?fmtDate(o.completedAt):"";
     if(items.length===0){
-      data.push([o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"",est,fc,fcomp,"","","","","","","","","","","","",""]);
+      data.push([o.orden,o.cliente,o.sede,o.vendedoraName,est,fc,fcomp,"","","","","","","","","","","","",""]);
     } else {
+      // Repetir datos de la orden en CADA producto — sin gaps
       items.forEach(it=>{
         data.push([
-          o.orden,o.cliente||"",o.sede||"",o.vendedoraName||"",est,fc,fcomp,
-          labelProducto(it.producto)||"",stat[it.status]||it.status||"",it.machineLabel||"",
-          it.metros||"",it.ancho||"",it.alto||"",it.abertura||"",
-          it.calibre||"",it.calibreInterno||"",it.color||"",
-          it.grosor||"",it.largo||"",it.cantidad||"",
+          o.orden, o.cliente||"", o.sede||"", o.vendedoraName||"", est, fc, fcomp,
+          labelProducto(it.producto)||"", stat[it.status]||it.status||"", it.machineLabel||"",
+          it.metros||"", it.ancho||"", it.alto||"", it.abertura||"",
+          it.calibre||"", it.calibreInterno||"", it.color||"",
+          it.grosor||"", it.largo||"", it.cantidad||"",
         ]);
       });
     }
   });
-  const tsv=[headers,...data].map(row=>row.map(clean).join(TAB)).join("\r\n");
+
+  // Construir TSV: BOM UTF-8 + encabezado + filas
+  const tsv=[headers,...data]
+    .map(row=>row.map(clean).join(TAB))
+    .join("\r\n");
+
+  // BOM \uFEFF hace que Excel abra UTF-8 correctamente con tildes y ñ
   const blob=new Blob(["\uFEFF"+tsv],{type:"text/tab-separated-values;charset=utf-8"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
@@ -431,11 +449,12 @@ function MachinesTab({machines,orders,user,isG,onItemClick,onAssignFree,onNew}){
   const canRename=user.username==="natalia";
   const [names,setNames]=useState(()=>Object.fromEntries(machines.map(m=>[m.id,m.name])));
   const [editing,setEditing]=useState(null);
+
   return(
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}}>
         <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"9px 14px",fontSize:12,color:"#991b1b",flex:1}}>
-          Cada máquina puede tener <strong>múltiples productos activos</strong>. Clic en <strong>VERDE</strong> para asignar. Usa los <strong>checkboxes</strong> para completar productos.
+          Cada máquina puede tener <strong>múltiples productos activos</strong>. Clic en máquina <strong>ROJA</strong> para finalizar productos. Clic en <strong>VERDE</strong> para asignar.
           {!isG&&<span style={{display:"block",marginTop:4}}>Solo puedes asignar a las máquinas de tu sede.</span>}
         </div>
         <button onClick={onNew} style={btnR}>+ Nueva Orden</button>
@@ -446,19 +465,20 @@ function MachinesTab({machines,orders,user,isG,onItemClick,onAssignFree,onNew}){
             <div style={{width:4,height:20,background:RED,borderRadius:2}}/>
             <h2 style={{margin:0,fontSize:16,fontWeight:700,color:"#334155"}}>Sede {sede}</h2>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))",gap:12}}>
             {machines.filter(m=>m.sede===sede).map(m=>{
               const entries=getMachineItems(m.id,orders);
+              const busy=entries.length>0;
               const puedeAsignar=isG||(user.sede===sede);
               const itemsEnCola=orders.reduce((acc,o)=>acc+normalizeItems(o).filter(it=>it.status==="queue").length,0);
               const displayName=names[m.id]||m.name;
-              return <MachCard key={m.id} machine={{...m,name:displayName}} entries={entries}
+              return <MachCard key={m.id} machine={{...m,name:displayName}} entries={entries} busy={busy}
                 itemsEnCola={itemsEnCola} puedeAsignar={puedeAsignar}
                 canRename={canRename} editing={editing===m.id}
                 onStartEdit={()=>setEditing(m.id)}
                 onSaveName={v=>{setNames(n=>({...n,[m.id]:v}));setEditing(null);}}
                 onCancelEdit={()=>setEditing(null)}
-                onCompleteItem={(e)=>onItemClick(e.order,e.item,e.itemIndex)}
+                onItemsDone={(doneList)=>doneList.forEach(e=>onItemClick(e.order,e.item,e.itemIndex))}
                 onAssignFree={()=>onAssignFree(m.id)}/>;
             })}
           </div>
@@ -468,16 +488,19 @@ function MachinesTab({machines,orders,user,isG,onItemClick,onAssignFree,onNew}){
   );
 }
 
-function MachCard({machine,entries,itemsEnCola,puedeAsignar,canRename,editing,onStartEdit,onSaveName,onCancelEdit,onCompleteItem,onAssignFree}){
-  const busy=entries.length>0;
+function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editing,onStartEdit,onSaveName,onCancelEdit,onItemsDone,onAssignFree}){
   const [hover,setHover]=useState(false);
   const [checked,setChecked]=useState({});
   const [nameVal,setNameVal]=useState(machine.name);
   const [showList,setShowList]=useState(false);
+
+  const toggleCheck=idx=>setChecked(c=>({...c,[idx]:!c[idx]}));
   const checkedCount=Object.values(checked).filter(Boolean).length;
 
   const handleConfirm=()=>{
-    entries.forEach((e,i)=>{ if(checked[i]) onCompleteItem(e); });
+    const toComplete=entries.filter((_,i)=>checked[i]);
+    if(toComplete.length===0) return;
+    onItemsDone(toComplete);
     setChecked({});
   };
 
@@ -485,6 +508,7 @@ function MachCard({machine,entries,itemsEnCola,puedeAsignar,canRename,editing,on
     <div onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}
       style={{border:`2px solid ${busy?RED:"#4ade80"}`,borderRadius:16,overflow:"hidden",background:"#fff",
         boxShadow:busy&&hover?`0 8px 24px rgba(232,38,42,.2)`:"none",transition:"box-shadow .15s"}}>
+      {/* Cabecera */}
       <div style={{background:busy?RED:GREEN,padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
           <div style={{width:28,height:28,background:"rgba(255,255,255,.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,color:"#fff",fontSize:13}}>M</div>
@@ -492,72 +516,89 @@ function MachCard({machine,entries,itemsEnCola,puedeAsignar,canRename,editing,on
             {editing?(
               <div style={{display:"flex",gap:4}}>
                 <input autoFocus value={nameVal} onChange={e=>setNameVal(e.target.value)}
-                  style={{fontSize:12,fontWeight:700,border:"none",borderRadius:6,padding:"2px 6px",flex:1,outline:"none"}}/>
-                <button onClick={()=>onSaveName(nameVal)} style={{background:"rgba(255,255,255,.3)",border:"none",borderRadius:6,padding:"2px 8px",cursor:"pointer",color:"#fff",fontWeight:700}}>✓</button>
-                <button onClick={onCancelEdit} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:6,padding:"2px 6px",cursor:"pointer",color:"#fff"}}>✕</button>
+                  style={{fontSize:12,fontWeight:700,border:"none",borderRadius:6,padding:"2px 6px",flex:1}}/>
+                <button onClick={()=>onSaveName(nameVal)} style={{background:"#fff",border:"none",borderRadius:6,padding:"2px 6px",cursor:"pointer",color:GREEN,fontWeight:700,fontSize:11}}>✓</button>
+                <button onClick={onCancelEdit} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:6,padding:"2px 6px",cursor:"pointer",color:"#fff",fontSize:11}}>✕</button>
               </div>
             ):(
               <div style={{display:"flex",alignItems:"center",gap:4}}>
                 <div style={{color:"#fff",fontWeight:700,fontSize:13}}>{machine.name} · {machine.label}</div>
-                {canRename&&<button onClick={onStartEdit} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:4,padding:"1px 6px",cursor:"pointer",color:"#fff",fontSize:10}}>✏</button>}
+                {canRename&&<button onClick={onStartEdit} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:4,padding:"1px 5px",cursor:"pointer",color:"#fff",fontSize:10}}>✏</button>}
               </div>
             )}
             <div style={{color:"rgba(255,255,255,.75)",fontSize:10}}>Sede {machine.sede}</div>
           </div>
         </div>
         <span style={{background:"rgba(0,0,0,.22)",color:"#fff",borderRadius:999,padding:"2px 10px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>
-          {busy?`${entries.length} ACTIVO${entries.length>1?"S":""}`:"LIBRE"}
+          {busy?`${entries.length} ACTIVO${entries.length>1?"S":""}`:\"LIBRE\"}
         </span>
       </div>
+      {/* Cuerpo */}
       <div style={{padding:14}}>
         {busy?(
           <>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-              <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                {entries.map((e,i)=>{ const info=infoProducto(e.item.producto); return <span key={i} style={{background:info.bg,color:info.color,borderRadius:999,padding:"2px 8px",fontSize:10,fontWeight:700}}>{labelProducto(e.item.producto)}</span>; })}
+            {/* Lista de productos activos con checkboxes */}
+            <div style={{marginBottom:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                <span style={{fontSize:11,fontWeight:700,color:"#334155"}}>Productos en producción:</span>
+                <button onClick={()=>setShowList(!showList)} style={{background:"none",border:"none",fontSize:10,color:RED,cursor:"pointer",fontWeight:600}}>
+                  {showList?"Ocultar ▲":"Ver lista ▼"}
+                </button>
               </div>
-              <button onClick={()=>setShowList(!showList)} style={{background:"none",border:"none",fontSize:10,color:RED,cursor:"pointer",fontWeight:700,whiteSpace:"nowrap",marginLeft:6}}>
-                {showList?"Ocultar ▲":"Gestionar ▼"}
-              </button>
-            </div>
-            {showList&&(
-              <div style={{background:"#f8fafc",borderRadius:10,padding:10,border:"1px solid #e2e8f0",marginBottom:8}}>
-                {entries.map((e,i)=>(
-                  <div key={i} onClick={()=>setChecked(c=>({...c,[i]:!c[i]}))}
-                    style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 6px",borderRadius:8,marginBottom:4,
-                      background:checked[i]?"#f0fdf4":"#fff",border:`1px solid ${checked[i]?"#86efac":"#e2e8f0"}`,cursor:"pointer"}}>
-                    <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${checked[i]?GREEN:"#cbd5e1"}`,
-                      background:checked[i]?GREEN:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}>
-                      {checked[i]&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}
-                    </div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{display:"flex",gap:4,marginBottom:2,flexWrap:"wrap"}}>
-                        <span style={{background:infoProducto(e.item.producto).bg,color:infoProducto(e.item.producto).color,borderRadius:999,padding:"1px 7px",fontSize:10,fontWeight:700}}>{labelProducto(e.item.producto)}</span>
-                        <span style={{fontSize:10,color:"#64748b"}}>#{e.order.orden} · {e.order.cliente}</span>
+              {/* Siempre muestra resumen */}
+              <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:6}}>
+                {entries.map((e,i)=>{
+                  const info=infoProducto(e.item.producto);
+                  return <span key={i} style={{background:info.bg,color:info.color,borderRadius:999,padding:"2px 8px",fontSize:10,fontWeight:700}}>{labelProducto(e.item.producto)}</span>;
+                })}
+              </div>
+              {/* Lista expandible con checkboxes */}
+              {showList&&(
+                <div style={{background:"#f8fafc",borderRadius:10,padding:10,border:"1px solid #e2e8f0"}}>
+                  {entries.map((e,i)=>{
+                    const info=infoProducto(e.item.producto);
+                    return(
+                      <div key={i} onClick={()=>toggleCheck(i)}
+                        style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 6px",borderRadius:8,marginBottom:4,
+                          background:checked[i]?"#f0fdf4":"#fff",border:`1px solid ${checked[i]?"#86efac":"#e2e8f0"}`,cursor:"pointer"}}>
+                        <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${checked[i]?GREEN:"#cbd5e1"}`,
+                          background:checked[i]?GREEN:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}>
+                          {checked[i]&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}
+                        </div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:2}}>
+                            <span style={{background:info.bg,color:info.color,borderRadius:999,padding:"1px 7px",fontSize:10,fontWeight:700}}>{labelProducto(e.item.producto)}</span>
+                            <span style={{fontSize:10,color:"#94a3b8"}}>#{e.order.orden}</span>
+                          </div>
+                          <div style={{fontSize:11,color:"#475569"}}>{e.order.cliente}</div>
+                          <div style={{fontSize:10,color:"#94a3b8"}}>{resumenItem(e.item)}</div>
+                        </div>
                       </div>
-                      <div style={{fontSize:10,color:"#94a3b8"}}>{resumenItem(e.item)}</div>
-                    </div>
+                    );
+                  })}
+                  {/* Botones de acción */}
+                  <div style={{display:"flex",gap:6,marginTop:8}}>
+                    <button onClick={handleConfirm} disabled={checkedCount===0}
+                      style={{flex:1,background:checkedCount>0?GREEN:"#e2e8f0",border:"none",borderRadius:8,padding:"8px",
+                        fontSize:12,fontWeight:700,color:checkedCount>0?"#fff":"#94a3b8",cursor:checkedCount>0?"pointer":"not-allowed"}}>
+                      ✓ Completar {checkedCount>0?`(${checkedCount})`:""}
+                    </button>
+                    {puedeAsignar&&<button onClick={e=>{e.stopPropagation();onAssignFree();}} disabled={!itemsEnCola}
+                      style={{flex:1,background:itemsEnCola?"#eff6ff":"#e2e8f0",border:"none",borderRadius:8,padding:"8px",
+                        fontSize:12,fontWeight:700,color:itemsEnCola?"#1d4ed8":"#94a3b8",cursor:itemsEnCola?"pointer":"not-allowed"}}>
+                      + Agregar
+                    </button>}
                   </div>
-                ))}
-                <div style={{display:"flex",gap:6,marginTop:8}}>
-                  <button onClick={handleConfirm} disabled={checkedCount===0}
-                    style={{flex:1,background:checkedCount>0?GREEN:"#e2e8f0",border:"none",borderRadius:8,padding:"8px",
-                      fontSize:12,fontWeight:700,color:checkedCount>0?"#fff":"#94a3b8",cursor:checkedCount>0?"pointer":"not-allowed"}}>
-                    ✓ Completar{checkedCount>0?` (${checkedCount})`:""}
-                  </button>
-                  {puedeAsignar&&<button onClick={e=>{e.stopPropagation();onAssignFree();}} disabled={!itemsEnCola}
-                    style={{background:itemsEnCola?"#eff6ff":"#e2e8f0",border:"none",borderRadius:8,padding:"8px 12px",
-                      fontSize:12,fontWeight:700,color:itemsEnCola?"#1d4ed8":"#94a3b8",cursor:itemsEnCola?"pointer":"not-allowed"}}>
-                    + Agregar
-                  </button>}
                 </div>
-              </div>
-            )}
-            {!showList&&puedeAsignar&&itemsEnCola>0&&(
-              <button onClick={e=>{e.stopPropagation();onAssignFree();}} style={{width:"100%",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"6px",fontSize:11,fontWeight:700,color:"#1d4ed8",cursor:"pointer"}}>
-                + Agregar producto
-              </button>
-            )}
+              )}
+              {!showList&&puedeAsignar&&(
+                <button onClick={e=>{e.stopPropagation();onAssignFree();}} disabled={!itemsEnCola}
+                  style={{width:"100%",background:itemsEnCola?"#eff6ff":"#e2e8f0",border:"1px solid #bfdbfe",borderRadius:8,padding:"6px",
+                    fontSize:11,fontWeight:700,color:itemsEnCola?"#1d4ed8":"#94a3b8",cursor:itemsEnCola?"pointer":"not-allowed"}}>
+                  + Agregar producto a esta máquina
+                </button>
+              )}
+            </div>
           </>
         ):(
           <div style={{textAlign:"center",padding:"18px 0"}}>
@@ -578,7 +619,6 @@ function MachCard({machine,entries,itemsEnCola,puedeAsignar,canRename,editing,on
     </div>
   );
 }
-
 
 // ═══ COLA DE ÓRDENES ═══════════════════════════════════════
 function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdit}){
