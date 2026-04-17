@@ -180,9 +180,9 @@ const exportExcel = rows => {
 
 // ═══ ESTILOS ═══════════════════════════════════════════════
 const inp={width:"100%",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"10px 14px",fontSize:14,color:"#1e293b",outline:"none",boxSizing:"border-box"};
-const btnR={background:RED,border:"none",borderRadius:10,padding:"11px 20px",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer"};
-const btnS={background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"11px 20px",fontSize:13,fontWeight:600,color:"#64748b",cursor:"pointer"};
-const btnG={background:GREEN,border:"none",borderRadius:10,padding:"11px 20px",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer"};
+const btnR={background:RED,border:"none",borderRadius:10,padding:"11px 20px",fontSize:14,fontWeight:700,color:"#fff",cursor:"pointer"};
+const btnS={background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"11px 20px",fontSize:14,fontWeight:600,color:"#64748b",cursor:"pointer"};
+const btnG={background:GREEN,border:"none",borderRadius:10,padding:"11px 20px",fontSize:14,fontWeight:700,color:"#fff",cursor:"pointer"};
 
 // ═══ ROOT ══════════════════════════════════════════════════
 export default function App(){
@@ -217,7 +217,7 @@ function Splash({error}){
       {error?(
         <div style={{textAlign:"center",color:"#f87171",maxWidth:320,padding:"0 16px"}}>
           <p style={{fontWeight:700,marginBottom:8}}>Error de conexión con Firebase</p>
-          <p style={{fontSize:13,lineHeight:1.6}}>Verifica que las variables de entorno (.env) estén configuradas y que el proyecto Firebase existe.</p>
+          <p style={{fontSize:14,lineHeight:1.6}}>Verifica que las variables de entorno (.env) estén configuradas y que el proyecto Firebase existe.</p>
         </div>
       ):(
         <>
@@ -241,22 +241,22 @@ function Login({onLogin}){
           <img src={logoUrl} style={{width:"100%",height:"100%",objectFit:"cover"}} alt="Fox"/>
         </div>
         <h1 style={{color:"#fff",fontSize:22,fontWeight:900,margin:0}}>Mallas y Alambres Fox</h1>
-        <p style={{color:"#f87171",fontSize:13,margin:0}}>Sistema de Gestión de Producción · Bogotá</p>
+        <p style={{color:"#f87171",fontSize:14,margin:0}}>Sistema de Gestión de Producción · Bogotá</p>
       </div>
       <div style={{background:"#fff",borderRadius:20,padding:"28px 32px",boxShadow:"0 25px 50px rgba(0,0,0,.5)",width:"100%",maxWidth:420}}>
         <h2 style={{fontSize:17,fontWeight:700,color:"#1e293b",marginBottom:20,marginTop:0,textAlign:"center"}}>Iniciar sesión</h2>
         <div style={{marginBottom:14}}>
-          <label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Usuario</label>
+          <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Usuario</label>
           <input style={inp} value={u} onChange={e=>{setU(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&attempt()} autoComplete="username"/>
         </div>
         <div style={{marginBottom:16}}>
-          <label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Contraseña</label>
+          <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Contraseña</label>
           <div style={{position:"relative"}}>
             <input type={show?"text":"password"} style={{...inp,paddingRight:80}} value={p} onChange={e=>{setP(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&attempt()} autoComplete="current-password"/>
-            <button onClick={()=>setShow(!show)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#94a3b8",fontSize:12,fontWeight:600}}>{show?"Ocultar":"Mostrar"}</button>
+            <button onClick={()=>setShow(!show)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#94a3b8",fontSize:14,fontWeight:600}}>{show?"Ocultar":"Mostrar"}</button>
           </div>
         </div>
-        {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"9px 13px",color:"#dc2626",fontSize:13,marginBottom:14}}>⚠ {err}</div>}
+        {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"9px 13px",color:"#dc2626",fontSize:14,marginBottom:14}}>⚠ {err}</div>}
         <button onClick={attempt} style={{...btnR,width:"100%",padding:"12px"}}>Ingresar al sistema</button>
       </div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}*{box-sizing:border-box}`}</style>
@@ -356,27 +356,27 @@ function Shell({user,onLogout,orders}){
   ];
 
   return(
-    <div style={{minHeight:"100vh",background:"#f1f5f9",fontFamily:"system-ui,-apple-system,sans-serif"}}>
+    <div style={{minHeight:"100vh",background:"#f1f5f9",fontFamily:"Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",WebkitFontSmoothing:"antialiased"}}>
       <div style={{background:DARK}}>
         <div style={{maxWidth:1280,margin:"0 auto",padding:"0 16px",display:"flex",alignItems:"center",justifyContent:"space-between",height:56}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <img src={logoUrl} style={{width:38,height:38,borderRadius:9,flexShrink:0}} alt="Fox"/>
             <div>
-              <div style={{fontSize:13,fontWeight:800,color:"#fff",lineHeight:1.2}}>Mallas y Alambres Fox</div>
-              <div style={{fontSize:10,color:"#f87171"}}>Gestión de Producción · Bogotá</div>
+              <div style={{fontSize:14,fontWeight:800,color:"#fff",lineHeight:1.2}}>Mallas y Alambres Fox</div>
+              <div style={{fontSize:14,color:"#f87171"}}>Gestión de Producción · Bogotá</div>
             </div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            {saving&&<span style={{color:RED,fontSize:10}}>● Guardando...</span>}
+            {saving&&<span style={{color:RED,fontSize:14}}>● Guardando...</span>}
             <div style={{textAlign:"right"}}>
-              <div style={{fontSize:12,fontWeight:700,color:"#fff"}}>{user.name}</div>
-              <div style={{fontSize:10,color:isG?"#fbbf24":"#93c5fd"}}>{isG?"Gerencia — Acceso total":`Vendedora · ${user.sede}`}</div>
+              <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>{user.name}</div>
+              <div style={{fontSize:14,color:isG?"#fbbf24":"#93c5fd"}}>{isG?"Gerencia — Acceso total":`Vendedora · ${user.sede}`}</div>
             </div>
-            <button onClick={onLogout} style={{background:RED,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontSize:11,fontWeight:700,cursor:"pointer"}}>Salir</button>
+            <button onClick={onLogout} style={{background:RED,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontSize:14,fontWeight:700,cursor:"pointer"}}>Salir</button>
           </div>
         </div>
         <div style={{borderTop:"1px solid #262626",padding:"5px 0"}}>
-          <div style={{maxWidth:1280,margin:"0 auto",padding:"0 16px",display:"flex",gap:18,fontSize:11,flexWrap:"wrap"}}>
+          <div style={{maxWidth:1280,margin:"0 auto",padding:"0 16px",display:"flex",gap:18,fontSize:14,flexWrap:"wrap"}}>
             <span style={{color:"#4ade80"}}>● {MACHINES.filter(m=>!getMachineItem(m.id,orders)).length} libres</span>
             <span style={{color:"#f87171"}}>● {activeItemCount} items en producción</span>
             <span style={{color:"#60a5fa"}}>● {queueOrders.length} órdenes en cola</span>
@@ -388,9 +388,9 @@ function Shell({user,onLogout,orders}){
       <div style={{background:"#fff",borderBottom:"1px solid #e2e8f0"}}>
         <div style={{maxWidth:1280,margin:"0 auto",padding:"0 16px",display:"flex"}}>
           {tabs.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"12px 14px",fontSize:13,fontWeight:600,border:"none",background:"none",cursor:"pointer",borderBottom:tab===t.id?`2px solid ${RED}`:"2px solid transparent",color:tab===t.id?RED:"#64748b",display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap"}}>
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"12px 14px",fontSize:14,fontWeight:600,border:"none",background:"none",cursor:"pointer",borderBottom:tab===t.id?`2px solid ${RED}`:"2px solid transparent",color:tab===t.id?RED:"#64748b",display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap"}}>
               {t.label}
-              {t.count>0&&<span style={{background:tab===t.id?"#fef2f2":"#f1f5f9",color:tab===t.id?RED:"#64748b",borderRadius:999,padding:"1px 7px",fontSize:10,fontWeight:700}}>{t.count}</span>}
+              {t.count>0&&<span style={{background:tab===t.id?"#fef2f2":"#f1f5f9",color:tab===t.id?RED:"#64748b",borderRadius:999,padding:"1px 7px",fontSize:14,fontWeight:700}}>{t.count}</span>}
             </button>
           ))}
         </div>
@@ -425,9 +425,9 @@ function Shell({user,onLogout,orders}){
 
 // ═══ BADGES ════════════════════════════════════════════════
 function ItemStatusBadge({item}){
-  if(item.status==="completed") return <span style={{background:"#f0fdf4",color:"#15803d",borderRadius:999,padding:"1px 8px",fontSize:10,fontWeight:700}}>✓ Completado</span>;
-  if(item.status==="active")    return <span style={{background:"#fef2f2",color:RED,borderRadius:999,padding:"1px 8px",fontSize:10,fontWeight:700}}>{item.machineLabel||"Activo"}</span>;
-  return <span style={{background:"#eff6ff",color:"#1d4ed8",borderRadius:999,padding:"1px 8px",fontSize:10,fontWeight:700}}>En Cola</span>;
+  if(item.status==="completed") return <span style={{background:"#f0fdf4",color:"#15803d",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>✓ Completado</span>;
+  if(item.status==="active")    return <span style={{background:"#fef2f2",color:RED,borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{item.machineLabel||"Activo"}</span>;
+  return <span style={{background:"#eff6ff",color:"#1d4ed8",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>En Cola</span>;
 }
 
 function ProductoBadges({items}){
@@ -438,7 +438,7 @@ function ProductoBadges({items}){
     <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
       {Object.entries(counts).map(([lbl,cnt])=>{
         const info=PRODUCTOS.find(p=>p.label===lbl)||{color:"#64748b",bg:"#f1f5f9"};
-        return <span key={lbl} style={{background:info.bg,color:info.color,borderRadius:999,padding:"2px 9px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{cnt>1?`${cnt}× `:""}{lbl}</span>;
+        return <span key={lbl} style={{background:info.bg,color:info.color,borderRadius:999,padding:"2px 9px",fontSize:14,fontWeight:700,whiteSpace:"nowrap"}}>{cnt>1?`${cnt}× `:""}{lbl}</span>;
       })}
     </div>
   );
@@ -453,7 +453,7 @@ function MachinesTab({machines,orders,user,isG,onItemClick,onAssignFree,onNew}){
   return(
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}}>
-        <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"9px 14px",fontSize:12,color:"#991b1b",flex:1}}>
+        <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"9px 14px",fontSize:14,color:"#991b1b",flex:1}}>
           Cada máquina puede tener <strong>múltiples productos activos</strong>. Clic en máquina <strong>ROJA</strong> para finalizar productos. Clic en <strong>VERDE</strong> para asignar.
           {!isG&&<span style={{display:"block",marginTop:4}}>Solo puedes asignar a las máquinas de tu sede.</span>}
         </div>
@@ -511,26 +511,26 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
       {/* Cabecera */}
       <div style={{background:busy?RED:GREEN,padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
-          <div style={{width:28,height:28,background:"rgba(255,255,255,.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,color:"#fff",fontSize:13}}>M</div>
+          <div style={{width:28,height:28,background:"rgba(255,255,255,.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,color:"#fff",fontSize:14}}>M</div>
           <div style={{flex:1}}>
             {editing?(
               <div style={{display:"flex",gap:4}}>
                 <input autoFocus value={nameVal} onChange={e=>setNameVal(e.target.value)}
-                  style={{fontSize:12,fontWeight:700,border:"none",borderRadius:6,padding:"2px 6px",flex:1}}/>
-                <button onClick={()=>onSaveName(nameVal)} style={{background:"#fff",border:"none",borderRadius:6,padding:"2px 6px",cursor:"pointer",color:GREEN,fontWeight:700,fontSize:11}}>✓</button>
-                <button onClick={onCancelEdit} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:6,padding:"2px 6px",cursor:"pointer",color:"#fff",fontSize:11}}>✕</button>
+                  style={{fontSize:14,fontWeight:700,border:"none",borderRadius:6,padding:"2px 6px",flex:1}}/>
+                <button onClick={()=>onSaveName(nameVal)} style={{background:"#fff",border:"none",borderRadius:6,padding:"2px 6px",cursor:"pointer",color:GREEN,fontWeight:700,fontSize:14}}>✓</button>
+                <button onClick={onCancelEdit} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:6,padding:"2px 6px",cursor:"pointer",color:"#fff",fontSize:14}}>✕</button>
               </div>
             ):(
               <div style={{display:"flex",alignItems:"center",gap:4}}>
-                <div style={{color:"#fff",fontWeight:700,fontSize:13}}>{machine.name} · {machine.label}</div>
-                {canRename&&<button onClick={onStartEdit} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:4,padding:"1px 5px",cursor:"pointer",color:"#fff",fontSize:10}}>✏</button>}
+                <div style={{color:"#fff",fontWeight:700,fontSize:14}}>{machine.name} · {machine.label}</div>
+                {canRename&&<button onClick={onStartEdit} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:4,padding:"1px 5px",cursor:"pointer",color:"#fff",fontSize:14}}>✏</button>}
               </div>
             )}
-            <div style={{color:"rgba(255,255,255,.75)",fontSize:10}}>Sede {machine.sede}</div>
+            <div style={{color:"rgba(255,255,255,.75)",fontSize:14}}>Sede {machine.sede}</div>
           </div>
         </div>
-        <span style={{background:"rgba(0,0,0,.22)",color:"#fff",borderRadius:999,padding:"2px 10px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>
-          {busy?`${entries.length} ACTIVO${entries.length>1?"S":""}`:"LIBRE"}
+        <span style={{background:"rgba(0,0,0,.22)",color:"#fff",borderRadius:999,padding:"2px 10px",fontSize:14,fontWeight:700,whiteSpace:"nowrap"}}>
+          {busy?`${entries.length} ACTIVO${entries.length>1?"S":""}`:\"LIBRE\"}
         </span>
       </div>
       {/* Cuerpo */}
@@ -540,8 +540,8 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
             {/* Lista de productos activos con checkboxes */}
             <div style={{marginBottom:10}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                <span style={{fontSize:11,fontWeight:700,color:"#334155"}}>Productos en producción:</span>
-                <button onClick={()=>setShowList(!showList)} style={{background:"none",border:"none",fontSize:10,color:RED,cursor:"pointer",fontWeight:600}}>
+                <span style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos en producción:</span>
+                <button onClick={()=>setShowList(!showList)} style={{background:"none",border:"none",fontSize:14,color:RED,cursor:"pointer",fontWeight:600}}>
                   {showList?"Ocultar ▲":"Ver lista ▼"}
                 </button>
               </div>
@@ -549,7 +549,7 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
               <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:6}}>
                 {entries.map((e,i)=>{
                   const info=infoProducto(e.item.producto);
-                  return <span key={i} style={{background:info.bg,color:info.color,borderRadius:999,padding:"2px 8px",fontSize:10,fontWeight:700}}>{labelProducto(e.item.producto)}</span>;
+                  return <span key={i} style={{background:info.bg,color:info.color,borderRadius:999,padding:"2px 8px",fontSize:14,fontWeight:700}}>{labelProducto(e.item.producto)}</span>;
                 })}
               </div>
               {/* Lista expandible con checkboxes */}
@@ -563,15 +563,15 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
                           background:checked[i]?"#f0fdf4":"#fff",border:`1px solid ${checked[i]?"#86efac":"#e2e8f0"}`,cursor:"pointer"}}>
                         <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${checked[i]?GREEN:"#cbd5e1"}`,
                           background:checked[i]?GREEN:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}>
-                          {checked[i]&&<span style={{color:"#fff",fontSize:11,fontWeight:900}}>✓</span>}
+                          {checked[i]&&<span style={{color:"#fff",fontSize:14,fontWeight:900}}>✓</span>}
                         </div>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:2}}>
-                            <span style={{background:info.bg,color:info.color,borderRadius:999,padding:"1px 7px",fontSize:10,fontWeight:700}}>{labelProducto(e.item.producto)}</span>
-                            <span style={{fontSize:10,color:"#94a3b8"}}>#{e.order.orden}</span>
+                            <span style={{background:info.bg,color:info.color,borderRadius:999,padding:"1px 7px",fontSize:14,fontWeight:700}}>{labelProducto(e.item.producto)}</span>
+                            <span style={{fontSize:14,color:"#94a3b8"}}>#{e.order.orden}</span>
                           </div>
-                          <div style={{fontSize:11,color:"#475569"}}>{e.order.cliente}</div>
-                          <div style={{fontSize:10,color:"#94a3b8"}}>{resumenItem(e.item)}</div>
+                          <div style={{fontSize:14,color:"#475569"}}>{e.order.cliente}</div>
+                          <div style={{fontSize:14,color:"#94a3b8"}}>{resumenItem(e.item)}</div>
                         </div>
                       </div>
                     );
@@ -580,12 +580,12 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
                   <div style={{display:"flex",gap:6,marginTop:8}}>
                     <button onClick={handleConfirm} disabled={checkedCount===0}
                       style={{flex:1,background:checkedCount>0?GREEN:"#e2e8f0",border:"none",borderRadius:8,padding:"8px",
-                        fontSize:12,fontWeight:700,color:checkedCount>0?"#fff":"#94a3b8",cursor:checkedCount>0?"pointer":"not-allowed"}}>
+                        fontSize:14,fontWeight:700,color:checkedCount>0?"#fff":"#94a3b8",cursor:checkedCount>0?"pointer":"not-allowed"}}>
                       ✓ Completar {checkedCount>0?`(${checkedCount})`:""}
                     </button>
                     {puedeAsignar&&<button onClick={e=>{e.stopPropagation();onAssignFree();}} disabled={!itemsEnCola}
                       style={{flex:1,background:itemsEnCola?"#eff6ff":"#e2e8f0",border:"none",borderRadius:8,padding:"8px",
-                        fontSize:12,fontWeight:700,color:itemsEnCola?"#1d4ed8":"#94a3b8",cursor:itemsEnCola?"pointer":"not-allowed"}}>
+                        fontSize:14,fontWeight:700,color:itemsEnCola?"#1d4ed8":"#94a3b8",cursor:itemsEnCola?"pointer":"not-allowed"}}>
                       + Agregar
                     </button>}
                   </div>
@@ -594,7 +594,7 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
               {!showList&&puedeAsignar&&(
                 <button onClick={e=>{e.stopPropagation();onAssignFree();}} disabled={!itemsEnCola}
                   style={{width:"100%",background:itemsEnCola?"#eff6ff":"#e2e8f0",border:"1px solid #bfdbfe",borderRadius:8,padding:"6px",
-                    fontSize:11,fontWeight:700,color:itemsEnCola?"#1d4ed8":"#94a3b8",cursor:itemsEnCola?"pointer":"not-allowed"}}>
+                    fontSize:14,fontWeight:700,color:itemsEnCola?"#1d4ed8":"#94a3b8",cursor:itemsEnCola?"pointer":"not-allowed"}}>
                   + Agregar producto a esta máquina
                 </button>
               )}
@@ -603,15 +603,15 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
         ):(
           <div style={{textAlign:"center",padding:"18px 0"}}>
             <div style={{fontSize:20,marginBottom:6,color:GREEN,fontWeight:900}}>LIBRE</div>
-            <div style={{fontWeight:600,color:GREEN,fontSize:13,marginBottom:4}}>Máquina disponible</div>
-            <div style={{fontSize:12,color:"#94a3b8",marginBottom:14}}>{itemsEnCola>0?`${itemsEnCola} producto(s) en cola`:"Sin productos en cola"}</div>
+            <div style={{fontWeight:600,color:GREEN,fontSize:14,marginBottom:4}}>Máquina disponible</div>
+            <div style={{fontSize:14,color:"#94a3b8",marginBottom:14}}>{itemsEnCola>0?`${itemsEnCola} producto(s) en cola`:"Sin productos en cola"}</div>
             {puedeAsignar?(
               <button onClick={e=>{e.stopPropagation();onAssignFree();}} disabled={!itemsEnCola}
-                style={{width:"100%",background:itemsEnCola?GREEN:"#e2e8f0",border:"none",borderRadius:10,padding:"9px",fontSize:12,color:itemsEnCola?"#fff":"#94a3b8",cursor:itemsEnCola?"pointer":"not-allowed",fontWeight:700}}>
+                style={{width:"100%",background:itemsEnCola?GREEN:"#e2e8f0",border:"none",borderRadius:10,padding:"9px",fontSize:14,color:itemsEnCola?"#fff":"#94a3b8",cursor:itemsEnCola?"pointer":"not-allowed",fontWeight:700}}>
                 {itemsEnCola?"+ Asignar producto":"Sin productos en cola"}
               </button>
             ):(
-              <div style={{fontSize:11,color:"#94a3b8",background:"#f8fafc",borderRadius:8,padding:"8px"}}>Solo tu sede puede asignar a esta máquina</div>
+              <div style={{fontSize:14,color:"#94a3b8",background:"#f8fafc",borderRadius:8,padding:"8px"}}>Solo tu sede puede asignar a esta máquina</div>
             )}
           </div>
         )}
@@ -634,7 +634,7 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
         <div style={{textAlign:"center",padding:"64px 0",color:"#94a3b8"}}>
           <div style={{fontSize:36,marginBottom:12,color:"#e2e8f0"}}>[ ]</div>
           <div style={{fontWeight:600,marginBottom:6}}>{q?"Sin resultados":"Cola vacía"}</div>
-          {!q&&<button onClick={onNew} style={{background:"none",border:"none",color:RED,fontSize:13,cursor:"pointer",textDecoration:"underline"}}>+ Crear primera orden</button>}
+          {!q&&<button onClick={onNew} style={{background:"none",border:"none",color:RED,fontSize:14,cursor:"pointer",textDecoration:"underline"}}>+ Crear primera orden</button>}
         </div>
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -647,37 +647,37 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
               <div key={o.orden} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px"}}>
                 {/* Cabecera de la orden */}
                 <div style={{display:"flex",alignItems:"flex-start",gap:14}}>
-                  <div style={{width:44,height:44,background:"#fef2f2",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:900,color:RED,fontSize:13}}>#</div>
+                  <div style={{width:44,height:44,background:"#fef2f2",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:900,color:RED,fontSize:14}}>#</div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
-                      <span style={{fontWeight:800,color:"#1e293b",fontSize:15}}>#{o.orden}</span>
-                      {activos>0&&<span style={{background:"#fef2f2",color:RED,borderRadius:999,padding:"1px 8px",fontSize:10,fontWeight:700}}>{activos} en máquina</span>}
-                      {enCola>0&&<span style={{background:"#eff6ff",color:"#1d4ed8",borderRadius:999,padding:"1px 8px",fontSize:10,fontWeight:700}}>{enCola} en cola</span>}
-                      {listos>0&&<span style={{background:"#f0fdf4",color:"#15803d",borderRadius:999,padding:"1px 8px",fontSize:10,fontWeight:700}}>{listos} listos</span>}
-                      <span style={{color:"#94a3b8",fontSize:11}}>{o.sede}</span>
+                      <span style={{fontWeight:900,color:"#1e293b",fontSize:17}}>#{o.orden}</span>
+                      {activos>0&&<span style={{background:"#fef2f2",color:RED,borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{activos} en máquina</span>}
+                      {enCola>0&&<span style={{background:"#eff6ff",color:"#1d4ed8",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{enCola} en cola</span>}
+                      {listos>0&&<span style={{background:"#f0fdf4",color:"#15803d",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{listos} listos</span>}
+                      <span style={{color:"#94a3b8",fontSize:14}}>{o.sede}</span>
                     </div>
-                    <div style={{fontWeight:600,color:"#475569",fontSize:13,marginBottom:6}}>{o.cliente}</div>
+                    <div style={{fontWeight:600,color:"#475569",fontSize:14,marginBottom:6}}>{o.cliente}</div>
                     {/* Items de la orden con su estado individual */}
                     <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:4}}>
                       {items.map((it,i)=>{
                         const info=infoProducto(it.producto);
                         return(
                           <div key={i} style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                            <span style={{background:info.bg,color:info.color,borderRadius:999,padding:"1px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{labelProducto(it.producto)}</span>
-                            <span style={{fontSize:11,color:"#64748b"}}>{resumenItem(it)}</span>
+                            <span style={{background:info.bg,color:info.color,borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700,whiteSpace:"nowrap"}}>{labelProducto(it.producto)}</span>
+                            <span style={{fontSize:14,color:"#64748b"}}>{resumenItem(it)}</span>
                             <ItemStatusBadge item={it}/>
                           </div>
                         );
                       })}
                     </div>
-                    <div style={{fontSize:11,color:"#94a3b8"}}>{o.vendedoraName} · {fmtDate(o.timestamp)}</div>
+                    <div style={{fontSize:14,color:"#94a3b8"}}>{o.vendedoraName} · {fmtDate(o.timestamp)}</div>
                   </div>
                   {/* Acciones */}
                   <div style={{display:"flex",gap:6,flexShrink:0,flexDirection:"column",alignItems:"stretch"}}>
-                    {enCola>0&&<button onClick={()=>onAssignOrder(o)} style={{...btnR,padding:"7px 14px",fontSize:12,whiteSpace:"nowrap"}}>Asignar productos</button>}
-                    <button onClick={()=>onDetail(o)} style={{...btnS,padding:"7px 10px",fontSize:12}}>Ver detalle</button>
-                    <button onClick={()=>onEdit(o)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#0369a1",fontSize:12,fontWeight:600}}>Editar</button>
-                    {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#dc2626",fontSize:12}}>Eliminar</button>}
+                    {enCola>0&&<button onClick={()=>onAssignOrder(o)} style={{...btnR,padding:"7px 14px",fontSize:14,whiteSpace:"nowrap"}}>Asignar productos</button>}
+                    <button onClick={()=>onDetail(o)} style={{...btnS,padding:"7px 10px",fontSize:14}}>Ver detalle</button>
+                    <button onClick={()=>onEdit(o)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#0369a1",fontSize:14,fontWeight:600}}>Editar</button>
+                    {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
                   </div>
                 </div>
               </div>
@@ -705,17 +705,17 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail}){
         <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar por No. Orden o cliente..." value={q} onChange={e=>setQ(e.target.value)}/>
         <button onClick={()=>exportExcel(fil)} style={btnG}>Exportar Excel</button>
       </div>
-      <div style={{fontSize:12,color:"#94a3b8",marginBottom:10}}>{fil.length} registro(s)</div>
+      <div style={{fontSize:14,color:"#94a3b8",marginBottom:10}}>{fil.length} registro(s)</div>
       <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",overflow:"hidden"}}>
         {fil.length===0?(
           <div style={{textAlign:"center",padding:"60px 0",color:"#94a3b8"}}><div style={{fontSize:36,marginBottom:10,color:"#e2e8f0"}}>[ ]</div><div>Sin registros</div></div>
         ):(
           <div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
               <thead>
                 <tr style={{background:"#f8fafc",borderBottom:"1px solid #e2e8f0"}}>
                   {["No.Orden","Cliente","Productos","Sede","Creado por","Estado","Creado","Completado",...(isG?["Acciones"]:[])].map(h=>(
-                    <th key={h} style={{padding:"10px 14px",textAlign:"left",fontSize:10,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.4,whiteSpace:"nowrap"}}>{h}</th>
+                    <th key={h} style={{padding:"10px 14px",textAlign:"left",fontSize:14,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.4,whiteSpace:"nowrap"}}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -730,13 +730,13 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail}){
                       <td style={{padding:"10px 14px",minWidth:160}}><ProductoBadges items={items}/></td>
                       <td style={{padding:"10px 14px",color:"#475569"}}>{o.sede}</td>
                       <td style={{padding:"10px 14px",color:"#475569",whiteSpace:"nowrap"}}>{o.vendedoraName}</td>
-                      <td style={{padding:"10px 14px"}}><span style={{background:s.bg,color:s.col,borderRadius:999,padding:"2px 9px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{s.txt}</span></td>
+                      <td style={{padding:"10px 14px"}}><span style={{background:s.bg,color:s.col,borderRadius:999,padding:"2px 9px",fontSize:14,fontWeight:700,whiteSpace:"nowrap"}}>{s.txt}</span></td>
                       <td style={{padding:"10px 14px",color:"#94a3b8",whiteSpace:"nowrap"}}>{fmtDate(o.timestamp)}</td>
                       <td style={{padding:"10px 14px",color:"#94a3b8",whiteSpace:"nowrap"}}>{o.completedAt?fmtDate(o.completedAt):"—"}</td>
                       {isG&&<td style={{padding:"10px 14px"}}>
                         <div style={{display:"flex",gap:4}}>
-                          <button onClick={()=>onDetail(o)} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#64748b",fontSize:11}}>Ver</button>
-                          {onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#dc2626",fontSize:11}}>Eliminar</button>}
+                          <button onClick={()=>onDetail(o)} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#64748b",fontSize:14}}>Ver</button>
+                          {onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
                         </div>
                       </td>}
                     </tr>
@@ -765,12 +765,12 @@ function Modal({title,onClose,children,maxWidth=560}){
     </div>
   );
 }
-function Field({label,children}){return <div style={{marginBottom:12}}><label style={{fontSize:12,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>{label}</label>{children}</div>;}
+function Field({label,children}){return <div style={{marginBottom:12}}><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>{label}</label>{children}</div>;}
 function NumInp({value,onChange,placeholder="",unit=""}){
   return(
     <div style={{position:"relative"}}>
-      <input type="number" min="0" step="any" style={{...inp,paddingRight:unit?36:14,fontSize:13}} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}/>
-      {unit&&<span style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",color:"#94a3b8",fontSize:11,fontWeight:600}}>{unit}</span>}
+      <input type="number" min="0" step="any" style={{...inp,paddingRight:unit?36:14,fontSize:14}} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}/>
+      {unit&&<span style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",color:"#94a3b8",fontSize:14,fontWeight:600}}>{unit}</span>}
     </div>
   );
 }
@@ -783,21 +783,21 @@ function ItemFields({item,onChange}){
     return(
       <div style={{marginTop:8}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-          <div><label style={{fontSize:11,color:"#94a3b8",display:"block",marginBottom:3}}>Ancho</label><NumInp value={item.ancho} onChange={v=>set("ancho",v)} placeholder="1.00" unit="m"/></div>
-          <div><label style={{fontSize:11,color:"#94a3b8",display:"block",marginBottom:3}}>Alto / Largo</label><NumInp value={item.alto} onChange={v=>set("alto",v)} placeholder="3.00" unit="m"/></div>
+          <div><label style={{fontSize:14,color:"#94a3b8",display:"block",marginBottom:3}}>Ancho</label><NumInp value={item.ancho} onChange={v=>set("ancho",v)} placeholder="1.00" unit="m"/></div>
+          <div><label style={{fontSize:14,color:"#94a3b8",display:"block",marginBottom:3}}>Alto / Largo</label><NumInp value={item.alto} onChange={v=>set("alto",v)} placeholder="3.00" unit="m"/></div>
         </div>
         <div style={{background:metros?"#f0fdf4":"#f8fafc",border:`1.5px solid ${metros?"#86efac":"#e2e8f0"}`,borderRadius:8,padding:"8px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-          <span style={{fontSize:12,color:"#64748b"}}>Metros cuadrados</span>
+          <span style={{fontSize:14,color:"#64748b"}}>Metros cuadrados</span>
           <span style={{fontSize:16,fontWeight:900,color:metros?GREEN:"#94a3b8"}}>{metros?`${metros} m²`:"—"}</span>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          <Field label="Abertura *"><select style={{...inp,fontSize:13}} value={item.abertura||""} onChange={e=>set("abertura",e.target.value)}><option value="">Seleccionar...</option>{ABERTURA_SIZES.map(s=><option key={s} value={s}>{s}</option>)}</select></Field>
+          <Field label="Abertura *"><select style={{...inp,fontSize:14}} value={item.abertura||""} onChange={e=>set("abertura",e.target.value)}><option value="">Seleccionar...</option>{ABERTURA_SIZES.map(s=><option key={s} value={s}>{s}</option>)}</select></Field>
           <Field label="Calibre *"><NumInp value={item.calibre||""} onChange={v=>set("calibre",v)} placeholder="Ej: 11"/></Field>
         </div>
         {item.producto==="pvc"&&(
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
             <Field label="Calibre interno *"><NumInp value={item.calibreInterno||""} onChange={v=>set("calibreInterno",v)} placeholder="Ej: 9"/></Field>
-            <Field label="Color *"><input style={{...inp,fontSize:13}} value={item.color||""} onChange={e=>set("color",e.target.value)} placeholder="Verde, Negro..."/></Field>
+            <Field label="Color *"><input style={{...inp,fontSize:14}} value={item.color||""} onChange={e=>set("color",e.target.value)} placeholder="Verde, Negro..."/></Field>
           </div>
         )}
       </div>
@@ -821,14 +821,14 @@ function ItemCard({item,index,onUpdate,onRemove,canRemove}){
   return(
     <div style={{border:`1.5px solid ${item.producto?info.color+"44":"#e2e8f0"}`,borderRadius:14,padding:14,marginBottom:10,background:item.producto?info.bg+"66":"#fafafa"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-        <span style={{fontSize:12,fontWeight:700,color:"#64748b"}}>Producto {index+1}</span>
+        <span style={{fontSize:14,fontWeight:700,color:"#64748b"}}>Producto {index+1}</span>
         {canRemove&&<button onClick={onRemove} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,width:28,height:28,cursor:"pointer",color:"#dc2626",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,flexShrink:0}}>×</button>}
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:4}}>
         {PRODUCTOS.map(pr=>(
           <div key={pr.id} onClick={()=>onUpdate({...item,producto:pr.id,abertura:"",calibre:"",calibreInterno:"",color:"",ancho:"",alto:"",grosor:"",largo:"",cantidad:""})}
             style={{border:`2px solid ${item.producto===pr.id?pr.color:"#e2e8f0"}`,background:item.producto===pr.id?pr.bg:"#fff",borderRadius:8,padding:"7px 6px",textAlign:"center",cursor:"pointer",transition:"all .1s"}}>
-            <div style={{fontWeight:700,color:item.producto===pr.id?pr.color:"#64748b",fontSize:11}}>{pr.label}</div>
+            <div style={{fontWeight:700,color:item.producto===pr.id?pr.color:"#64748b",fontSize:14}}>{pr.label}</div>
           </div>
         ))}
       </div>
@@ -884,38 +884,38 @@ function NewOrderModal({user,onClose,onCreate}){
     <Modal title="Crear Nueva Orden" onClose={onClose} maxWidth={580}>
       {canSelectSede?(
         <div style={{marginBottom:14}}>
-          <label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:6}}>Sede destino *</label>
+          <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:6}}>Sede destino *</label>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
             {["Centro","Santa Lucia"].map(s=>(
               <div key={s} onClick={()=>setSedeTarget(s)} style={{border:`2px solid ${sedeTarget===s?RED:"#e2e8f0"}`,background:sedeTarget===s?"#fef2f2":"#fff",borderRadius:10,padding:"10px",textAlign:"center",cursor:"pointer"}}>
-                <div style={{fontWeight:700,color:sedeTarget===s?RED:"#334155",fontSize:13}}>{s}</div>
+                <div style={{fontWeight:700,color:sedeTarget===s?RED:"#334155",fontSize:14}}>{s}</div>
               </div>
             ))}
           </div>
         </div>
       ):(
-        <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"10px 14px",fontSize:13,color:"#991b1b",fontWeight:600,marginBottom:14}}>{user.sede}</div>
+        <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"10px 14px",fontSize:14,color:"#991b1b",fontWeight:600,marginBottom:14}}>{user.sede}</div>
       )}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>No. Orden *</label><input style={inp} value={orden} onChange={e=>setOrden(e.target.value)}/></div>
+        <div><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>No. Orden *</label><input style={inp} value={orden} onChange={e=>setOrden(e.target.value)}/></div>
         <div>
-          <label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente *</label>
+          <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente *</label>
           <input style={inp} value={cliente} onChange={e=>setCliente(e.target.value)} placeholder="Nombre del cliente"/>
           <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
-            <button type="button" onClick={()=>setCliente("Inventario (Stock)")} style={{background:cliente==="Inventario (Stock)"?"#7c3aed":"#f5f3ff",border:"1.5px solid #7c3aed",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:cliente==="Inventario (Stock)"?"#fff":"#7c3aed",fontSize:11,fontWeight:700}}>📦 Inventario (Stock)</button>
+            <button type="button" onClick={()=>setCliente("Inventario (Stock)")} style={{background:cliente==="Inventario (Stock)"?"#7c3aed":"#f5f3ff",border:"1.5px solid #7c3aed",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:cliente==="Inventario (Stock)"?"#fff":"#7c3aed",fontSize:14,fontWeight:700}}>📦 Inventario (Stock)</button>
           </div>
         </div>
       </div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-        <label style={{fontSize:13,fontWeight:700,color:"#334155"}}>Productos ({items.length})</label>
-        <button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"6px 14px",cursor:"pointer",color:GREEN,fontSize:12,fontWeight:700}}>+ Agregar producto</button>
+        <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.length})</label>
+        <button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"6px 14px",cursor:"pointer",color:GREEN,fontSize:14,fontWeight:700}}>+ Agregar producto</button>
       </div>
       {items.map((it,i)=><ItemCard key={it._key} item={it} index={i} onUpdate={v=>updateItem(i,v)} onRemove={()=>removeItem(i)} canRemove={items.length>1}/>)}
       <div ref={itemsEndRef}/>
-      <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"9px 14px",fontSize:12,color:"#991b1b",marginBottom:12}}>
+      <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"9px 14px",fontSize:14,color:"#991b1b",marginBottom:12}}>
         Creado por: <strong>{user.name}</strong> · Sede: <strong>{sedeTarget}</strong>
       </div>
-      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:13,marginBottom:12}}>⚠ {err}</div>}
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
       <div style={{display:"flex",gap:10}}>
         <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
         <button onClick={submit} disabled={loading} style={{...btnR,flex:2}}>{loading?"Guardando...":"Crear orden"}</button>
@@ -943,13 +943,13 @@ function EditOrderModal({order,onClose,onSave}){
   };
   return(
     <Modal title={`Editar Orden #${order.orden}`} onClose={onClose} maxWidth={580}>
-      <div style={{marginBottom:14}}><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente</label><input style={inp} value={cliente} onChange={e=>setCliente(e.target.value)}/></div>
+      <div style={{marginBottom:14}}><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente</label><input style={inp} value={cliente} onChange={e=>setCliente(e.target.value)}/></div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-        <label style={{fontSize:13,fontWeight:700,color:"#334155"}}>Productos ({items.length})</label>
-        <button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"6px 14px",cursor:"pointer",color:GREEN,fontSize:12,fontWeight:700}}>+ Agregar producto</button>
+        <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.length})</label>
+        <button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"6px 14px",cursor:"pointer",color:GREEN,fontSize:14,fontWeight:700}}>+ Agregar producto</button>
       </div>
       {items.map((it,i)=><ItemCard key={it._key||i} item={it} index={i} onUpdate={v=>updateItem(i,v)} onRemove={()=>removeItem(i)} canRemove={items.length>1}/>)}
-      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:13,marginBottom:12}}>⚠ {err}</div>}
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
       <div style={{display:"flex",gap:10}}>
         <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
         <button onClick={submit} disabled={loading} style={{...btnR,flex:2}}>{loading?"Guardando...":"Guardar cambios"}</button>
@@ -966,18 +966,14 @@ function AssignOrderModal({order,allOrders,machines,user,isG,onClose,onAssign,on
   const [loading,setLoading]=useState(false);
   const [err,setErr]=useState("");
 
-  // Máquinas ya ocupadas (excluyendo items de esta misma orden)
-  const occupiedMachines=new Set(
-    allOrders.flatMap(o=>normalizeItems(o).filter(it=>it.status==="active"&&o.orden!==order.orden).map(it=>it.machineId))
-  );
-  // También incluir selecciones actuales (no asignar dos items al mismo time en este modal)
+  // Con multi-producto las maquinas pueden tener varios items activos
+  // Solo excluir selecciones actuales del mismo modal (no duplicar en un solo envío)
   const selectedInModal=new Set(Object.values(sel).filter(Boolean));
 
   const availableMachines=(itemIdx)=>{
     const sedesPermitidas=(isG||user.sede==="Santa Lucia")?["Centro","Santa Lucia"]:[user.sede];
     return machines.filter(m=>
       sedesPermitidas.includes(m.sede) &&
-      !occupiedMachines.has(m.id) &&
       (!selectedInModal.has(m.id) || sel[itemIdx]===m.id)
     );
   };
@@ -1006,17 +1002,17 @@ function AssignOrderModal({order,allOrders,machines,user,isG,onClose,onAssign,on
     <Modal title={`Asignar productos — Orden #${order.orden}`} onClose={onClose} maxWidth={600}>
       <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"10px 14px",marginBottom:16}}>
         <span style={{fontWeight:800,fontSize:15,color:"#1e293b"}}>#{order.orden}</span>
-        <span style={{color:"#64748b",fontSize:13}}> · {order.cliente} · {order.sede}</span>
+        <span style={{color:"#64748b",fontSize:14}}> · {order.cliente} · {order.sede}</span>
       </div>
 
       {!isG&&(
-        <div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"9px 14px",fontSize:12,color:"#92400e",marginBottom:14}}>
+        <div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"9px 14px",fontSize:14,color:"#92400e",marginBottom:14}}>
           Solo puedes asignar a máquinas de tu sede: <strong>{user.sede}</strong>
         </div>
       )}
 
       <div style={{marginBottom:14}}>
-        <div style={{fontSize:13,fontWeight:700,color:"#334155",marginBottom:10}}>
+        <div style={{fontSize:14,fontWeight:700,color:"#334155",marginBottom:10}}>
           Productos en cola ({pendingItems.length}) — selecciona una máquina para cada uno:
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1027,25 +1023,25 @@ function AssignOrderModal({order,allOrders,machines,user,isG,onClose,onAssign,on
               <div key={it._idx} style={{border:`1.5px solid ${info.color}44`,borderRadius:12,overflow:"hidden"}}>
                 {/* Header del item */}
                 <div style={{background:info.color,padding:"8px 14px"}}>
-                  <span style={{color:"#fff",fontWeight:800,fontSize:12}}>{labelProducto(it.producto)}</span>
-                  <span style={{color:"rgba(255,255,255,.8)",fontSize:11,marginLeft:8}}>{resumenItem(it)}</span>
+                  <span style={{color:"#fff",fontWeight:800,fontSize:14}}>{labelProducto(it.producto)}</span>
+                  <span style={{color:"rgba(255,255,255,.8)",fontSize:14,marginLeft:8}}>{resumenItem(it)}</span>
                 </div>
                 {/* Selector de máquina */}
                 <div style={{padding:12,background:info.bg+"88"}}>
-                  <div style={{fontSize:11,fontWeight:600,color:info.color,marginBottom:8}}>Asignar a máquina:</div>
+                  <div style={{fontSize:14,fontWeight:600,color:info.color,marginBottom:8}}>Asignar a máquina:</div>
                   {available.length===0?(
-                    <div style={{fontSize:12,color:"#94a3b8",fontStyle:"italic"}}>No hay máquinas disponibles{!isG?" en tu sede":""}</div>
+                    <div style={{fontSize:14,color:"#94a3b8",fontStyle:"italic"}}>No hay máquinas disponibles{!isG?" en tu sede":""}</div>
                   ):(
                     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:6}}>
                       {/* Opción: no asignar todavía */}
                       <div onClick={()=>setSel(p=>({...p,[it._idx]:""}))}
                         style={{border:`2px solid ${!sel[it._idx]?"#64748b":"#e2e8f0"}`,background:!sel[it._idx]?"#f1f5f9":"#fff",borderRadius:8,padding:"8px 4px",textAlign:"center",cursor:"pointer"}}>
-                        <div style={{fontSize:10,fontWeight:700,color:!sel[it._idx]?"#64748b":"#94a3b8"}}>Sin asignar</div>
+                        <div style={{fontSize:14,fontWeight:700,color:!sel[it._idx]?"#64748b":"#94a3b8"}}>Sin asignar</div>
                       </div>
                       {available.map(m=>(
                         <div key={m.id} onClick={()=>setSel(p=>({...p,[it._idx]:m.id}))}
                           style={{border:`2px solid ${sel[it._idx]===m.id?info.color:"#e2e8f0"}`,background:sel[it._idx]===m.id?info.bg:"#fff",borderRadius:8,padding:"8px 4px",textAlign:"center",cursor:"pointer"}}>
-                          <div style={{fontWeight:700,color:sel[it._idx]===m.id?info.color:"#334155",fontSize:12}}>{m.label}</div>
+                          <div style={{fontWeight:700,color:sel[it._idx]===m.id?info.color:"#334155",fontSize:14}}>{m.label}</div>
                           <div style={{fontSize:9,color:"#94a3b8"}}>{m.sede}</div>
                         </div>
                       ))}
@@ -1061,22 +1057,22 @@ function AssignOrderModal({order,allOrders,machines,user,isG,onClose,onAssign,on
       {/* Items ya asignados o completados */}
       {items.filter(it=>it.status!=="queue").length>0&&(
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:12,fontWeight:600,color:"#94a3b8",marginBottom:8}}>Ya asignados / completados:</div>
+          <div style={{fontSize:14,fontWeight:600,color:"#94a3b8",marginBottom:8}}>Ya asignados / completados:</div>
           {items.map((it,i)=>{
             if(it.status==="queue") return null;
             const info=infoProducto(it.producto);
             return(
               <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                <span style={{background:info.bg,color:info.color,borderRadius:999,padding:"1px 8px",fontSize:10,fontWeight:700}}>{labelProducto(it.producto)}</span>
+                <span style={{background:info.bg,color:info.color,borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{labelProducto(it.producto)}</span>
                 <ItemStatusBadge item={it}/>
-                <span style={{fontSize:11,color:"#64748b"}}>{resumenItem(it)}</span>
+                <span style={{fontSize:14,color:"#64748b"}}>{resumenItem(it)}</span>
               </div>
             );
           })}
         </div>
       )}
 
-      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:13,marginBottom:12}}>⚠ {err}</div>}
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
       <div style={{display:"flex",gap:10}}>
         <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
         <button onClick={submit} disabled={loading||Object.values(sel).filter(Boolean).length===0}
@@ -1129,7 +1125,7 @@ function PickItemModal({machineId,orders,allOrders,user,isG,machines,onClose,onA
 
   return(
     <Modal title={`Asignar a ${machine.label} — Sede ${machine.sede}`} onClose={onClose}>
-      <div style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:13,color:"#15803d"}}>
+      <div style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:14,color:"#15803d"}}>
         {machine.name} disponible — elige el producto a producir
       </div>
       <input style={{...inp,marginBottom:10}} placeholder="Buscar por orden, cliente o producto..." value={q} onChange={e=>setQ(e.target.value)}/>
@@ -1142,13 +1138,13 @@ function PickItemModal({machineId,orders,allOrders,user,isG,machines,onClose,onA
               style={{border:`2px solid ${selKey===key?RED:"#e2e8f0"}`,background:selKey===key?"#fef2f2":"#fff",borderRadius:12,padding:"10px 14px",cursor:"pointer"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                 <span style={{fontWeight:800,color:"#1e293b",fontSize:14}}>#{order.orden} — {order.cliente}</span>
-                {selKey===key&&<span style={{color:RED,fontWeight:700,fontSize:11}}>✓ Seleccionado</span>}
+                {selKey===key&&<span style={{color:RED,fontWeight:700,fontSize:14}}>✓ Seleccionado</span>}
               </div>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                <span style={{background:info.bg,color:info.color,borderRadius:999,padding:"1px 8px",fontSize:10,fontWeight:700}}>{labelProducto(item.producto)}</span>
-                <span style={{fontSize:11,color:"#64748b"}}>{resumenItem(item)}</span>
+                <span style={{background:info.bg,color:info.color,borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{labelProducto(item.producto)}</span>
+                <span style={{fontSize:14,color:"#64748b"}}>{resumenItem(item)}</span>
               </div>
-              <div style={{fontSize:10,color:"#94a3b8"}}>{order.sede} · {order.vendedoraName}</div>
+              <div style={{fontSize:14,color:"#94a3b8"}}>{order.sede} · {order.vendedoraName}</div>
             </div>
           );
         })}
@@ -1157,7 +1153,7 @@ function PickItemModal({machineId,orders,allOrders,user,isG,machines,onClose,onA
       <div style={{display:"flex",gap:10}}>
         <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
         <button onClick={go} disabled={!selKey||loading}
-          style={{flex:2,background:selKey?RED:"#e2e8f0",border:"none",borderRadius:10,padding:"11px",fontSize:13,fontWeight:700,color:selKey?"#fff":"#94a3b8",cursor:selKey?"pointer":"not-allowed"}}>
+          style={{flex:2,background:selKey?RED:"#e2e8f0",border:"none",borderRadius:10,padding:"11px",fontSize:14,fontWeight:700,color:selKey?"#fff":"#94a3b8",cursor:selKey?"pointer":"not-allowed"}}>
           {loading?"Asignando...":"Asignar producto"}
         </button>
       </div>
@@ -1191,16 +1187,16 @@ function CompleteItemModal({order,item,itemIndex,onClose,onComplete,onReturn}){
     <div style={{background:`linear-gradient(135deg,${info.bg},${info.bg}cc)`,border:`2px solid ${info.color}`,borderRadius:14,padding:14,marginBottom:14}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
         <div>
-          <span style={{background:info.color,color:"#fff",borderRadius:999,padding:"2px 10px",fontSize:11,fontWeight:700}}>{labelProducto(item.producto)}</span>
+          <span style={{background:info.color,color:"#fff",borderRadius:999,padding:"2px 10px",fontSize:14,fontWeight:700}}>{labelProducto(item.producto)}</span>
           <div style={{fontSize:22,fontWeight:900,color:"#1e293b",lineHeight:1,marginTop:4}}>Orden #{order.orden}</div>
         </div>
         <div style={{textAlign:"right"}}>
-          <div style={{fontSize:13,fontWeight:700,color:info.color}}>{item.machineLabel}</div>
-          <div style={{fontSize:10,color:"#64748b"}}>Hace {timeAgo(item.assignedAt||order.timestamp)}</div>
+          <div style={{fontSize:14,fontWeight:700,color:info.color}}>{item.machineLabel}</div>
+          <div style={{fontSize:14,color:"#64748b"}}>Hace {timeAgo(item.assignedAt||order.timestamp)}</div>
         </div>
       </div>
-      <div style={{fontSize:11,color:info.color,fontWeight:600,marginBottom:4}}>Cliente: <span style={{color:"#1e293b",fontWeight:700,fontSize:13}}>{order.cliente}</span></div>
-      <div style={{fontSize:10,color:"#64748b"}}>Por: {order.vendedoraName} · Sede: {order.sede}</div>
+      <div style={{fontSize:14,color:info.color,fontWeight:600,marginBottom:4}}>Cliente: <span style={{color:"#1e293b",fontWeight:700,fontSize:14}}>{order.cliente}</span></div>
+      <div style={{fontSize:14,color:"#64748b"}}>Por: {order.vendedoraName} · Sede: {order.sede}</div>
     </div>
   );
 
@@ -1210,23 +1206,23 @@ function CompleteItemModal({order,item,itemIndex,onClose,onComplete,onReturn}){
       <Header/>
       {/* Indicador de pasos */}
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-        <div style={{width:24,height:24,borderRadius:"50%",background:info.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:"#fff",flexShrink:0}}>1</div>
-        <span style={{fontSize:13,fontWeight:600,color:"#334155"}}>Verificar el producto</span>
+        <div style={{width:24,height:24,borderRadius:"50%",background:info.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:900,color:"#fff",flexShrink:0}}>1</div>
+        <span style={{fontSize:14,fontWeight:600,color:"#334155"}}>Verificar el producto</span>
         <div style={{flex:1,height:2,background:"#e2e8f0",borderRadius:2}}/>
-        <div style={{width:24,height:24,borderRadius:"50%",background:"#e2e8f0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#94a3b8",flexShrink:0}}>2</div>
-        <span style={{fontSize:13,color:"#94a3b8"}}>Confirmar</span>
+        <div style={{width:24,height:24,borderRadius:"50%",background:"#e2e8f0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#94a3b8",flexShrink:0}}>2</div>
+        <span style={{fontSize:14,color:"#94a3b8"}}>Confirmar</span>
       </div>
 
       {/* Detalle del item */}
       <div style={{border:`2px solid ${info.color}55`,borderRadius:14,overflow:"hidden",marginBottom:14}}>
         <div style={{background:info.color,padding:"8px 14px"}}>
-          <span style={{color:"#fff",fontWeight:800,fontSize:13}}>{labelProducto(item.producto)}</span>
+          <span style={{color:"#fff",fontWeight:800,fontSize:14}}>{labelProducto(item.producto)}</span>
         </div>
         <div style={{padding:12,background:info.bg+"99",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(100px,1fr))",gap:8}}>
           {attrs.map(({l,v})=>(
             <div key={l} style={{background:"rgba(255,255,255,.8)",borderRadius:8,padding:"8px 10px"}}>
               <div style={{fontSize:9,color:info.color,textTransform:"uppercase",letterSpacing:.4,fontWeight:700,marginBottom:2}}>{l}</div>
-              <div style={{fontSize:13,fontWeight:800,color:"#1e293b"}}>{v}</div>
+              <div style={{fontSize:14,fontWeight:800,color:"#1e293b"}}>{v}</div>
             </div>
           ))}
         </div>
@@ -1235,17 +1231,17 @@ function CompleteItemModal({order,item,itemIndex,onClose,onComplete,onReturn}){
       {/* Estado del resto de la orden */}
       {otherItems.length>0&&(
         <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:12,padding:12,marginBottom:14}}>
-          <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:8}}>Otros productos de esta orden:</div>
+          <div style={{fontSize:14,fontWeight:700,color:"#64748b",marginBottom:8}}>Otros productos de esta orden:</div>
           {otherItems.map((it,i)=>{
             const oi=infoProducto(it.producto);
             return(
               <div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                <span style={{background:oi.bg,color:oi.color,borderRadius:999,padding:"1px 8px",fontSize:10,fontWeight:700}}>{labelProducto(it.producto)}</span>
+                <span style={{background:oi.bg,color:oi.color,borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{labelProducto(it.producto)}</span>
                 <ItemStatusBadge item={it}/>
               </div>
             );
           })}
-          {allDoneAfter&&<div style={{marginTop:8,background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"6px 10px",fontSize:12,color:"#15803d",fontWeight:600}}>✓ Al completar este producto, la orden quedará 100% terminada</div>}
+          {allDoneAfter&&<div style={{marginTop:8,background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"6px 10px",fontSize:14,color:"#15803d",fontWeight:600}}>✓ Al completar este producto, la orden quedará 100% terminada</div>}
         </div>
       )}
 
@@ -1253,7 +1249,7 @@ function CompleteItemModal({order,item,itemIndex,onClose,onComplete,onReturn}){
         <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
         <button onClick={()=>setPaso("confirm")} style={{...btnG,flex:2}}>Todo correcto → Continuar</button>
       </div>
-      <button onClick={()=>setPaso("liberar")} style={{width:"100%",background:"none",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"10px",fontSize:12,color:"#64748b",cursor:"pointer",fontWeight:600}}>
+      <button onClick={()=>setPaso("liberar")} style={{width:"100%",background:"none",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"10px",fontSize:14,color:"#64748b",cursor:"pointer",fontWeight:600}}>
         Liberar máquina sin completar este producto
       </button>
     </Modal>
@@ -1264,21 +1260,21 @@ function CompleteItemModal({order,item,itemIndex,onClose,onComplete,onReturn}){
     <Modal title="Confirmar finalización" onClose={onClose}>
       <Header/>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
-        <div style={{width:24,height:24,borderRadius:"50%",background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:"#fff",flexShrink:0}}>✓</div>
-        <span style={{fontSize:13,color:"#64748b"}}>Producto revisado</span>
+        <div style={{width:24,height:24,borderRadius:"50%",background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:900,color:"#fff",flexShrink:0}}>✓</div>
+        <span style={{fontSize:14,color:"#64748b"}}>Producto revisado</span>
         <div style={{flex:1,height:2,background:GREEN,borderRadius:2}}/>
-        <div style={{width:24,height:24,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:"#fff",flexShrink:0}}>2</div>
-        <span style={{fontSize:13,fontWeight:600,color:"#334155"}}>Confirmar entrega</span>
+        <div style={{width:24,height:24,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:900,color:"#fff",flexShrink:0}}>2</div>
+        <span style={{fontSize:14,fontWeight:600,color:"#334155"}}>Confirmar entrega</span>
       </div>
       <div style={{background:"#f0fdf4",border:"2px solid #86efac",borderRadius:12,padding:12,marginBottom:14}}>
-        <div style={{fontSize:12,fontWeight:700,color:GREEN,marginBottom:6}}>Resumen del producto finalizado:</div>
+        <div style={{fontSize:14,fontWeight:700,color:GREEN,marginBottom:6}}>Resumen del producto finalizado:</div>
         <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-          <span style={{background:info.color,color:"#fff",borderRadius:999,padding:"2px 10px",fontSize:11,fontWeight:700}}>{labelProducto(item.producto)}</span>
-          <span style={{fontSize:12,color:"#475569"}}>{resumenItem(item)}</span>
+          <span style={{background:info.color,color:"#fff",borderRadius:999,padding:"2px 10px",fontSize:14,fontWeight:700}}>{labelProducto(item.producto)}</span>
+          <span style={{fontSize:14,color:"#475569"}}>{resumenItem(item)}</span>
         </div>
-        {allDoneAfter&&<div style={{marginTop:8,fontSize:12,color:GREEN,fontWeight:600}}>✓ Esta acción completará la orden #{order.orden} al 100%</div>}
+        {allDoneAfter&&<div style={{marginTop:8,fontSize:14,color:GREEN,fontWeight:600}}>✓ Esta acción completará la orden #{order.orden} al 100%</div>}
       </div>
-      <div style={{background:"#fef9c3",border:"1.5px solid #fde047",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#713f12",marginBottom:16}}>
+      <div style={{background:"#fef9c3",border:"1.5px solid #fde047",borderRadius:10,padding:"10px 14px",fontSize:14,color:"#713f12",marginBottom:16}}>
         ⚠ La máquina <strong>{item.machineLabel}</strong> quedará libre para el siguiente producto.
       </div>
       <div style={{display:"flex",gap:10}}>
@@ -1294,14 +1290,14 @@ function CompleteItemModal({order,item,itemIndex,onClose,onComplete,onReturn}){
       <Header/>
       <div style={{background:"#fffbeb",border:"2px solid #f59e0b",borderRadius:14,padding:16,marginBottom:16}}>
         <div style={{fontSize:15,fontWeight:700,color:"#92400e",marginBottom:8}}>⚠ Advertencia importante</div>
-        <p style={{fontSize:13,color:"#78350f",margin:"0 0 10px"}}>
+        <p style={{fontSize:14,color:"#78350f",margin:"0 0 10px"}}>
           Si liberas la máquina <strong>{item.machineLabel}</strong> el producto <strong>{labelProducto(item.producto)}</strong> de la orden <strong>#{order.orden}</strong> volverá a la cola pero <strong>NO quedará registrado como completado</strong>.
         </p>
-        <p style={{fontSize:13,color:"#78350f",margin:0}}>Asegúrate de volver a asignarlo y completarlo.</p>
+        <p style={{fontSize:14,color:"#78350f",margin:0}}>Asegúrate de volver a asignarlo y completarlo.</p>
       </div>
       <div style={{display:"flex",gap:10}}>
         <button onClick={()=>setPaso("review")} style={{...btnS,flex:1}}>← Cancelar</button>
-        <button onClick={goReturn} disabled={returning} style={{flex:2,background:"#f59e0b",border:"none",borderRadius:10,padding:"11px",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer"}}>{returning?"Procesando...":"Entendido, liberar máquina"}</button>
+        <button onClick={goReturn} disabled={returning} style={{flex:2,background:"#f59e0b",border:"none",borderRadius:10,padding:"11px",fontSize:14,fontWeight:700,color:"#fff",cursor:"pointer"}}>{returning?"Procesando...":"Entendido, liberar máquina"}</button>
       </div>
     </Modal>
   );
@@ -1322,17 +1318,17 @@ function DetailModal({order,onClose}){
     <Modal title="Detalle de la Orden" onClose={onClose}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
         <span style={{fontSize:26,fontWeight:900,color:"#1e293b"}}>#{order.orden}</span>
-        <span style={{background:s.bg,color:s.col,borderRadius:999,padding:"4px 14px",fontSize:12,fontWeight:700}}>{s.txt}</span>
+        <span style={{background:s.bg,color:s.col,borderRadius:999,padding:"4px 14px",fontSize:14,fontWeight:700}}>{s.txt}</span>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
         {meta.map(([l,v])=>(
           <div key={l} style={{background:"#f8fafc",border:"1px solid #f1f5f9",borderRadius:10,padding:"10px 12px"}}>
-            <div style={{fontSize:10,color:"#94a3b8",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}}>{l}</div>
-            <div style={{fontWeight:600,color:"#334155",fontSize:13}}>{v}</div>
+            <div style={{fontSize:14,color:"#94a3b8",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}}>{l}</div>
+            <div style={{fontWeight:600,color:"#334155",fontSize:14}}>{v}</div>
           </div>
         ))}
       </div>
-      <div style={{fontWeight:700,fontSize:13,color:"#334155",marginBottom:10}}>Productos ({items.length})</div>
+      <div style={{fontWeight:700,fontSize:14,color:"#334155",marginBottom:10}}>Productos ({items.length})</div>
       <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
         {items.map((it,i)=>{
           const info=infoProducto(it.producto);
@@ -1345,17 +1341,17 @@ function DetailModal({order,onClose}){
           return(
             <div key={i} style={{border:`1.5px solid ${info.color}44`,borderRadius:12,overflow:"hidden"}}>
               <div style={{background:info.color,padding:"8px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{color:"#fff",fontWeight:800,fontSize:12}}>{i+1}. {labelProducto(it.producto)}</span>
+                <span style={{color:"#fff",fontWeight:800,fontSize:14}}>{i+1}. {labelProducto(it.producto)}</span>
                 <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                  {it.machineLabel&&<span style={{background:"rgba(255,255,255,.25)",color:"#fff",borderRadius:999,padding:"1px 8px",fontSize:10,fontWeight:700}}>{it.machineLabel}</span>}
-                  <span style={{background:itemS.bg,color:itemS.col,borderRadius:999,padding:"1px 8px",fontSize:10,fontWeight:700}}>{itemS.txt}</span>
+                  {it.machineLabel&&<span style={{background:"rgba(255,255,255,.25)",color:"#fff",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{it.machineLabel}</span>}
+                  <span style={{background:itemS.bg,color:itemS.col,borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{itemS.txt}</span>
                 </div>
               </div>
               <div style={{padding:12,background:info.bg+"88",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:6}}>
                 {campos.map(([l,v])=>(
                   <div key={l} style={{background:"rgba(255,255,255,.7)",borderRadius:8,padding:"6px 8px"}}>
                     <div style={{fontSize:9,color:info.color,textTransform:"uppercase",letterSpacing:.3,marginBottom:1}}>{l}</div>
-                    <div style={{fontWeight:700,color:"#334155",fontSize:12}}>{v}</div>
+                    <div style={{fontWeight:700,color:"#334155",fontSize:14}}>{v}</div>
                   </div>
                 ))}
               </div>
@@ -1363,7 +1359,7 @@ function DetailModal({order,onClose}){
           );
         })}
       </div>
-      <button onClick={onClose} style={{width:"100%",background:DARK,border:"none",borderRadius:10,padding:"11px",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer"}}>Cerrar</button>
+      <button onClick={onClose} style={{width:"100%",background:DARK,border:"none",borderRadius:10,padding:"11px",fontSize:14,fontWeight:700,color:"#fff",cursor:"pointer"}}>Cerrar</button>
     </Modal>
   );
 }
