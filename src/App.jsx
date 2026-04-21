@@ -147,7 +147,7 @@ const exportExcel = rows => {
     const items=normalizeItems(o);
     const est=stat[o.status]||o.status||"";
     const fc=fmtDate(o.timestamp)||"";
-    const fcomp=o.completedAt?fmtDate(o.completedAt):"";
+    const fcomp=o.completedAt?fmtDate(o.completedAt):fmtDate(normalizeItems(o).map(it=>it.completedAt).filter(Boolean).sort((a,b)=>b-a)[0])||"";
     if(items.length===0){
       data.push([o.orden,o.cliente,o.sede,o.vendedoraName,est,fc,fcomp,"","","","","","","","","","","","",""]);
     } else {
@@ -200,6 +200,22 @@ export default function App(){
       err=>{ console.error(err); setDbErr(true); setReady(true); }
     );
   },[]);
+
+  // Auto-reparar ordenes completadas que tienen completedAt null en Firestore
+  useEffect(()=>{
+    if(orders.length===0) return;
+    orders.forEach(o=>{
+      const items=normalizeItems(o);
+      const isCompleted=deriveOrderStatus(items)==="completed";
+      if(isCompleted&&!o.completedAt){
+        // Busca el completedAt mas reciente entre los items
+        const fallback=items.map(it=>it.completedAt).filter(Boolean).sort((a,b)=>b-a)[0];
+        if(fallback){
+          updateDoc(doc(db,"orders",String(o.orden)),{completedAt:fallback}).catch(()=>{});
+        }
+      }
+    });
+  },[orders]);
 
   const login=u=>{ setUser(u); localStorage.setItem("fox_session",JSON.stringify(u)); };
   const logout=()=>{ setUser(null); localStorage.removeItem("fox_session"); };
@@ -327,14 +343,17 @@ function Shell({user,onLogout,orders}){
 
   const completeItem=async(orden,itemIndex)=>{
     const ts=Date.now();
-    const o=orders.find(x=>x.orden===orden);
+    const o=orders.find(x=>String(x.orden)===String(orden));
+    if(!o) return;
     const items=normalizeItems(o).map((it,i)=>
       i===itemIndex?{...it,status:"completed",completedAt:ts}:it
     ).map(({_key:_k,...rest})=>rest);
     const newStatus=deriveOrderStatus(items);
-    await withSave(()=>updateDoc(doc(db,"orders",orden),{
+    // completedAt: si todos completados usa ts, si ya habia fecha la mantiene, sino busca en items
+    const existingCompletedAt=o.completedAt||items.map(it=>it.completedAt).filter(Boolean).sort((a,b)=>b-a)[0]||null;
+    await withSave(()=>updateDoc(doc(db,"orders",String(orden)),{
       items,status:newStatus,
-      completedAt:newStatus==="completed"?ts:(o.completedAt||null),
+      completedAt:newStatus==="completed"?ts:existingCompletedAt,
     }));
   };
 
@@ -733,7 +752,7 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail}){
                       <td style={{padding:"10px 14px",color:"#475569",whiteSpace:"nowrap"}}>{o.vendedoraName}</td>
                       <td style={{padding:"10px 14px"}}><span style={{background:s.bg,color:s.col,borderRadius:999,padding:"2px 9px",fontSize:14,fontWeight:700,whiteSpace:"nowrap"}}>{s.txt}</span></td>
                       <td style={{padding:"10px 14px",color:"#94a3b8",whiteSpace:"nowrap"}}>{fmtDate(o.timestamp)}</td>
-                      <td style={{padding:"10px 14px",color:"#94a3b8",whiteSpace:"nowrap"}}>{o.completedAt?fmtDate(o.completedAt):"—"}</td>
+                      <td style={{padding:"10px 14px",color:"#94a3b8",whiteSpace:"nowrap"}}>{o.completedAt?fmtDate(o.completedAt):fmtDate(normalizeItems(o).map(it=>it.completedAt).filter(Boolean).sort((a,b)=>b-a)[0])||"—"}</td>
                       <td style={{padding:"10px 14px"}}>
                         <div style={{display:"flex",gap:4}}>
                           <button onClick={()=>onDetail(o)} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#64748b",fontSize:14}}>Ver</button>
