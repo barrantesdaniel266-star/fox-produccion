@@ -2,346 +2,433 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fox Producción — Pantalla Planta</title>
+<title>Fox — Planta Santa Lucía</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: #0f172a;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    color: #f8fafc;
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-  }
-  .header {
-    background: #1a1a1a;
-    padding: 14px 32px;
-    display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 3px solid #E8262A;
-    position: sticky; top: 0; z-index: 100;
-  }
-  .header-left { display: flex; align-items: center; gap: 14px; }
-  .header-logo {
-    width: 50px; height: 50px; border-radius: 12px;
-    background: #E8262A; display: flex; align-items: center;
-    justify-content: center; font-size: 24px; font-weight: 900; color: #fff;
-  }
-  .header-title { font-size: 22px; font-weight: 800; color: #fff; }
-  .header-sub { font-size: 13px; color: #f87171; }
-  .header-clock { font-size: 30px; font-weight: 900; color: #fff; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
-  .header-date { font-size: 13px; color: #64748b; text-align: right; margin-top: 2px; }
-  .stats-bar {
-    background: #1e293b; padding: 12px 32px;
-    display: flex; gap: 36px; align-items: center;
-    border-bottom: 1px solid #334155;
-  }
-  .stat { display: flex; align-items: center; gap: 8px; }
-  .stat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .stat-label { font-size: 14px; color: #94a3b8; }
-  .stat-value { font-size: 20px; font-weight: 900; }
-  .last-update { margin-left: auto; font-size: 12px; color: #475569; }
-  .main { padding: 24px 32px; }
-  .section-title {
-    font-size: 12px; font-weight: 700; color: #475569;
-    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .section-title::after { content:''; flex:1; height:1px; background:#1e293b; }
-  .machines-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-    gap: 14px; margin-bottom: 32px;
-  }
-  .machine-card {
-    border-radius: 16px; overflow: hidden;
-    border: 2px solid #334155; background: #1e293b;
-    transition: border-color 0.4s, box-shadow 0.4s;
-  }
-  .machine-card.busy { border-color: #E8262A; box-shadow: 0 0 20px rgba(232,38,42,0.15); }
-  .machine-card.free { border-color: #16a34a; }
-  .machine-header { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
-  .machine-header.busy { background: linear-gradient(135deg, #E8262A, #b91c1c); }
-  .machine-header.free { background: linear-gradient(135deg, #16a34a, #15803d); }
-  .machine-name { font-size: 16px; font-weight: 800; color: #fff; }
-  .machine-sede { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
-  .machine-badge {
-    background: rgba(0,0,0,0.25); color: #fff;
-    border-radius: 999px; padding: 3px 12px;
-    font-size: 11px; font-weight: 700; white-space: nowrap;
-  }
-  .machine-body { padding: 14px; }
-  .machine-free-wrap { text-align: center; padding: 20px 0; }
-  .machine-free-icon { font-size: 32px; color: #16a34a; font-weight: 900; }
-  .machine-free-sub { font-size: 14px; color: #475569; margin-top: 4px; }
-  .product-item {
-    background: #0f172a; border-radius: 10px;
-    padding: 10px 12px; margin-bottom: 8px;
-    border-left: 3px solid #E8262A;
-  }
-  .product-item:last-child { margin-bottom: 0; }
-  .product-badge {
-    display: inline-block; border-radius: 999px;
-    padding: 2px 10px; font-size: 12px; font-weight: 700; margin-bottom: 5px;
-  }
-  .product-top { display: flex; justify-content: space-between; align-items: baseline; }
-  .product-order { font-size: 22px; font-weight: 900; color: #fff; }
-  .product-time { font-size: 12px; color: #475569; }
-  .product-client { font-size: 14px; color: #cbd5e1; font-weight: 600; margin-bottom: 2px; }
-  .product-params { font-size: 12px; color: #64748b; }
-  .queue-wrap { background: #1e293b; border-radius: 14px; overflow: hidden; border: 1px solid #334155; }
-  .queue-table { width: 100%; border-collapse: collapse; }
-  .queue-table th {
-    background: #162032; padding: 10px 14px;
-    font-size: 11px; font-weight: 700; color: #64748b;
-    text-transform: uppercase; letter-spacing: 0.5px; text-align: left;
-  }
-  .queue-table td { padding: 11px 14px; border-top: 1px solid #0f172a; vertical-align: middle; }
-  .queue-table tr:hover td { background: #162032; }
-  .q-num { font-size: 18px; font-weight: 900; color: #fff; }
-  .q-client { font-size: 15px; font-weight: 600; color: #e2e8f0; }
-  .sede-pill { display: inline-block; border-radius: 6px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
-  .sede-centro { background: #1d4ed8; color: #fff; }
-  .sede-santa  { background: #7c3aed; color: #fff; }
-  .status-pill { border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
-  .st-queue  { background: #1e3a5f; color: #60a5fa; }
-  .st-active { background: #4c0519; color: #fb7185; }
-  .no-data { text-align: center; padding: 48px; color: #475569; font-size: 16px; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-  .pulse { animation: pulse 2s ease-in-out infinite; }
-  @keyframes spin { to{transform:rotate(360deg)} }
-  .spinner { width:52px; height:52px; border:4px solid #1e293b; border-top-color:#E8262A; border-radius:50%; animation:spin 1s linear infinite; }
-  .loading { display:flex; align-items:center; justify-content:center; min-height:70vh; flex-direction:column; gap:16px; }
-  .error-box { background:#4c0519; border:1px solid #be185d; border-radius:14px; padding:24px; text-align:center; color:#fda4af; font-size:15px; margin:32px; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&display=swap');
+ 
+* { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+:root {
+  --red:    #FF2D2D;
+  --green:  #00E676;
+  --bg:     #060C18;
+  --panel:  #0B1423;
+  --card:   #101D30;
+  --border: #1A2D4A;
+}
+ 
+body {
+  background: var(--bg);
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #FFFFFF;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+ 
+/* ═══ HEADER ═══════════════════════════════════════════ */
+header {
+  background: #050A14;
+  border-bottom: 3px solid var(--red);
+  padding: 0 40px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.logo { display: flex; align-items: center; gap: 14px; }
+.logo-icon {
+  width: 42px; height: 42px; border-radius: 10px;
+  background: var(--red);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 900;
+}
+.logo-title { font-size: 21px; font-weight: 800; }
+.logo-sub { font-size: 12px; color: #FF8080; margin-top: 1px; letter-spacing: .5px; }
+ 
+.header-right { display: flex; align-items: center; gap: 32px; }
+ 
+/* stats inline */
+.hstat { display: flex; align-items: center; gap: 8px; }
+.hstat-dot { width: 9px; height: 9px; border-radius: 50%; }
+.hstat-lbl { font-size: 13px; color: #607090; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+.hstat-val { font-size: 28px; font-weight: 900; line-height: 1; }
+ 
+.divider { width: 1px; height: 32px; background: var(--border); }
+ 
+.clock-wrap { text-align: right; }
+.clock { font-size: 32px; font-weight: 900; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+.clock-date { font-size: 12px; color: #607090; margin-top: 2px; text-transform: capitalize; }
+ 
+/* ═══ SEDE LABEL ════════════════════════════════════════ */
+.sede-bar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 40px;
+  display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+}
+.sede-pill {
+  background: #7C3AED;
+  color: #fff;
+  font-size: 13px; font-weight: 800;
+  padding: 4px 14px; border-radius: 999px;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.sede-label { font-size: 14px; font-weight: 700; color: #607090; }
+ 
+/* ═══ GRID ══════════════════════════════════════════════ */
+.grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 32px 24px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  align-content: start;
+}
+.grid::-webkit-scrollbar { width: 4px; }
+.grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+ 
+/* ═══ MACHINE CARD ══════════════════════════════════════ */
+.mcard {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+}
+ 
+/* OCCUPIED */
+.mcard.busy {
+  border-color: var(--red);
+  background: #110A0A;
+  box-shadow: 0 0 0 1px rgba(255,45,45,.15), 0 8px 32px rgba(255,45,45,.12);
+}
+ 
+/* FREE */
+.mcard.free {
+  border-color: #0D3320;
+  background: #080F0A;
+}
+ 
+/* header strip */
+.mcard-strip {
+  height: 6px;
+}
+.mcard.busy  .mcard-strip { background: var(--red); }
+.mcard.free  .mcard-strip { background: var(--green); }
+ 
+.mcard-head {
+  padding: 14px 16px 10px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.mcard-name { font-size: 17px; font-weight: 800; }
+.mcard-lbl  { font-size: 12px; color: #607090; margin-top: 2px; }
+.status-chip {
+  font-size: 11px; font-weight: 800;
+  border-radius: 999px; padding: 4px 11px;
+  white-space: nowrap; letter-spacing: .5px; text-transform: uppercase;
+}
+.busy-chip  { background: rgba(255,45,45,.2);  color: #FF6B6B; }
+.free-chip  { background: rgba(0,230,118,.12); color: var(--green); }
+ 
+.mcard-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+ 
+/* FREE state */
+.free-state {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 20px 0;
+}
+.free-check { font-size: 34px; color: var(--green); margin-bottom: 6px; }
+.free-txt   { font-size: 16px; font-weight: 800; color: var(--green); }
+ 
+/* PRODUCT inside card */
+.prod {
+  background: rgba(0,0,0,.4);
+  border-radius: 10px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--red);
+}
+.prod-top {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 6px;
+}
+.prod-badge {
+  font-size: 11px; font-weight: 800; border-radius: 999px;
+  padding: 3px 10px;
+}
+.prod-ago { font-size: 11px; color: #607090; }
+.prod-num  { font-size: 28px; font-weight: 900; line-height: 1; letter-spacing: -1px; }
+.prod-cli  { font-size: 14px; font-weight: 700; color: #90B4D8; margin-top: 3px; }
+.prod-info { font-size: 11px; color: #506070; margin-top: 5px; line-height: 1.5; }
+ 
+/* PRODUCT TYPE COLORS */
+.t-esl { background: rgba(59,130,246,.2);  color: #7DC4FF; }
+.t-pvc { background: rgba(0,230,118,.15);  color: #5DFFB0; }
+.t-pos { background: rgba(251,146,60,.18); color: #FFB06B; }
+.t-tub { background: rgba(168,85,247,.18); color: #CC88FF; }
+ 
+/* ═══ ANIMATIONS ════════════════════════════════════════ */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.pulse { animation: pulse 2.5s ease-in-out infinite; }
+ 
+@keyframes spin { to{transform:rotate(360deg)} }
+ 
+@keyframes redglow {
+  0%,100% { box-shadow: 0 0 0 1px rgba(255,45,45,.15), 0 8px 32px rgba(255,45,45,.08); }
+  50%     { box-shadow: 0 0 0 1px rgba(255,45,45,.3),  0 8px 40px rgba(255,45,45,.22); }
+}
+.mcard.busy { animation: redglow 3.5s ease-in-out infinite; }
+ 
+/* ═══ LOADING ════════════════════════════════════════════ */
+#loading {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 14px;
+  background: var(--bg); z-index: 99;
+}
+.spinner {
+  width: 44px; height: 44px;
+  border: 3px solid var(--border);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
 </style>
 </head>
 <body>
-
-<div class="header">
-  <div class="header-left">
-    <div class="header-logo">F</div>
+ 
+<!-- LOADING -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div style="font-size:15px;color:#607090">Conectando con Firebase...</div>
+</div>
+ 
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">F</div>
     <div>
-      <div class="header-title">Mallas y Alambres Fox</div>
-      <div class="header-sub">Panel de Produccion en Tiempo Real</div>
+      <div class="logo-title">Mallas y Alambres Fox</div>
+      <div class="logo-sub">Panel de Producción · Tiempo Real</div>
     </div>
   </div>
-  <div style="text-align:right">
-    <div class="header-clock" id="clock">--:--:--</div>
-    <div class="header-date" id="dateStr">--</div>
+  <div class="header-right">
+    <div class="hstat">
+      <div class="hstat-dot" style="background:var(--green)"></div>
+      <span class="hstat-lbl">Libres</span>
+      <span class="hstat-val" id="sFree" style="color:var(--green)">—</span>
+    </div>
+    <div class="divider"></div>
+    <div class="hstat">
+      <div class="hstat-dot" style="background:var(--red)"></div>
+      <span class="hstat-lbl">Activos</span>
+      <span class="hstat-val" id="sAct" style="color:#FF6B6B">—</span>
+    </div>
+    <div class="divider"></div>
+    <div class="hstat">
+      <div class="hstat-dot" style="background:#60A5FA"></div>
+      <span class="hstat-lbl">Cola</span>
+      <span class="hstat-val" id="sQ" style="color:#60A5FA">—</span>
+    </div>
+    <div class="divider"></div>
+    <div class="hstat">
+      <div class="hstat-dot" style="background:#A3E635"></div>
+      <span class="hstat-lbl">Completadas</span>
+      <span class="hstat-val" id="sDone" style="color:#A3E635">—</span>
+    </div>
+    <div class="divider"></div>
+    <div class="clock-wrap">
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="clock-date" id="cdate">--</div>
+    </div>
   </div>
+</header>
+ 
+<!-- SEDE BAR -->
+<div class="sede-bar">
+  <div class="sede-pill">Santa Lucía</div>
+  <div class="sede-label" id="machSummary">Cargando...</div>
 </div>
-
-<div class="stats-bar">
-  <div class="stat"><div class="stat-dot" style="background:#16a34a"></div><span class="stat-label">Maquinas libres</span><span class="stat-value" id="sFree" style="color:#4ade80">--</span></div>
-  <div class="stat"><div class="stat-dot" style="background:#E8262A"></div><span class="stat-label">Items en produccion</span><span class="stat-value" id="sActive" style="color:#f87171">--</span></div>
-  <div class="stat"><div class="stat-dot" style="background:#60a5fa"></div><span class="stat-label">Ordenes en cola</span><span class="stat-value" id="sQueue" style="color:#60a5fa">--</span></div>
-  <div class="stat"><div class="stat-dot" style="background:#a3e635"></div><span class="stat-label">Completadas</span><span class="stat-value" id="sDone" style="color:#a3e635">--</span></div>
-  <span class="last-update" id="lastUpdate">Conectando...</span>
-</div>
-
-<div class="main" id="main">
-  <div class="loading"><div class="spinner"></div><div style="color:#64748b;font-size:16px">Conectando con Firebase...</div></div>
-</div>
-
+ 
+<!-- GRID -->
+<div class="grid" id="grid"></div>
+ 
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-import { getFirestore, collection, query, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
-
-const firebaseConfig = {
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+import { getFirestore, collection, query, orderBy, onSnapshot }
+       from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+ 
+/* ── Firebase ─────────────────────────────────────────── */
+const app = initializeApp({
   apiKey:            "AIzaSyABPktv7Jfpc9UjmFl13QzrsSwVK34zCO0",
   authDomain:        "fox-produccion.firebaseapp.com",
   projectId:         "fox-produccion",
   storageBucket:     "fox-produccion.firebasestorage.app",
   messagingSenderId: "614815300879",
   appId:             "1:614815300879:web:137a1e22a35e6ced7ed27a"
-};
-
+});
+const db = getFirestore(app);
+ 
+/* ── Config ───────────────────────────────────────────── */
 const MACHINES = [
-  {id:"C1",  label:"C-1",  name:"Maquina 1", sede:"Centro"},
-  {id:"C2",  label:"C-2",  name:"Maquina 2", sede:"Centro"},
-  {id:"SL1", label:"SL-1", name:"Maquina 1", sede:"Santa Lucia"},
-  {id:"SL2", label:"SL-2", name:"Maquina 2", sede:"Santa Lucia"},
-  {id:"SL3", label:"SL-3", name:"Maquina 3", sede:"Santa Lucia"},
-  {id:"SL4", label:"SL-4", name:"Maquina 4", sede:"Santa Lucia"},
-  {id:"SL5", label:"SL-5", name:"Maquina 5", sede:"Santa Lucia"},
+  { id:"SL1", label:"SL-1", name:"Máquina 1" },
+  { id:"SL2", label:"SL-2", name:"Máquina 2" },
+  { id:"SL3", label:"SL-3", name:"Máquina 3" },
+  { id:"SL4", label:"SL-4", name:"Máquina 4" },
+  { id:"SL5", label:"SL-5", name:"Máquina 5" },
 ];
-const PRODS = {
-  eslabonada:{label:"Malla Eslabonada",color:"#3b82f6",bg:"#eff6ff"},
-  pvc:       {label:"Malla PVC",       color:"#16a34a",bg:"#f0fdf4"},
-  postes:    {label:"Postes",          color:"#b45309",bg:"#fffbeb"},
-  tubos:     {label:"Tubos",           color:"#7c3aed",bg:"#f5f3ff"},
+ 
+const PROD = {
+  eslabonada: { l:"Malla Eslabonada", cls:"t-esl" },
+  pvc:        { l:"Malla PVC",        cls:"t-pvc" },
+  postes:     { l:"Postes",           cls:"t-pos" },
+  tubos:      { l:"Tubos",            cls:"t-tub" },
 };
-
-const lp = id => PRODS[id]?.label || id || '';
-const ip = id => PRODS[id] || {color:'#64748b', bg:'#1e293b'};
-
-function normalizeItems(o) {
-  const base = o.status === 'completed' ? 'completed' : o.status === 'active' ? 'active' : 'queue';
-  if (Array.isArray(o.items) && o.items.length) {
+const lp  = id => PROD[id]?.l   || id || '';
+const cls = id => PROD[id]?.cls || 't-esl';
+ 
+/* ── Helpers ──────────────────────────────────────────── */
+function norm(o) {
+  const b = o.status==='completed'?'completed':o.status==='active'?'active':'queue';
+  if (Array.isArray(o.items) && o.items.length)
     return o.items.map(it => ({
       ...it,
-      status:       it.status       !== undefined ? it.status       : base,
-      machineId:    it.machineId    !== undefined ? it.machineId    : (o.machineId    || null),
-      machineLabel: it.machineLabel !== undefined ? it.machineLabel : (o.machineLabel || null),
-      assignedAt:   it.assignedAt   !== undefined ? it.assignedAt   : (o.assignedAt   || null),
+      status:     it.status     !==undefined ? it.status     : b,
+      machineId:  it.machineId  !==undefined ? it.machineId  : (o.machineId  ||null),
+      assignedAt: it.assignedAt !==undefined ? it.assignedAt : (o.assignedAt ||null),
     }));
-  }
-  if (o.producto) return [{...o, status:base, machineId:o.machineId||null}];
+  if (o.producto) return [{ ...o, status:b, machineId: o.machineId||null }];
   return [];
 }
-
-function deriveStatus(items) {
+ 
+function derSt(items) {
   if (!items?.length) return 'queue';
-  if (items.every(i => i.status === 'completed')) return 'completed';
-  if (items.some(i  => i.status === 'active' || i.status === 'completed')) return 'active';
+  if (items.every(i => i.status==='completed')) return 'completed';
+  if (items.some(i  => i.status==='active'||i.status==='completed')) return 'active';
   return 'queue';
 }
-
-function timeAgo(ts) {
+ 
+function ago(ts) {
   if (!ts) return '';
-  const m = Math.floor((Date.now() - ts) / 60000);
-  if (m < 1) return 'ahora';
-  if (m < 60) return m + ' min';
-  const h = Math.floor(m / 60);
-  return h < 24 ? h + 'h' : Math.floor(h/24) + 'd';
+  const m = Math.floor((Date.now()-ts)/60000);
+  if (m < 1)  return 'ahora';
+  if (m < 60) return m+'min';
+  const h = Math.floor(m/60);
+  return h < 24 ? h+'h' : Math.floor(h/24)+'d';
 }
-
-function resumen(it) {
+ 
+function params(it) {
   if (!it?.producto) return '';
   const p = [];
-  if (it.producto === 'eslabonada' || it.producto === 'pvc') {
-    if (it.metros)           p.push(it.metros + 'm\u00b2');
-    if (it.ancho && it.alto) p.push(it.ancho + '\u00d7' + it.alto + 'm');
-    if (it.abertura)         p.push('Ab:' + it.abertura);
-    if (it.calibre)          p.push('Cal:' + it.calibre);
-    if (it.color)            p.push(it.color);
+  if (it.producto==='eslabonada'||it.producto==='pvc') {
+    if (it.metros)            p.push(it.metros + 'm²');
+    if (it.ancho && it.alto)  p.push(it.ancho + '×' + it.alto + 'm');
+    if (it.abertura)          p.push('Ab: ' + it.abertura);
+    if (it.calibre)           p.push('Cal: ' + it.calibre);
+    if (it.color)             p.push(it.color);
   } else {
-    if (it.calibre)  p.push('Cal:' + it.calibre);
-    if (it.grosor)   p.push(it.grosor + '"');
-    if (it.largo)    p.push(it.largo + 'm');
-    if (it.cantidad) p.push(it.cantidad + 'un');
+    if (it.calibre)   p.push('Cal: ' + it.calibre);
+    if (it.grosor)    p.push(it.grosor + '"');
+    if (it.largo)     p.push(it.largo + 'm');
+    if (it.cantidad)  p.push(it.cantidad + ' un');
   }
-  return p.join(' \u00b7 ');
+  return p.join('  ·  ');
 }
-
+ 
+/* ── Clock ────────────────────────────────────────────── */
 function tick() {
   const n = new Date();
   document.getElementById('clock').textContent =
-    n.toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-  document.getElementById('dateStr').textContent =
-    n.toLocaleDateString('es-CO', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    n.toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('cdate').textContent =
+    n.toLocaleDateString('es-CO', {weekday:'long',day:'numeric',month:'long'});
 }
 tick(); setInterval(tick, 1000);
-
+ 
+/* ── Render ───────────────────────────────────────────── */
 function render(orders) {
-  const allItems  = orders.flatMap(o => normalizeItems(o));
-  const active    = allItems.filter(it => it.status === 'active');
-  const queueOrds = orders.filter(o => deriveStatus(normalizeItems(o)) !== 'completed');
-  const doneOrds  = orders.filter(o => deriveStatus(normalizeItems(o)) === 'completed');
-  const freeMachs = MACHINES.filter(m => !active.some(it => it.machineId === m.id));
-
-  document.getElementById('sFree').textContent   = freeMachs.length;
-  document.getElementById('sActive').textContent  = active.length;
-  document.getElementById('sQueue').textContent   = queueOrds.length;
-  document.getElementById('sDone').textContent    = doneOrds.length;
-  document.getElementById('lastUpdate').textContent =
-    'Actualizado: ' + new Date().toLocaleTimeString('es-CO');
-
+  const allItems = orders.flatMap(o => norm(o));
+  const active   = allItems.filter(it => it.status === 'active');
+  const slActive = active.filter(it => MACHINES.some(m => m.id === it.machineId));
+  const free     = MACHINES.filter(m => !active.some(it => it.machineId === m.id));
+  const queueO   = orders.filter(o => derSt(norm(o)) !== 'completed');
+  const doneO    = orders.filter(o => derSt(norm(o)) === 'completed');
+ 
+  /* stats */
+  document.getElementById('sFree').textContent  = free.length;
+  document.getElementById('sAct').textContent   = slActive.length;
+  document.getElementById('sQ').textContent     = queueO.length;
+  document.getElementById('sDone').textContent  = doneO.length;
+  document.getElementById('machSummary').textContent =
+    `${MACHINES.length - free.length} de ${MACHINES.length} máquinas en uso  ·  Act. ${new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}`;
+ 
+  /* grid */
   let html = '';
-
-  html += '<div class="section-title">Estado de Maquinas</div>';
-  html += '<div class="machines-grid">';
-
-  MACHINES.forEach(function(m) {
-    const mItems = active.filter(function(it) { return it.machineId === m.id; });
+  MACHINES.forEach(m => {
+    const mItems = active.filter(it => it.machineId === m.id);
     const busy   = mItems.length > 0;
-
-    html += '<div class="machine-card ' + (busy ? 'busy' : 'free') + '">';
-    html += '<div class="machine-header ' + (busy ? 'busy' : 'free') + '">'
-          + '<div>'
-          + '<div class="machine-name">' + m.name + ' \u00b7 ' + m.label + '</div>'
-          + '<div class="machine-sede">Sede ' + m.sede + '</div>'
-          + '</div>'
-          + '<div class="machine-badge">'
-          + (busy ? mItems.length + ' ACTIVO' + (mItems.length > 1 ? 'S' : '') : 'LIBRE')
-          + '</div></div>';
-    html += '<div class="machine-body">';
-
+ 
+    html += `<div class="mcard ${busy?'busy':'free'}">
+      <div class="mcard-strip"></div>
+      <div class="mcard-head">
+        <div>
+          <div class="mcard-name">${m.name}</div>
+          <div class="mcard-lbl">${m.label}</div>
+        </div>
+        <div class="status-chip ${busy?'busy-chip':'free-chip'}">
+          ${busy ? mItems.length+' activo'+(mItems.length>1?'s':'') : 'libre'}
+        </div>
+      </div>
+      <div class="mcard-body">`;
+ 
     if (busy) {
-      mItems.forEach(function(it) {
-        var parent = null;
-        for (var i = 0; i < orders.length; i++) {
-          var its = normalizeItems(orders[i]);
-          if (its.some(function(x) { return x.machineId === m.id && x.assignedAt === it.assignedAt; })) {
-            parent = orders[i]; break;
-          }
+      mItems.forEach(it => {
+        /* find parent order */
+        let par = null;
+        for (const o of orders) {
+          const its = norm(o);
+          if (its.some(x => x.machineId===m.id && x.assignedAt===it.assignedAt)) { par=o; break; }
         }
-        var info = ip(it.producto);
-        html += '<div class="product-item">'
-              + '<span class="product-badge" style="background:' + info.bg + ';color:' + info.color + '">' + lp(it.producto) + '</span>'
-              + '<div class="product-top">'
-              + '<div class="product-order">#' + (parent ? parent.orden : '?') + '</div>'
-              + '<div class="product-time pulse">' + timeAgo(it.assignedAt) + '</div>'
-              + '</div>'
-              + '<div class="product-client">' + (parent ? parent.cliente : '') + '</div>'
-              + '<div class="product-params">' + resumen(it) + '</div>'
-              + '</div>';
+        html += `<div class="prod">
+          <div class="prod-top">
+            <span class="prod-badge ${cls(it.producto)}">${lp(it.producto)}</span>
+            <span class="prod-ago pulse">${ago(it.assignedAt)}</span>
+          </div>
+          <div class="prod-num">#${par?.orden ?? '?'}</div>
+          <div class="prod-cli">${par?.cliente ?? ''}</div>
+          <div class="prod-info">${params(it)}</div>
+        </div>`;
       });
     } else {
-      html += '<div class="machine-free-wrap">'
-            + '<div class="machine-free-icon">\u2713</div>'
-            + '<div class="machine-free-sub">Disponible</div>'
-            + '</div>';
+      html += `<div class="free-state">
+        <div class="free-check">✓</div>
+        <div class="free-txt">Disponible</div>
+      </div>`;
     }
-
-    html += '</div></div>';
+ 
+    html += `</div></div>`;
   });
-  html += '</div>';
-
-  if (queueOrds.length) {
-    html += '<div class="section-title">Cola de Ordenes</div>';
-    html += '<div class="queue-wrap"><table class="queue-table">'
-          + '<thead><tr>'
-          + '<th>No. Orden</th><th>Cliente</th><th>Sede</th>'
-          + '<th>Productos</th><th>Estado</th><th>Vendedora</th>'
-          + '</tr></thead><tbody>';
-
-    queueOrds.slice(0, 25).forEach(function(o) {
-      var items = normalizeItems(o);
-      var st    = deriveStatus(items);
-      var sedeClass = o.sede === 'Centro' ? 'centro' : 'santa';
-      var stLbl = st === 'active' ? 'En Producci\u00f3n' : 'En Cola';
-      var stCls = st === 'active' ? 'st-active' : 'st-queue';
-      var prods = [...new Set(items.map(function(it) { return lp(it.producto); }))].join(', ') || '\u2014';
-      html += '<tr>'
-            + '<td class="q-num">#' + o.orden + '</td>'
-            + '<td class="q-client">' + (o.cliente || '\u2014') + '</td>'
-            + '<td><span class="sede-pill sede-' + sedeClass + '">' + o.sede + '</span></td>'
-            + '<td style="font-size:13px;color:#94a3b8">' + prods + '</td>'
-            + '<td><span class="status-pill ' + stCls + '">' + stLbl + '</span></td>'
-            + '<td style="font-size:13px;color:#64748b">' + (o.vendedoraName || '\u2014') + '</td>'
-            + '</tr>';
-    });
-    html += '</tbody></table></div>';
-  }
-
-  if (!queueOrds.length && !active.length) {
-    html += '<div class="no-data">\u2705 Sin \u00f3rdenes activas por el momento</div>';
-  }
-
-  document.getElementById('main').innerHTML = html;
+ 
+  document.getElementById('grid').innerHTML = html;
+  document.getElementById('loading').style.display = 'none';
 }
-
-try {
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
-  const q   = query(collection(db, 'orders'), orderBy('timestamp', 'desc'));
-  onSnapshot(q,
-    function(snap) { render(snap.docs.map(function(d) { return Object.assign({}, d.data(), {_id: d.id}); })); },
-    function(err)  { document.getElementById('main').innerHTML = '<div class="error-box">\u274c Error Firebase: ' + err.message + '</div>'; }
-  );
-} catch(e) {
-  document.getElementById('main').innerHTML = '<div class="error-box">\u274c ' + e.message + '</div>';
-}
+ 
+/* ── Firebase listener ────────────────────────────────── */
+onSnapshot(
+  query(collection(db,'orders'), orderBy('timestamp','desc')),
+  snap => render(snap.docs.map(d => ({...d.data(), _id:d.id}))),
+  err  => {
+    document.getElementById('loading').innerHTML =
+      `<div style="color:#FF6B6B;font-size:16px">&#10060; ${err.message}</div>`;
+  }
+);
 </script>
 </body>
 </html>
