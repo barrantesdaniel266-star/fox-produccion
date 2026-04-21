@@ -715,7 +715,7 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail}){
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
               <thead>
                 <tr style={{background:"#f8fafc",borderBottom:"1px solid #e2e8f0"}}>
-                  {["No.Orden","Cliente","Productos","Sede","Creado por","Estado","Creado","Completado",...(isG?["Acciones"]:[])].map(h=>(
+                  {["No.Orden","Cliente","Productos","Sede","Creado por","Estado","Creado","Completado","Acciones"].map(h=>(
                     <th key={h} style={{padding:"10px 14px",textAlign:"left",fontSize:14,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.4,whiteSpace:"nowrap"}}>{h}</th>
                   ))}
                 </tr>
@@ -734,12 +734,12 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail}){
                       <td style={{padding:"10px 14px"}}><span style={{background:s.bg,color:s.col,borderRadius:999,padding:"2px 9px",fontSize:14,fontWeight:700,whiteSpace:"nowrap"}}>{s.txt}</span></td>
                       <td style={{padding:"10px 14px",color:"#94a3b8",whiteSpace:"nowrap"}}>{fmtDate(o.timestamp)}</td>
                       <td style={{padding:"10px 14px",color:"#94a3b8",whiteSpace:"nowrap"}}>{o.completedAt?fmtDate(o.completedAt):"—"}</td>
-                      {isG&&<td style={{padding:"10px 14px"}}>
+                      <td style={{padding:"10px 14px"}}>
                         <div style={{display:"flex",gap:4}}>
                           <button onClick={()=>onDetail(o)} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#64748b",fontSize:14}}>Ver</button>
-                          {onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
+                          {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
                         </div>
-                      </td>}
+                      </td>
                     </tr>
                   );
                 })}
