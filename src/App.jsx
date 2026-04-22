@@ -432,7 +432,7 @@ function Shell({user,onLogout,orders}){
           onDetail={o=>setModal({t:"detail",order:o})}/>}
       </div>
 
-      {modal?.t==="new"         &&<NewOrderModal    user={user}         onClose={()=>setModal(null)} onCreate={createOrder}/>}
+      {modal?.t==="new"         &&<NewOrderModal    user={user} orders={orders} onClose={()=>setModal(null)} onCreate={createOrder}/>}
       {modal?.t==="edit"        &&<EditOrderModal   order={modal.order} onClose={()=>setModal(null)} onSave={editOrder}/>}
       {modal?.t==="assignOrder" &&<AssignOrderModal order={modal.order} allOrders={orders} machines={MACHINES} user={user} isG={isG} onClose={()=>setModal(null)} onAssign={assignItem} onAssignMultiple={assignMultipleItems}/>}
       {modal?.t==="pickItem"    &&<PickItemModal    machineId={modal.machineId} orders={queueOrders} allOrders={orders} user={user} isG={isG} machines={MACHINES} onClose={()=>setModal(null)} onAssign={assignItem}/>}
@@ -878,7 +878,7 @@ function enrichItem(it){
 const newEmptyItem=()=>({_key:Date.now()+Math.random(),producto:"",calibre:"",calibreInterno:"",color:"",ancho:"",alto:"",abertura:"",grosor:"",largo:"",cantidad:""});
 
 // ═══ NUEVA ORDEN ═══════════════════════════════════════════
-function NewOrderModal({user,onClose,onCreate}){
+function NewOrderModal({user,orders,onClose,onCreate}){
   const isG=user.role==="gerencia";
   const [orden,setOrden]=useState("");const [cliente,setCliente]=useState("");
   const canSelectSede=isG||user.sede==="Santa Lucia";
@@ -889,6 +889,27 @@ function NewOrderModal({user,onClose,onCreate}){
   const itemsEndRef=useRef(null);
   const addItem=()=>{setItems(prev=>[...prev,newEmptyItem()]);setTimeout(()=>itemsEndRef.current?.scrollIntoView({behavior:"smooth"}),50);};
   const removeItem=i=>setItems(prev=>prev.filter((_,idx)=>idx!==i));
+
+  // Calcula el siguiente # de orden para Stock revisando el historial
+  const nextStockOrder=()=>{
+    const stockOrders=(orders||[]).filter(o=>
+      String(o.cliente||"").toLowerCase().includes("stock")||
+      String(o.cliente||"").toLowerCase().includes("inventario")
+    );
+    if(stockOrders.length===0) return "001";
+    const nums=stockOrders
+      .map(o=>parseInt(String(o.orden).replace(/\D/g,""),10))
+      .filter(n=>!isNaN(n));
+    if(nums.length===0) return "001";
+    const next=Math.max(...nums)+1;
+    return String(next).padStart(3,"0");
+  };
+
+  const selectStock=()=>{
+    setCliente("Inventario (Stock)");
+    const next=nextStockOrder();
+    setOrden(next);
+  };
   const submit=async()=>{
     if(!orden.trim()){setErr("Ingresa el número de orden");return;}
     if(!cliente.trim()){setErr("Ingresa el nombre del cliente");return;}
@@ -922,7 +943,7 @@ function NewOrderModal({user,onClose,onCreate}){
           <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente *</label>
           <input style={inp} value={cliente} onChange={e=>setCliente(e.target.value)} placeholder="Nombre del cliente"/>
           <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
-            <button type="button" onClick={()=>setCliente("Inventario (Stock)")} style={{background:cliente==="Inventario (Stock)"?"#7c3aed":"#f5f3ff",border:"1.5px solid #7c3aed",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:cliente==="Inventario (Stock)"?"#fff":"#7c3aed",fontSize:14,fontWeight:700}}>📦 Inventario (Stock)</button>
+            <button type="button" onClick={selectStock} style={{background:cliente==="Inventario (Stock)"?"#7c3aed":"#f5f3ff",border:"1.5px solid #7c3aed",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:cliente==="Inventario (Stock)"?"#fff":"#7c3aed",fontSize:14,fontWeight:700}}>📦 Inventario (Stock)</button>
           </div>
         </div>
       </div>
