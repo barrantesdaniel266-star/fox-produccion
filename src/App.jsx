@@ -826,7 +826,7 @@ function ItemFields({item,onChange}){
     return(
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginTop:8}}>
         <Field label="Calibre *"><NumInp value={item.calibre||""} onChange={v=>set("calibre",v)} placeholder="Ej: 14"/></Field>
-        <Field label={'Grosor (") *'}><NumInp value={item.grosor||""} onChange={v=>set("grosor",v)} placeholder='1.5' unit='"'/></Field>
+        <Field label={'Grosor *'}><select style={{...inp,fontSize:14}} value={item.grosor||""} onChange={e=>set("grosor",e.target.value)}><option value="">Seleccionar...</option><option value="1.5">1½"</option><option value="2">2"</option></select></Field>
         <Field label="Largo (m) *"><NumInp value={item.largo||""} onChange={v=>set("largo",v)} placeholder="2.0" unit="m"/></Field>
         <Field label="Cantidad *"><NumInp value={item.cantidad||""} onChange={v=>set("cantidad",v)} placeholder="10" unit="un"/></Field>
       </div>
@@ -976,7 +976,7 @@ function EditOrderModal({order,onClose,onSave}){
   const submit=async()=>{
     if(!cliente.trim()){setErr("Ingresa el nombre del cliente");return;}
     for(let it of items){const e=validarItem(it);if(e){setErr(e);return;}}
-    const cleanItems=items.map(it=>{const {_key:_,...rest}=it;return rest;});
+    const cleanItems=items.map(it=>enrichItem(it));
     setLoading(true);
     await onSave(order.orden,{cliente:cliente.trim(),items:cleanItems});
     setLoading(false);onClose();
