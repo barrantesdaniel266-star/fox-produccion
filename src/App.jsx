@@ -34,7 +34,6 @@ const PRODUCTOS = [
   { id:"eslabonada", label:"Malla Eslabonada", color:"#1d4ed8", bg:"#eff6ff" },
   { id:"pvc",        label:"Malla PVC",        color:"#15803d", bg:"#f0fdf4" },
   { id:"postes",     label:"Postes",           color:"#b45309", bg:"#fffbeb" },
-  { id:"tubos",      label:"Tubos",            color:"#7c3aed", bg:"#f5f3ff" },
 ];
 
 const ABERTURA_SIZES = ['1"','1"1/2','2"','2"1/4','2"1/2'];
@@ -50,7 +49,7 @@ const timeAgo = ts => {
   if(m<1)return"ahora"; if(m<60)return`${m}min`;
   const h=Math.floor(m/60); return h<24?`${h}h`:`${Math.floor(h/24)}d`;
 };
-const calcM2 = (a,b) => { const v=parseFloat(a)*parseFloat(b); return isNaN(v)?"":v.toFixed(2); };
+const calcM2 = (ancho,alto) => { const v=parseFloat(ancho)*parseFloat(alto); return isNaN(v)||v<=0?"":v.toFixed(2); };
 const labelProducto = id => { const p=PRODUCTOS.find(x=>x.id===id); return p?p.label:id||""; };
 const infoProducto  = id => PRODUCTOS.find(x=>x.id===id)||{color:"#64748b",bg:"#f1f5f9",label:id};
 
@@ -120,7 +119,7 @@ const resumenItem = it => {
     const parts=[it.metros&&`${it.metros}m²`,it.ancho&&it.alto&&`${it.ancho}×${it.alto}m`,v(it.abertura,"Ab:"),v(it.calibre,"Cal:"),v(it.calibreInterno,"CalInt:"),it.color].filter(Boolean);
     return parts.join(" | ");
   }
-  if (it.producto==="postes"||it.producto==="tubos"){
+  if (it.producto==="postes"){
     const parts=[v(it.calibre,"Cal:"),it.grosor&&`${it.grosor}"`,it.largo&&`${it.largo}m`,it.cantidad&&`${it.cantidad} un`].filter(Boolean);
     return parts.join(" | ");
   }
@@ -823,7 +822,7 @@ function ItemFields({item,onChange}){
       </div>
     );
   }
-  if(item.producto==="postes"||item.producto==="tubos"){
+  if(item.producto==="postes"){
     return(
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginTop:8}}>
         <Field label="Calibre *"><NumInp value={item.calibre||""} onChange={v=>set("calibre",v)} placeholder="Ej: 14"/></Field>
@@ -865,7 +864,7 @@ function validarItem(it){
     if(!it.calibre) return `Ingresa el calibre en ${labelProducto(it.producto)}`;
     if(it.producto==="pvc"&&(!it.calibreInterno||!it.color)) return "Ingresa calibre interno y color en Malla PVC";
   }
-  if(it.producto==="postes"||it.producto==="tubos"){
+  if(it.producto==="postes"){
     if(!it.calibre||!it.grosor||!it.largo||!it.cantidad) return `Completa todos los campos en ${labelProducto(it.producto)}`;
   }
   return null;
@@ -1217,7 +1216,7 @@ function CompleteItemModal({order,item,itemIndex,onClose,onComplete,onReturn}){
     {l:"Metros cuadrados",v:`${item.metros} m²`},{l:"Ancho",v:`${item.ancho}m`},{l:"Alto",v:`${item.alto}m`},{l:"Abertura",v:item.abertura},{l:"Calibre",v:item.calibre},
   ]:item.producto==="pvc"?[
     {l:"Metros cuadrados",v:`${item.metros} m²`},{l:"Ancho",v:`${item.ancho}m`},{l:"Alto",v:`${item.alto}m`},{l:"Abertura",v:item.abertura},{l:"Calibre",v:item.calibre},{l:"Cal.Interno",v:item.calibreInterno},{l:"Color",v:item.color},
-  ]:(item.producto==="postes"||item.producto==="tubos")?[
+  ]:(item.producto==="postes")?[
     {l:"Calibre",v:item.calibre},{l:"Grosor",v:`${item.grosor}"`},{l:"Largo",v:`${item.largo}m`},{l:"Cantidad",v:`${item.cantidad} unidades`},
   ]:[];
 
@@ -1377,7 +1376,7 @@ function DetailModal({order,onClose}){
           const campos=[
             ...(it.producto==="eslabonada"||it.producto==="pvc"?[["M²",`${it.metros} m²`],["Ancho",`${it.ancho}m`],["Alto",`${it.alto}m`],["Abertura",it.abertura],["Calibre",it.calibre]]:[]),
             ...(it.producto==="pvc"?[["Cal.Int",it.calibreInterno],["Color",it.color]]:[]),
-            ...(it.producto==="postes"||it.producto==="tubos"?[["Calibre",it.calibre],["Grosor",`${it.grosor}"`],["Largo",`${it.largo}m`],["Cantidad",`${it.cantidad} un`]]:[]),
+            ...(it.producto==="postes"?[["Calibre",it.calibre],["Grosor",`${it.grosor}"`],["Largo",`${it.largo}m`],["Cantidad",`${it.cantidad} un`]]:[]),
           ];
           return(
             <div key={i} style={{border:`1.5px solid ${info.color}44`,borderRadius:12,overflow:"hidden"}}>
