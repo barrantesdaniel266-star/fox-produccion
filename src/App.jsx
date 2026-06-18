@@ -243,7 +243,7 @@ export default function App(){
 
   if(!ready)return <Splash error={dbErr}/>;
   if(!user)return <Login onLogin={login}/>;
-  return <Shell user={user} onLogout={logout} orders={orders}/>;
+  return <Shell user={user} onLogout={logout} orders={orders} movimientos={movimientos} onCreateMov={createMovimiento} onRecibirMov={recibirMovimiento} onResolverAlerta={resolverAlerta}/>;
 }
 
 // ═══ SPLASH ════════════════════════════════════════════════
@@ -302,14 +302,15 @@ function Login({onLogin}){
 }
 
 // ═══ SHELL ═════════════════════════════════════════════════
-function Shell({user,onLogout,orders}){
-  const [tab,setTab]=useState(isLogistica?"movimientos":"machines");
+function Shell({user,onLogout,orders,movimientos=[],onCreateMov,onRecibirMov,onResolverAlerta}){
+  // tab init deferred below after isLogistica is defined
   const [modal,setModal]=useState(null);
   const [saving,setSaving]=useState(false);
   const isG=user.role==="gerencia";
   const isViewer=user.role==="viewer";
   const isLogistica=user.role==="logistica";
   const canProd=!isViewer&&!isLogistica; // puede manipular produccion
+  const [tab,setTab]=useState(isLogistica?"movimientos":"machines");
 
   // Auto-logout por inactividad (30 min). Viewer (TV) nunca cierra sesion.
   useEffect(()=>{
@@ -496,7 +497,7 @@ function Shell({user,onLogout,orders}){
           onDel={isG&&!isViewer?(r=>{if(window.confirm(`¿Confirmas eliminar la orden #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
           onEdit={o=>!isViewer&&setModal({t:"edit",order:o})}/>}
-        {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onResolver={resolverAlerta}/>}
+        {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onResolver={onResolverAlerta}/>}
         {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG&&!isViewer}
           onDel={isG&&!isViewer?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}/>}
@@ -508,6 +509,8 @@ function Shell({user,onLogout,orders}){
       {modal?.t==="pickItem"    &&<PickItemModal    machineId={modal.machineId} orders={queueOrders} allOrders={orders} user={user} isG={isG} machines={MACHINES} onClose={()=>setModal(null)} onAssign={assignItem}/>}
       {modal?.t==="complete"    &&<CompleteItemModal order={modal.order} item={modal.item} itemIndex={modal.itemIndex} onClose={()=>setModal(null)} onComplete={completeItem} onReturn={returnItemToQueue}/>}
       {modal?.t==="detail"      &&<DetailModal      order={modal.order} onClose={()=>setModal(null)}/>}
+      {modal?.t==="newMov"     &&<NewMovimientoModal user={user} movimientos={movimientos} onClose={()=>setModal(null)} onCreate={onCreateMov}/>}
+      {modal?.t==="recibirMov" &&<RecibirMovimientoModal mov={modal.mov} user={user} onClose={()=>setModal(null)} onRecibir={onRecibirMov}/>}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}*{box-sizing:border-box}`}</style>
     </div>
   );
