@@ -17,7 +17,9 @@ const USERS = {
   "rafael":          { password:"Fox2026*",        name:"Rafael",         role:"gerencia",  sede:"Ambas Sedes" },
   "natalia":         { password:"Fox2026*",        name:"Natalia",        role:"gerencia",  sede:"Ambas Sedes" },
   "jefe.planta":     { password:"Fox2026*",        name:"Jefe de Planta", role:"gerencia",  sede:"Ambas Sedes" },
-  "tv.planta":       { password:"FoxTV2026",        name:"Pantalla Planta", role:"viewer",   sede:"Ambas Sedes" },
+  "tv.planta":       { password:"FoxTV2026",        name:"Pantalla Planta", role:"viewer",      sede:"Ambas Sedes" },
+  "alejandra":       { password:"FoxAle2026*",      name:"Alejandra",      role:"logistica",   sede:"Ambas Sedes" },
+  "granja":          { password:"FoxGranja2026",    name:"La Granja",      role:"vendedora",   sede:"La Granja"   },
 };
 
 const MACHINES = [
@@ -34,6 +36,20 @@ const PRODUCTOS = [
   { id:"eslabonada", label:"Malla Eslabonada", color:"#1d4ed8", bg:"#eff6ff" },
   { id:"pvc",        label:"Malla PVC",        color:"#15803d", bg:"#f0fdf4" },
   { id:"postes",     label:"Postes",           color:"#b45309", bg:"#fffbeb" },
+];
+
+const SEDES = ["Centro","Santa Lucia","La Granja"];
+
+const MOV_PRODUCTOS = [
+  { id:"eslabonada",  label:"Malla Eslabonada",  unidad:"m²",     conDesc:true },
+  { id:"pvc",         label:"Malla PVC",          unidad:"m²",     conDesc:true },
+  { id:"postes",      label:"Postes",             unidad:"unid",   conDesc:true },
+  { id:"tubos",       label:"Tubos",              unidad:"unid",   conDesc:true },
+  { id:"alambrepuas", label:"Alambre de Púas",    unidad:"rollos", conDesc:true },
+  { id:"gallinero",   label:"Malla Gallinero",    unidad:"unid",   conDesc:true  },
+  { id:"pajarito",    label:"Malla Pajarito",     unidad:"unid",   conDesc:true  },
+  { id:"concertina",  label:"Concertina",         unidad:"rollos", conDesc:true },
+  { id:"gaviones",    label:"Gaviones",           unidad:"unid",   conDesc:true  },
 ];
 
 const ABERTURA_SIZES = ['1"','1"1/2','2"','2"1/4','2"1/2'];
@@ -192,6 +208,12 @@ export default function App(){
   const [ready,setReady]=useState(false);
   const [dbErr,setDbErr]=useState(false);
 
+  const [movimientos,setMovimientos]=useState([]);
+  useEffect(()=>{
+    const q2=query(collection(db,"movimientos"),orderBy("timestamp","desc"));
+    return onSnapshot(q2,snap=>setMovimientos(snap.docs.map(d=>d.data())),()=>{});
+  },[]);
+
   useEffect(()=>{
     const q=query(collection(db,"orders"),orderBy("timestamp","desc"));
     return onSnapshot(q,
@@ -281,11 +303,13 @@ function Login({onLogin}){
 
 // ═══ SHELL ═════════════════════════════════════════════════
 function Shell({user,onLogout,orders}){
-  const [tab,setTab]=useState("machines");
+  const [tab,setTab]=useState(isLogistica?"movimientos":"machines");
   const [modal,setModal]=useState(null);
   const [saving,setSaving]=useState(false);
   const isG=user.role==="gerencia";
   const isViewer=user.role==="viewer";
+  const isLogistica=user.role==="logistica";
+  const canProd=!isViewer&&!isLogistica; // puede manipular produccion
 
   // Auto-logout por inactividad (30 min). Viewer (TV) nunca cierra sesion.
   useEffect(()=>{
@@ -366,11 +390,57 @@ function Shell({user,onLogout,orders}){
 
   const removeOrder=async orden=>{ await withSave(()=>deleteDoc(doc(db,"orders",orden))); };
   const editOrder=async(orden,changes)=>{ await withSave(()=>updateDoc(doc(db,"orders",orden),changes)); };
+  const createMovimiento=async(data)=>{
+    const num="MOV-"+String(movimientos.length+1).padStart(3,"0");
+    const id="mov_"+Date.now();
+    const mov={
+      id,numero:num,...data,
+      estado:"enviado",
+      creadoPor:user.username,
+      creadoPorNombre:user.name,
+      timestamp:Date.now(),
+      fechaRecibo:null,
+      recibidoPor:null,
+      alertaDiscrepancia:false,
+      alertaResuelta:false,
+    };
+    await withSave(()=>setDoc(doc(db,"movimientos",id),mov));
+  };
 
+  const recibirMovimiento=async(id,itemsRecibidos)=>{
+    const mov=movimientos.find(m=>m.id===id);
+    if(!mov)return;
+    const hasDiscrep=itemsRecibidos.some((it,i)=>
+      Number(it.cantidadRecibida)!==Number(mov.items[i].cantidadEnviada)
+    );
+    const updatedItems=mov.items.map((it,i)=>({
+      ...it,
+      cantidadRecibida:Number(itemsRecibidos[i].cantidadRecibida),
+      aprobado:true,
+    }));
+    await withSave(()=>updateDoc(doc(db,"movimientos",id),{
+      estado:hasDiscrep?"discrepancia":"recibido",
+      items:updatedItems,
+      fechaRecibo:Date.now(),
+      recibidoPor:user.name,
+      alertaDiscrepancia:hasDiscrep,
+      alertaResuelta:false,
+    }));
+  };
+
+  const resolverAlerta=async(id)=>{
+    if(!isG)return;
+    await withSave(()=>updateDoc(doc(db,"movimientos",id),{alertaResuelta:true,alertaDiscrepancia:false}));
+  };
+
+
+
+  const movPendientes=movimientos.filter(m=>m.estado==="enviado"&&m.destino===user.sede&&!isG&&!isLogistica).length;
   const tabs=[
-    {id:"machines",label:"Máquinas",       count:activeItemCount},
-    {id:"queue",   label:"Cola de Órdenes",count:queueOrders.length},
-    {id:"history", label:"Historial",      count:doneOrders.length},
+    {id:"machines",   label:"Máquinas",        count:activeItemCount},
+    {id:"queue",      label:"Cola de Órdenes", count:queueOrders.length},
+    {id:"history",    label:"Historial",       count:doneOrders.length},
+    {id:"movimientos",label:"🚚 Movimientos",  count:movimientos.filter(m=>m.estado==="enviado"||m.estado==="discrepancia").length},
   ];
 
   return(
@@ -388,7 +458,7 @@ function Shell({user,onLogout,orders}){
             {saving&&<span style={{color:RED,fontSize:14}}>● Guardando...</span>}
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>{user.name}</div>
-              <div style={{fontSize:14,color:isG?"#fbbf24":"#93c5fd"}}>{isG?"Gerencia — Acceso total":`Vendedora · ${user.sede}`}</div>
+              <div style={{fontSize:14,color:isG?"#fbbf24":"#93c5fd"}}>{isG?"Gerencia — Acceso total":isLogistica?"Logística — Movimientos":user.role==="viewer"?"Visualizador":`Vendedora · ${user.sede}`}</div>
             </div>
             <button onClick={onLogout} style={{background:RED,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontSize:14,fontWeight:700,cursor:"pointer"}}>Salir</button>
           </div>
@@ -416,16 +486,17 @@ function Shell({user,onLogout,orders}){
 
       <div style={{maxWidth:1280,margin:"0 auto",padding:16}}>
         {tab==="machines"&&<MachinesTab machines={MACHINES} orders={orders} user={user} isG={isG}
-          onItemClick={(ord,it,idx)=>!isViewer&&setModal({t:"complete",order:ord,item:it,itemIndex:idx})}
-          onCompleteItem={(orden,idx)=>!isViewer&&completeItem(orden,idx)}
-          onAssignFree={mid=>!isViewer&&setModal({t:"pickItem",machineId:mid})}
-          onNew={()=>!isViewer&&setModal({t:"new"})}/>}
+          onItemClick={(ord,it,idx)=>canProd&&setModal({t:"complete",order:ord,item:it,itemIndex:idx})}
+          onCompleteItem={(orden,idx)=>canProd&&completeItem(orden,idx)}
+          onAssignFree={mid=>canProd&&setModal({t:"pickItem",machineId:mid})}
+          onNew={()=>canProd&&setModal({t:"new"})}/>}
         {tab==="queue"&&<QueueTab orders={queueOrders} allOrders={orders} isG={isG&&!isViewer}
           onNew={()=>!isViewer&&setModal({t:"new"})}
           onAssignOrder={o=>!isViewer&&setModal({t:"assignOrder",order:o})}
           onDel={isG&&!isViewer?(r=>{if(window.confirm(`¿Confirmas eliminar la orden #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
           onEdit={o=>!isViewer&&setModal({t:"edit",order:o})}/>}
+        {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onResolver={resolverAlerta}/>}
         {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG&&!isViewer}
           onDel={isG&&!isViewer?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}/>}
@@ -464,6 +535,302 @@ function ProductoBadges({items}){
 }
 
 // ═══ PESTAÑA MÁQUINAS ══════════════════════════════════════
+// ═══ MOVIMIENTOS TAB ═══════════════════════════════════════
+const MOV_ESTADOS = {
+  enviado:     { label:"En tránsito", color:"#d97706", bg:"#fffbeb", border:"#fde68a" },
+  recibido:    { label:"Recibido",    color:"#15803d", bg:"#f0fdf4", border:"#86efac" },
+  discrepancia:{ label:"Discrepancia",color:"#dc2626", bg:"#fef2f2", border:"#fecaca" },
+};
+
+function MovimientosTab({movimientos,user,isG,onNew,onRecibir,onResolver}){
+  const [filtro,setFiltro]=useState("todos");
+  const filtrados=filtro==="todos"?movimientos:movimientos.filter(m=>m.estado===filtro);
+  const pendRecibir=movimientos.filter(m=>m.estado==="enviado"&&(isG||m.destino===user.sede));
+  const discrepancias=movimientos.filter(m=>m.estado==="discrepancia"&&!m.alertaResuelta);
+
+  return(
+    <div>
+      {/* Alertas discrepancia */}
+      {discrepancias.length>0&&(
+        <div style={{background:"#fef2f2",border:"1.5px solid #fecaca",borderRadius:12,padding:"12px 18px",marginBottom:18,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:18}}>🔴</span>
+            <div>
+              <div style={{fontWeight:700,color:"#dc2626",fontSize:15}}>⚠ {discrepancias.length} envío(s) con discrepancia</div>
+              <div style={{fontSize:13,color:"#b91c1c"}}>Las cantidades recibidas no coinciden con las enviadas.</div>
+            </div>
+          </div>
+          {isG&&<div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {discrepancias.map(m=>(
+              <button key={m.id} onClick={()=>onResolver(m.id)}
+                style={{background:"#dc2626",border:"none",borderRadius:8,padding:"6px 14px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                Resolver #{m.numero}
+              </button>
+            ))}
+          </div>}
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {["todos","enviado","recibido","discrepancia"].map(f=>(
+            <button key={f} onClick={()=>setFiltro(f)}
+              style={{background:filtro===f?"#1e293b":"#f8fafc",border:"1.5px solid",borderColor:filtro===f?"#1e293b":"#e2e8f0",borderRadius:8,padding:"5px 14px",cursor:"pointer",fontSize:13,fontWeight:600,color:filtro===f?"#fff":"#64748b"}}>
+              {f==="todos"?"Todos":MOV_ESTADOS[f]?.label||f}
+              {f!=="todos"&&<span style={{marginLeft:5,background:filtro===f?"rgba(255,255,255,.2)":"#e2e8f0",borderRadius:999,padding:"1px 6px",fontSize:12}}>
+                {movimientos.filter(m=>m.estado===f).length}
+              </span>}
+            </button>
+          ))}
+        </div>
+        <button onClick={onNew} style={{background:RED,border:"none",color:"#fff",borderRadius:10,padding:"8px 18px",fontSize:14,fontWeight:700,cursor:"pointer"}}>+ Nuevo Envío</button>
+      </div>
+
+      {/* Lista */}
+      {filtrados.length===0?(
+        <div style={{textAlign:"center",padding:"48px 0",color:"#94a3b8",fontSize:15}}>No hay movimientos {filtro!=="todos"?`con estado "${MOV_ESTADOS[filtro]?.label||filtro}"`:""}</div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {filtrados.map(m=>{
+            const est=MOV_ESTADOS[m.estado]||MOV_ESTADOS.enviado;
+            const puedoRecibir=(isG||m.destino===user.sede)&&m.estado==="enviado";
+            return(
+              <div key={m.id} style={{background:"#fff",borderRadius:14,border:`1.5px solid ${m.alertaDiscrepancia&&!m.alertaResuelta?"#fca5a5":est.border}`,padding:"16px 20px",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
+                <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",flexWrap:"wrap",gap:8,marginBottom:12}}>
+                  <div>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                      <span style={{fontSize:18,fontWeight:900,color:"#1e293b"}}>{m.numero}</span>
+                      <span style={{background:est.bg,color:est.color,border:`1px solid ${est.border}`,borderRadius:999,padding:"2px 10px",fontSize:12,fontWeight:700}}>{est.label}</span>
+                      {m.alertaDiscrepancia&&!m.alertaResuelta&&<span style={{background:"#fef2f2",color:"#dc2626",border:"1px solid #fecaca",borderRadius:999,padding:"2px 10px",fontSize:12,fontWeight:700}}>⚠ Discrepancia</span>}
+                    </div>
+                    <div style={{fontSize:14,color:"#475569"}}>
+                      <strong>{m.origen}</strong> → <strong>{m.destino}</strong>
+                      <span style={{color:"#94a3b8",marginLeft:10}}>{fmtDate(m.timestamp)}</span>
+                    </div>
+                    <div style={{fontSize:13,color:"#94a3b8",marginTop:2}}>Creado por {m.creadoPorNombre}</div>
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    {puedoRecibir&&(
+                      <button onClick={()=>onRecibir(m)}
+                        style={{background:"#16a34a",border:"none",color:"#fff",borderRadius:9,padding:"7px 16px",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                        ✓ Registrar Recibo
+                      </button>
+                    )}
+                    {m.estado==="recibido"&&m.fechaRecibo&&(
+                      <span style={{fontSize:12,color:"#94a3b8",alignSelf:"center"}}>Recibido: {fmtDate(m.fechaRecibo)}</span>
+                    )}
+                  </div>
+                </div>
+                {/* Items table */}
+                <div style={{background:"#f8fafc",borderRadius:10,overflow:"hidden",border:"1px solid #e2e8f0"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+                    <thead>
+                      <tr style={{background:"#f1f5f9"}}>
+                        <th style={{padding:"7px 12px",textAlign:"left",color:"#64748b",fontWeight:700}}>Producto</th>
+                        <th style={{padding:"7px 12px",textAlign:"left",color:"#64748b",fontWeight:700}}>Descripción</th>
+                        <th style={{padding:"7px 12px",textAlign:"center",color:"#64748b",fontWeight:700}}>Enviado</th>
+                        {m.estado!=="enviado"&&<th style={{padding:"7px 12px",textAlign:"center",color:"#64748b",fontWeight:700}}>Recibido</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {m.items.map((it,i)=>{
+                        const diff=m.estado!=="enviado"?Number(it.cantidadRecibida)-Number(it.cantidadEnviada):0;
+                        return(
+                          <tr key={i} style={{borderTop:"1px solid #e2e8f0",background:diff<0?"#fef9f9":diff>0?"#f0fdf4":"#fff"}}>
+                            <td style={{padding:"7px 12px",fontWeight:600,color:"#334155"}}>{MOV_PRODUCTOS.find(p=>p.id===it.producto)?.label||it.producto}</td>
+                            <td style={{padding:"7px 12px",color:"#64748b"}}>{it.descripcion||"—"}</td>
+                            <td style={{padding:"7px 12px",textAlign:"center",fontWeight:700}}>{it.cantidadEnviada} {it.unidad}</td>
+                            {m.estado!=="enviado"&&<td style={{padding:"7px 12px",textAlign:"center",fontWeight:700,color:diff<0?"#dc2626":diff>0?"#16a34a":"#16a34a"}}>
+                              {it.cantidadRecibida} {it.unidad}
+                              {diff!==0&&<span style={{fontSize:11,marginLeft:4}}>{diff>0?`+${diff}`:diff}</span>}
+                            </td>}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {m.notas&&<div style={{marginTop:8,fontSize:13,color:"#64748b"}}>📝 {m.notas}</div>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══ NEW MOVIMIENTO MODAL ═══════════════════════════════════
+function NewMovimientoModal({user,onClose,onCreate}){
+  const [origen,setOrigen]=useState(user.sede==="Ambas Sedes"?"Centro":user.sede);
+  const [destino,setDestino]=useState("");
+  const [items,setItems]=useState([{producto:"",descripcion:"",cantidadEnviada:"",unidad:"rollos"}]);
+  const [notas,setNotas]=useState("");
+  const [err,setErr]=useState("");
+  const [loading,setLoading]=useState(false);
+
+  const addItem=()=>setItems(p=>[...p,{producto:"",descripcion:"",cantidadEnviada:"",unidad:"rollos"}]);
+  const removeItem=i=>setItems(p=>p.filter((_,idx)=>idx!==i));
+  const updateItem=(i,k,v)=>setItems(p=>p.map((x,idx)=>idx===i?{...x,[k]:v}:x));
+
+  const submit=async()=>{
+    if(!destino){setErr("Selecciona el destino");return;}
+    if(destino===origen){setErr("Origen y destino no pueden ser iguales");return;}
+    for(const it of items){
+      if(!it.producto){setErr("Selecciona el producto en todos los items");return;}
+      if(!it.cantidadEnviada||Number(it.cantidadEnviada)<=0){setErr("Ingresa la cantidad enviada en todos los items");return;}
+    }
+    setLoading(true);
+    await onCreate({
+      origen,destino,
+      items:items.map(it=>({...it,cantidadEnviada:Number(it.cantidadEnviada),cantidadRecibida:null,aprobado:false})),
+      notas:notas.trim(),
+    });
+    setLoading(false);onClose();
+  };
+
+  return(
+    <Modal title="Nuevo Envío de Mercancía 🚚" onClose={onClose} maxWidth={600}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+        <div>
+          <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Origen *</label>
+          <select style={inp} value={origen} onChange={e=>setOrigen(e.target.value)}>
+            {SEDES.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Destino *</label>
+          <select style={inp} value={destino} onChange={e=>setDestino(e.target.value)}>
+            <option value="">Seleccionar...</option>
+            {SEDES.filter(s=>s!==origen).map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos a enviar ({items.length})</label>
+        <button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"5px 12px",cursor:"pointer",color:GREEN,fontSize:13,fontWeight:700}}>+ Agregar</button>
+      </div>
+
+      {items.map((it,i)=>{
+        const prod=MOV_PRODUCTOS.find(p=>p.id===it.producto);
+        return(
+          <div key={i} style={{background:"#f8fafc",borderRadius:10,padding:"12px",marginBottom:10,border:"1px solid #e2e8f0"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <span style={{fontSize:13,fontWeight:700,color:"#64748b"}}>Item {i+1}</span>
+              {items.length>1&&<button onClick={()=>removeItem(i)} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:13}}>✕ Quitar</button>}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+              <div>
+                <label style={{fontSize:12,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Producto *</label>
+                <select style={{...inp,fontSize:13}} value={it.producto} onChange={e=>{
+                  const p=MOV_PRODUCTOS.find(x=>x.id===e.target.value);
+                  updateItem(i,"producto",e.target.value);
+                  if(p) updateItem(i,"unidad",p.unidad);
+                }}>
+                  <option value="">Seleccionar...</option>
+                  {MOV_PRODUCTOS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{fontSize:12,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Cantidad ({it.unidad||"unid"}) *</label>
+                <input style={{...inp,fontSize:13}} type="number" min="1" value={it.cantidadEnviada} onChange={e=>updateItem(i,"cantidadEnviada",e.target.value)} placeholder="0"/>
+              </div>
+            </div>
+            {prod?.conDesc&&(
+              <div>
+                <label style={{fontSize:12,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Descripción</label>
+                <input style={{...inp,fontSize:13}} value={it.descripcion} onChange={e=>updateItem(i,"descripcion",e.target.value)} placeholder="Calibre, medida, referencia..."/>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      <div style={{marginBottom:14}}>
+        <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Notas</label>
+        <input style={inp} value={notas} onChange={e=>setNotas(e.target.value)} placeholder="Observaciones opcionales..."/>
+      </div>
+
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:13,marginBottom:12}}>⚠ {err}</div>}
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
+        <button onClick={submit} disabled={loading} style={{...btnR,flex:2}}>{loading?"Registrando...":"Registrar Envío 🚚"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ═══ RECIBIR MOVIMIENTO MODAL ═══════════════════════════════
+function RecibirMovimientoModal({mov,user,onClose,onRecibir}){
+  const [recibidos,setRecibidos]=useState(
+    mov.items.map(it=>({...it,cantidadRecibida:String(it.cantidadEnviada)}))
+  );
+  const [loading,setLoading]=useState(false);
+
+  const update=(i,v)=>setRecibidos(p=>p.map((x,idx)=>idx===i?{...x,cantidadRecibida:v}:x));
+
+  const submit=async()=>{
+    setLoading(true);
+    await onRecibir(mov.id,recibidos);
+    setLoading(false);onClose();
+  };
+
+  const hasDiscrepancia=recibidos.some((r,i)=>Number(r.cantidadRecibida)!==Number(mov.items[i].cantidadEnviada));
+
+  return(
+    <Modal title={`Recibir Envío ${mov.numero} 📦`} onClose={onClose} maxWidth={540}>
+      <div style={{marginBottom:14,background:"#f8fafc",borderRadius:10,padding:"10px 14px",fontSize:13,color:"#475569"}}>
+        <strong>{mov.origen}</strong> → <strong>{mov.destino}</strong>
+        <span style={{marginLeft:12,color:"#94a3b8"}}>{fmtDate(mov.timestamp)}</span>
+      </div>
+      <p style={{fontSize:13,color:"#64748b",marginBottom:14}}>Verifica las cantidades recibidas. Si hay diferencia, quedará registrada como discrepancia.</p>
+
+      {mov.items.map((it,i)=>{
+        const prod=MOV_PRODUCTOS.find(p=>p.id===it.producto);
+        const diff=Number(recibidos[i]?.cantidadRecibida||0)-Number(it.cantidadEnviada);
+        return(
+          <div key={i} style={{background:"#fff",border:`1.5px solid ${diff<0?"#fecaca":diff>0?"#86efac":"#e2e8f0"}`,borderRadius:10,padding:"12px 14px",marginBottom:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+              <div>
+                <div style={{fontWeight:700,fontSize:14,color:"#1e293b"}}>{prod?.label||it.producto}</div>
+                {it.descripcion&&<div style={{fontSize:12,color:"#94a3b8"}}>{it.descripcion}</div>}
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:12,color:"#94a3b8"}}>Enviado</div>
+                <div style={{fontWeight:800,fontSize:16}}>{it.cantidadEnviada} {it.unidad}</div>
+              </div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <label style={{fontSize:13,fontWeight:600,color:"#64748b",whiteSpace:"nowrap"}}>Cantidad recibida:</label>
+              <input
+                style={{...inp,fontSize:14,fontWeight:700,maxWidth:100,textAlign:"center",borderColor:diff<0?"#fca5a5":diff>0?"#86efac":"#e2e8f0"}}
+                type="number" min="0"
+                value={recibidos[i]?.cantidadRecibida||""}
+                onChange={e=>update(i,e.target.value)}
+              />
+              <span style={{fontSize:12,color:"#94a3b8"}}>{it.unidad}</span>
+              {diff!==0&&<span style={{fontSize:13,fontWeight:700,color:diff<0?"#dc2626":"#16a34a"}}>{diff>0?"+":""}{diff}</span>}
+            </div>
+          </div>
+        );
+      })}
+
+      {hasDiscrepancia&&(
+        <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"10px 14px",marginBottom:12,fontSize:13,color:"#dc2626",fontWeight:600}}>
+          ⚠ Hay diferencias en las cantidades. Se generará una alerta para gerencia.
+        </div>
+      )}
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
+        <button onClick={submit} disabled={loading} style={{...btnR,flex:2}}>{loading?"Registrando...":"Confirmar Recibo"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+
 function MachinesTab({machines,orders,user,isG,onItemClick,onCompleteItem,onAssignFree,onNew}){
   const canRename=user.username==="natalia";
   const [names,setNames]=useState(()=>Object.fromEntries(machines.map(m=>[m.id,m.name])));
