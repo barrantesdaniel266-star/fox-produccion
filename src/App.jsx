@@ -434,6 +434,13 @@ function Shell({user,onLogout,orders,movimientos=[]}){
     await withSave(()=>updateDoc(doc(db,"movimientos",id),{alertaResuelta:true,alertaDiscrepancia:false}));
   };
 
+  const editarMovimiento=async(id,nuevosDatos)=>{
+    await withSave(()=>updateDoc(doc(db,"movimientos",id),{
+      items:nuevosDatos.items,
+      notas:nuevosDatos.notas,
+    }));
+  };
+
 
 
   const movPendientes=movimientos.filter(m=>m.estado==="enviado"&&m.destino===user.sede&&!isG&&!isLogistica).length;
@@ -497,7 +504,7 @@ function Shell({user,onLogout,orders,movimientos=[]}){
           onDel={isG&&!isViewer?(r=>{if(window.confirm(`¿Confirmas eliminar la orden #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
           onEdit={o=>!isViewer&&setModal({t:"edit",order:o})}/>}
-        {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onResolver={resolverAlerta}/>}
+        {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onEditar={m=>setModal({t:"editarMov",mov:m})} onResolver={resolverAlerta}/>}
         {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG&&!isViewer}
           onDel={isG&&!isViewer?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}/>}
@@ -511,6 +518,7 @@ function Shell({user,onLogout,orders,movimientos=[]}){
       {modal?.t==="detail"      &&<DetailModal      order={modal.order} onClose={()=>setModal(null)}/>}
       {modal?.t==="newMov"     &&<NewMovimientoModal user={user} movimientos={movimientos} onClose={()=>setModal(null)} onCreate={createMovimiento}/>}
       {modal?.t==="recibirMov" &&<RecibirMovimientoModal mov={modal.mov} user={user} onClose={()=>setModal(null)} onRecibir={recibirMovimiento}/>}
+      {modal?.t==="editarMov" &&<EditarMovimientoModal mov={modal.mov} onClose={()=>setModal(null)} onSave={editarMovimiento}/>}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}*{box-sizing:border-box}`}</style>
     </div>
   );
@@ -545,7 +553,8 @@ const MOV_ESTADOS = {
   discrepancia:{ label:"Discrepancia",color:"#dc2626", bg:"#fef2f2", border:"#fecaca" },
 };
 
-function MovimientosTab({movimientos,user,isG,onNew,onRecibir,onResolver}){
+function MovimientosTab({movimientos,user,isG,onNew,onRecibir,onEditar,onResolver}){
+  const isLogistica=user.role==="logistica";
   const [filtro,setFiltro]=useState("todos");
   const filtrados=filtro==="todos"?movimientos:movimientos.filter(m=>m.estado===filtro);
   const pendRecibir=movimientos.filter(m=>m.estado==="enviado"&&(isG||m.destino===user.sede));
@@ -618,6 +627,12 @@ function MovimientosTab({movimientos,user,isG,onNew,onRecibir,onResolver}){
                       <button onClick={()=>onRecibir(m)}
                         style={{background:"#16a34a",border:"none",color:"#fff",borderRadius:9,padding:"7px 16px",fontSize:13,fontWeight:700,cursor:"pointer"}}>
                         ✓ Registrar Recibo
+                      </button>
+                    )}
+                    {m.estado==="enviado"&&(isG||isLogistica)&&(
+                      <button onClick={()=>onEditar(m)}
+                        style={{background:"#eff6ff",border:"1px solid #bfdbfe",color:"#1d4ed8",borderRadius:9,padding:"7px 14px",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                        ✏ Editar
                       </button>
                     )}
                     {m.estado==="recibido"&&m.fechaRecibo&&(
@@ -828,6 +843,89 @@ function RecibirMovimientoModal({mov,user,onClose,onRecibir}){
       <div style={{display:"flex",gap:10}}>
         <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
         <button onClick={submit} disabled={loading} style={{...btnR,flex:2}}>{loading?"Registrando...":"Confirmar Recibo"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+
+// ═══ EDITAR MOVIMIENTO MODAL ════════════════════════════════
+function EditarMovimientoModal({mov,onClose,onSave}){
+  const [items,setItems]=useState(mov.items.map(it=>({...it})));
+  const [notas,setNotas]=useState(mov.notas||"");
+  const [loading,setLoading]=useState(false);
+  const [err,setErr]=useState("");
+
+  const updateItem=(i,k,v)=>setItems(p=>p.map((x,idx)=>idx===i?{...x,[k]:v}:x));
+  const addItem=()=>setItems(p=>[...p,{producto:"",descripcion:"",cantidadEnviada:"",unidad:"unid",cantidadRecibida:null,aprobado:false}]);
+  const removeItem=i=>setItems(p=>p.filter((_,idx)=>idx!==i));
+
+  const submit=async()=>{
+    for(const it of items){
+      if(!it.producto){setErr("Selecciona el producto en todos los items");return;}
+      if(!it.cantidadEnviada||Number(it.cantidadEnviada)<=0){setErr("Ingresa la cantidad en todos los items");return;}
+    }
+    setLoading(true);
+    await onSave(mov.id,{
+      items:items.map(it=>({...it,cantidadEnviada:Number(it.cantidadEnviada)})),
+      notas:notas.trim(),
+    });
+    setLoading(false);onClose();
+  };
+
+  return(
+    <Modal title={`Editar Envío ${mov.numero} ✏`} onClose={onClose} maxWidth={600}>
+      <div style={{marginBottom:12,background:"#f8fafc",borderRadius:10,padding:"10px 14px",fontSize:13,color:"#475569"}}>
+        <strong>{mov.origen}</strong> → <strong>{mov.destino}</strong>
+      </div>
+
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.length})</label>
+        <button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"5px 12px",cursor:"pointer",color:GREEN,fontSize:13,fontWeight:700}}>+ Agregar</button>
+      </div>
+
+      {items.map((it,i)=>{
+        const prod=MOV_PRODUCTOS.find(p=>p.id===it.producto);
+        return(
+          <div key={i} style={{background:"#f8fafc",borderRadius:10,padding:"12px",marginBottom:10,border:"1px solid #e2e8f0"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <span style={{fontSize:13,fontWeight:700,color:"#64748b"}}>Item {i+1}</span>
+              {items.length>1&&<button onClick={()=>removeItem(i)} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:13}}>✕ Quitar</button>}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+              <div>
+                <label style={{fontSize:12,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Producto *</label>
+                <select style={{...inp,fontSize:13}} value={it.producto} onChange={e=>{
+                  const p=MOV_PRODUCTOS.find(x=>x.id===e.target.value);
+                  updateItem(i,"producto",e.target.value);
+                  if(p) updateItem(i,"unidad",p.unidad);
+                }}>
+                  <option value="">Seleccionar...</option>
+                  {MOV_PRODUCTOS.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{fontSize:12,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Cantidad ({it.unidad||"unid"}) *</label>
+                <input style={{...inp,fontSize:13}} type="number" min="1" value={it.cantidadEnviada} onChange={e=>updateItem(i,"cantidadEnviada",e.target.value)} placeholder="0"/>
+              </div>
+            </div>
+            <div>
+              <label style={{fontSize:12,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Descripción</label>
+              <input style={{...inp,fontSize:13}} value={it.descripcion||""} onChange={e=>updateItem(i,"descripcion",e.target.value)} placeholder="Calibre, medida, referencia..."/>
+            </div>
+          </div>
+        );
+      })}
+
+      <div style={{marginBottom:14}}>
+        <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Notas</label>
+        <input style={inp} value={notas} onChange={e=>setNotas(e.target.value)} placeholder="Observaciones opcionales..."/>
+      </div>
+
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:13,marginBottom:12}}>⚠ {err}</div>}
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
+        <button onClick={submit} disabled={loading} style={{...btnR,flex:2}}>{loading?"Guardando...":"Guardar Cambios"}</button>
       </div>
     </Modal>
   );
