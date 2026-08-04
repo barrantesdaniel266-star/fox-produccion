@@ -69,6 +69,34 @@ const calcM2 = (ancho,alto) => { const v=parseFloat(ancho)*parseFloat(alto); ret
 const labelProducto = id => { const p=PRODUCTOS.find(x=>x.id===id); return p?p.label:id||""; };
 const infoProducto  = id => PRODUCTOS.find(x=>x.id===id)||{color:"#64748b",bg:"#f1f5f9",label:id};
 
+// ¿La orden es de inventario/stock? (en esos casos se ignoran costo y precio de venta)
+const esStockCliente = cliente =>
+  String(cliente||"").toLowerCase().includes("stock") ||
+  String(cliente||"").toLowerCase().includes("inventario");
+
+// Formatea valores de dinero en pesos colombianos
+const fmtMoney = v => {
+  const n=Number(v);
+  if(v===""||v==null||isNaN(n)) return "—";
+  return "$"+n.toLocaleString("es-CO");
+};
+
+// Estados de entrega (independientes del estado de producción)
+const ENTREGA_ESTADOS = {
+  pendiente: { label:"Pendiente de entrega", short:"Pendiente", color:"#b45309", bg:"#fffbeb", border:"#fde68a" },
+  entregado: { label:"Entregado",            short:"Entregado", color:"#15803d", bg:"#f0fdf4", border:"#86efac" },
+};
+const entregaInfo = o => ENTREGA_ESTADOS[o?.estadoEntrega==="entregado"?"entregado":"pendiente"];
+
+// Construye una entrada de log de cambios
+const makeLog = (user,accion,detalle="") => ({
+  ts: Date.now(),
+  usuario: user?.name || user?.username || "—",
+  username: user?.username || "",
+  accion,
+  detalle,
+});
+
 // Normaliza items y agrega status/machineId por item (compat. retroactiva)
 const normalizeItems = o => {
   const baseStatus = o.status==="completed"?"completed":o.status==="active"?"active":"queue";
@@ -142,19 +170,21 @@ const resumenItem = it => {
   return "";
 };
 
-const exportExcel = rows => {
+const exportExcel = (rows,includeCost=false) => {
   const stat={queue:"En Cola",active:"En Produccion",completed:"Completada"};
   // Usar tabulacion como separador - Excel lo reconoce universalmente sin importar configuracion regional
   const TAB="\t";
   // Limpiar el valor: quitar tabs y saltos de linea que rompen el formato
   const clean=v=>String(v==null?"":v).replace(/\t/g," ").replace(/\r?\n/g," ").trim();
+  const money=v=>(v===""||v==null||isNaN(Number(v)))?"":Number(v);
 
   const headers=[
-    "No.Orden","Cliente","Sede","Creado por","Estado Orden",
-    "Fecha Creacion","Fecha Completado",
+    "No.Orden","Cliente","Remision","Sede","Creado por","Estado Orden",
+    "Estado Entrega","Fecha Entrega","Fecha Creacion","Fecha Completado",
     "Producto","Estado Producto","Maquina",
     "M2","Ancho(m)","Alto(m)","Abertura",
-    "Calibre","Cal.Interno","Color","Grosor","Largo(m)","Cantidad"
+    "Calibre","Cal.Interno","Color","Grosor","Largo(m)","Cantidad",
+    "Precio Venta", ...(includeCost?["Costo"]:[])
   ];
 
   const data=[];
@@ -163,17 +193,21 @@ const exportExcel = rows => {
     const est=stat[o.status]||o.status||"";
     const fc=fmtDate(o.timestamp)||"";
     const fcomp=o.completedAt?fmtDate(o.completedAt):fmtDate(normalizeItems(o).map(it=>it.completedAt).filter(Boolean).sort((a,b)=>b-a)[0])||"";
+    const estEnt=o.estadoEntrega==="entregado"?"Entregado":"Pendiente";
+    const fEnt=o.fechaEntrega?fmtDate(o.fechaEntrega):"";
+    const pre=[o.orden,o.cliente||"",o.remision||"",o.sede||"",o.vendedoraName||"",est,estEnt,fEnt,fc,fcomp];
     if(items.length===0){
-      data.push([o.orden,o.cliente,o.sede,o.vendedoraName,est,fc,fcomp,"","","","","","","","","","","","",""]);
+      data.push([...pre,"","","","","","","","","","","","","",...(includeCost?[""]:[])]);
     } else {
       // Repetir datos de la orden en CADA producto — sin gaps
       items.forEach(it=>{
         data.push([
-          o.orden, o.cliente||"", o.sede||"", o.vendedoraName||"", est, fc, fcomp,
+          ...pre,
           labelProducto(it.producto)||"", stat[it.status]||it.status||"", it.machineLabel||"",
           it.metros||"", it.ancho||"", it.alto||"", it.abertura||"",
           it.calibre||"", it.calibreInterno||"", it.color||"",
           it.grosor||"", it.largo||"", it.cantidad||"",
+          money(it.precioVenta), ...(includeCost?[money(it.costo)]:[]),
         ]);
       });
     }
@@ -332,13 +366,46 @@ function Shell({user,onLogout,orders,movimientos=[]}){
 
   const withSave=async fn=>{setSaving(true);try{await fn();}catch(e){alert("Error al guardar: "+e.message);}finally{setSaving(false);}};
 
+  // Devuelve el arreglo de logs de una orden + nuevas entradas
+  const withLogs=(o,...entries)=>[...(Array.isArray(o?.logs)?o.logs:[]),...entries];
+
   const createOrder=async d=>{
     if(orders.find(o=>o.orden===d.orden)) return "Ya existe una orden con este número";
     await withSave(()=>setDoc(doc(db,"orders",d.orden),{
-      ...d,vendedora:user.username,vendedoraName:user.name,
+      ...d,
+      remision:d.remision||"",
+      vendedora:user.username,vendedoraName:user.name,
       status:"queue",timestamp:Date.now(),completedAt:null,
+      estadoEntrega:"pendiente",fechaEntrega:null,
+      logs:[makeLog(user,"Creó la orden",d.remision?`Remisión: ${d.remision}`:"")],
     }));
     return null;
+  };
+
+  // Edición ligera de nombre + remisión (disponible para todos, con log)
+  const quickEditOrder=async(orden,{cliente,remision})=>{
+    const o=orders.find(x=>String(x.orden)===String(orden));
+    if(!o) return;
+    const cambios=[];
+    if((o.cliente||"")!==(cliente||"")) cambios.push(`Cliente: "${o.cliente||"—"}" → "${cliente||"—"}"`);
+    if((o.remision||"")!==(remision||"")) cambios.push(`Remisión: "${o.remision||"—"}" → "${remision||"—"}"`);
+    if(cambios.length===0) return;
+    await withSave(()=>updateDoc(doc(db,"orders",String(orden)),{
+      cliente,remision,
+      logs:withLogs(o,makeLog(user,"Editó datos de la orden",cambios.join(" · "))),
+    }));
+  };
+
+  // Marca la entrega (entregado / pendiente) con fecha y log
+  const setEntrega=async(orden,estado)=>{
+    const o=orders.find(x=>String(x.orden)===String(orden));
+    if(!o) return;
+    const entregado=estado==="entregado";
+    await withSave(()=>updateDoc(doc(db,"orders",String(orden)),{
+      estadoEntrega:entregado?"entregado":"pendiente",
+      fechaEntrega:entregado?Date.now():null,
+      logs:withLogs(o,makeLog(user,entregado?"Marcó como entregado":"Revirtió entrega")),
+    }));
   };
 
   const assignItem=async(orden,itemIndex,machineId)=>{
@@ -390,7 +457,13 @@ function Shell({user,onLogout,orders,movimientos=[]}){
   };
 
   const removeOrder=async orden=>{ await withSave(()=>deleteDoc(doc(db,"orders",orden))); };
-  const editOrder=async(orden,changes)=>{ await withSave(()=>updateDoc(doc(db,"orders",orden),changes)); };
+  const editOrder=async(orden,changes)=>{
+    const o=orders.find(x=>String(x.orden)===String(orden));
+    await withSave(()=>updateDoc(doc(db,"orders",String(orden)),{
+      ...changes,
+      logs:withLogs(o,makeLog(user,"Editó la orden (productos/datos)")),
+    }));
+  };
   const createMovimiento=async(data)=>{
     const num="MOV-"+String(movimientos.length+1).padStart(3,"0");
     const id="mov_"+Date.now();
@@ -503,19 +576,27 @@ function Shell({user,onLogout,orders,movimientos=[]}){
           onAssignOrder={o=>!isViewer&&setModal({t:"assignOrder",order:o})}
           onDel={isG&&!isViewer?(r=>{if(window.confirm(`¿Confirmas eliminar la orden #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
-          onEdit={o=>!isViewer&&setModal({t:"edit",order:o})}/>}
+          onQuickEdit={!isViewer?(o=>setModal({t:"quickEdit",order:o})):null}
+          canFullEdit={canProd}
+          onEdit={o=>canProd&&setModal({t:"edit",order:o})}/>}
         {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onEditar={m=>setModal({t:"editarMov",mov:m})} onResolver={resolverAlerta}/>}
         {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG&&!isViewer}
           onDel={isG&&!isViewer?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
-          onDetail={o=>setModal({t:"detail",order:o})}/>}
+          onDetail={o=>setModal({t:"detail",order:o})}
+          onQuickEdit={!isViewer?(o=>setModal({t:"quickEdit",order:o})):null}
+          onSetEntrega={!isViewer?setEntrega:null}/>}
       </div>
 
       {modal?.t==="new"         &&<NewOrderModal    user={user} orders={orders} onClose={()=>setModal(null)} onCreate={createOrder}/>}
-      {modal?.t==="edit"        &&<EditOrderModal   order={modal.order} onClose={()=>setModal(null)} onSave={editOrder}/>}
+      {modal?.t==="edit"        &&<EditOrderModal   order={modal.order} isG={isG} onClose={()=>setModal(null)} onSave={editOrder}/>}
+      {modal?.t==="quickEdit"   &&<QuickEditModal   order={modal.order} onClose={()=>setModal(null)} onSave={quickEditOrder}/>}
       {modal?.t==="assignOrder" &&<AssignOrderModal order={modal.order} allOrders={orders} machines={MACHINES} user={user} isG={isG} onClose={()=>setModal(null)} onAssign={assignItem} onAssignMultiple={assignMultipleItems}/>}
       {modal?.t==="pickItem"    &&<PickItemModal    machineId={modal.machineId} orders={queueOrders} allOrders={orders} user={user} isG={isG} machines={MACHINES} onClose={()=>setModal(null)} onAssign={assignItem}/>}
       {modal?.t==="complete"    &&<CompleteItemModal order={modal.order} item={modal.item} itemIndex={modal.itemIndex} onClose={()=>setModal(null)} onComplete={completeItem} onReturn={returnItemToQueue}/>}
-      {modal?.t==="detail"      &&<DetailModal      order={modal.order} onClose={()=>setModal(null)}/>}
+      {modal?.t==="detail"      &&<DetailModal      order={orders.find(o=>String(o.orden)===String(modal.order.orden))||modal.order} isG={isG}
+          onClose={()=>setModal(null)}
+          onQuickEdit={!isViewer?(o=>setModal({t:"quickEdit",order:o})):null}
+          onSetEntrega={!isViewer?setEntrega:null}/>}
       {modal?.t==="newMov"     &&<NewMovimientoModal user={user} movimientos={movimientos} onClose={()=>setModal(null)} onCreate={createMovimiento}/>}
       {modal?.t==="recibirMov" &&<RecibirMovimientoModal mov={modal.mov} user={user} onClose={()=>setModal(null)} onRecibir={recibirMovimiento}/>}
       {modal?.t==="editarMov" &&<EditarMovimientoModal mov={modal.mov} onClose={()=>setModal(null)} onSave={editarMovimiento}/>}
@@ -1108,7 +1189,7 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
 }
 
 // ═══ COLA DE ÓRDENES ═══════════════════════════════════════
-function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdit}){
+function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdit,onQuickEdit,canFullEdit}){
   const [q,setQ]=useState("");
   const fil=orders.filter(o=>String(o.orden).toLowerCase().includes(q.toLowerCase())||o.cliente.toLowerCase().includes(q.toLowerCase()));
   return(
@@ -1143,7 +1224,7 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
                       {listos>0&&<span style={{background:"#f0fdf4",color:"#15803d",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{listos} listos</span>}
                       <span style={{color:"#94a3b8",fontSize:14}}>{o.sede}</span>
                     </div>
-                    <div style={{fontWeight:600,color:"#475569",fontSize:14,marginBottom:6}}>{o.cliente}</div>
+                    <div style={{fontWeight:600,color:"#475569",fontSize:14,marginBottom:6}}>{o.cliente}{o.remision?<span style={{color:"#94a3b8",fontWeight:500}}> · Rem: {o.remision}</span>:null}</div>
                     {/* Items de la orden con su estado individual */}
                     <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:4}}>
                       {items.map((it,i)=>{
@@ -1163,7 +1244,8 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
                   <div style={{display:"flex",gap:6,flexShrink:0,flexDirection:"column",alignItems:"stretch"}}>
                     {enCola>0&&<button onClick={()=>onAssignOrder(o)} style={{...btnR,padding:"7px 14px",fontSize:14,whiteSpace:"nowrap"}}>Asignar productos</button>}
                     <button onClick={()=>onDetail(o)} style={{...btnS,padding:"7px 10px",fontSize:14}}>Ver detalle</button>
-                    <button onClick={()=>onEdit(o)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#0369a1",fontSize:14,fontWeight:600}}>Editar</button>
+                    {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#4338ca",fontSize:14,fontWeight:600}}>Editar datos</button>}
+                    {canFullEdit&&onEdit&&<button onClick={()=>onEdit(o)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#0369a1",fontSize:14,fontWeight:600}}>Editar productos</button>}
                     {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
                   </div>
                 </div>
@@ -1177,7 +1259,7 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
 }
 
 // ═══ HISTORIAL ═════════════════════════════════════════════
-function HistoryTab({orders,allOrders,isG,onDel,onDetail}){
+function HistoryTab({orders,allOrders,isG,onDel,onDetail,onQuickEdit,onSetEntrega}){
   const [q,setQ]=useState("");const [view,setView]=useState("completed");
   const pool=view==="all"?allOrders:orders;
   const fil=pool.filter(o=>String(o.orden).toLowerCase().includes(q.toLowerCase())||o.cliente.toLowerCase().includes(q.toLowerCase())).sort((a,b)=>(b.completedAt||b.timestamp)-(a.completedAt||a.timestamp));
@@ -1190,7 +1272,7 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail}){
           <option value="all">Todas las órdenes</option>
         </select>
         <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar por No. Orden o cliente..." value={q} onChange={e=>setQ(e.target.value)}/>
-        <button onClick={()=>exportExcel(fil)} style={btnG}>Exportar Excel</button>
+        <button onClick={()=>exportExcel(fil,isG)} style={btnG}>Exportar Excel</button>
       </div>
       <div style={{fontSize:14,color:"#94a3b8",marginBottom:10}}>{fil.length} registro(s)</div>
       <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",overflow:"hidden"}}>
@@ -1201,7 +1283,7 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail}){
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
               <thead>
                 <tr style={{background:"#f8fafc",borderBottom:"1px solid #e2e8f0"}}>
-                  {["No.Orden","Cliente","Productos","Sede","Creado por","Estado","Creado","Completado","Acciones"].map(h=>(
+                  {["No.Orden","Cliente","Productos","Sede","Creado por","Estado","Entrega","Creado","Completado","Acciones"].map(h=>(
                     <th key={h} style={{padding:"10px 14px",textAlign:"left",fontSize:14,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.4,whiteSpace:"nowrap"}}>{h}</th>
                   ))}
                 </tr>
@@ -1218,11 +1300,19 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail}){
                       <td style={{padding:"10px 14px",color:"#475569"}}>{o.sede}</td>
                       <td style={{padding:"10px 14px",color:"#475569",whiteSpace:"nowrap"}}>{o.vendedoraName}</td>
                       <td style={{padding:"10px 14px"}}><span style={{background:s.bg,color:s.col,borderRadius:999,padding:"2px 9px",fontSize:14,fontWeight:700,whiteSpace:"nowrap"}}>{s.txt}</span></td>
+                      <td style={{padding:"10px 14px",whiteSpace:"nowrap"}}>
+                        {(()=>{const ei=entregaInfo(o);return <span style={{background:ei.bg,color:ei.color,border:`1px solid ${ei.border}`,borderRadius:999,padding:"2px 9px",fontSize:13,fontWeight:700}}>{ei.short}</span>;})()}
+                        {o.fechaEntrega&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{fmtDate(o.fechaEntrega)}</div>}
+                      </td>
                       <td style={{padding:"10px 14px",color:"#94a3b8",whiteSpace:"nowrap"}}>{fmtDate(o.timestamp)}</td>
                       <td style={{padding:"10px 14px",color:"#94a3b8",whiteSpace:"nowrap"}}>{o.completedAt?fmtDate(o.completedAt):fmtDate(normalizeItems(o).map(it=>it.completedAt).filter(Boolean).sort((a,b)=>b-a)[0])||"—"}</td>
                       <td style={{padding:"10px 14px"}}>
-                        <div style={{display:"flex",gap:4}}>
+                        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
                           <button onClick={()=>onDetail(o)} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#64748b",fontSize:14}}>Ver</button>
+                          {onSetEntrega&&(o.estadoEntrega==="entregado"
+                            ?<button onClick={()=>onSetEntrega(o.orden,"pendiente")} style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#b45309",fontSize:14}}>Revertir</button>
+                            :<button onClick={()=>onSetEntrega(o.orden,"entregado")} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#15803d",fontSize:14,fontWeight:600}}>Entregar</button>)}
+                          {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#4338ca",fontSize:14}}>Editar</button>}
                           {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
                         </div>
                       </td>
@@ -1303,7 +1393,36 @@ function ItemFields({item,onChange}){
   return null;
 }
 
-function ItemCard({item,index,onUpdate,onRemove,canRemove}){
+// Campos de precio de venta (todos) y costo (solo gerencia). Ocultos en órdenes de inventario.
+function PriceFields({item,onChange,isG}){
+  const set=(k,v)=>onChange({...item,[k]:v});
+  const pv=Number(item.precioVenta), co=Number(item.costo);
+  const margen=(!isNaN(pv)&&!isNaN(co)&&item.precioVenta!==""&&item.costo!=="")?pv-co:null;
+  return(
+    <div style={{marginTop:10,background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"10px 12px"}}>
+      <div style={{fontSize:12,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>Precios</div>
+      <div style={{display:"grid",gridTemplateColumns:isG?"1fr 1fr":"1fr",gap:8}}>
+        <div>
+          <label style={{fontSize:13,color:"#64748b",display:"block",marginBottom:3,fontWeight:600}}>Precio de venta</label>
+          <NumInp value={item.precioVenta} onChange={v=>set("precioVenta",v)} placeholder="0" unit="$"/>
+        </div>
+        {isG&&(
+          <div>
+            <label style={{fontSize:13,color:"#b45309",display:"block",marginBottom:3,fontWeight:700}}>Costo (solo gerencia)</label>
+            <NumInp value={item.costo} onChange={v=>set("costo",v)} placeholder="0" unit="$"/>
+          </div>
+        )}
+      </div>
+      {isG&&margen!==null&&(
+        <div style={{marginTop:8,fontSize:13,fontWeight:700,color:margen>=0?GREEN:"#dc2626"}}>
+          Margen: {fmtMoney(margen)}{pv>0?` · ${Math.round((margen/pv)*100)}%`:""}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ItemCard({item,index,onUpdate,onRemove,canRemove,isG,esStock}){
   const info=item.producto?infoProducto(item.producto):{color:"#64748b",bg:"#f8fafc"};
   return(
     <div style={{border:`1.5px solid ${item.producto?info.color+"44":"#e2e8f0"}`,borderRadius:14,padding:14,marginBottom:10,background:item.producto?info.bg+"66":"#fafafa"}}>
@@ -1320,6 +1439,7 @@ function ItemCard({item,index,onUpdate,onRemove,canRemove}){
         ))}
       </div>
       <ItemFields item={item} onChange={onUpdate}/>
+      {item.producto&&!esStock&&<PriceFields item={item} onChange={onUpdate} isG={isG}/>}
     </div>
   );
 }
@@ -1339,15 +1459,21 @@ function validarItem(it){
 }
 function enrichItem(it){
   const {_key:_,...rest}=it;
-  if(rest.producto==="eslabonada"||rest.producto==="pvc") return {...rest,metros:calcM2(rest.ancho,rest.alto),status:"queue",machineId:null,machineLabel:null,assignedAt:null,completedAt:null};
-  return {...rest,status:"queue",machineId:null,machineLabel:null,assignedAt:null,completedAt:null};
+  // Normaliza precio de venta y costo: número si viene, "" si no
+  const precioVenta = rest.precioVenta===""||rest.precioVenta==null ? "" : Number(rest.precioVenta);
+  const costo       = rest.costo===""||rest.costo==null ? "" : Number(rest.costo);
+  const base={...rest,precioVenta,costo,status:"queue",machineId:null,machineLabel:null,assignedAt:null,completedAt:null};
+  if(rest.producto==="eslabonada"||rest.producto==="pvc") return {...base,metros:calcM2(rest.ancho,rest.alto)};
+  return base;
 }
-const newEmptyItem=()=>({_key:Date.now()+Math.random(),producto:"",calibre:"",calibreInterno:"",color:"",ancho:"",alto:"",abertura:"",grosor:"",largo:"",cantidad:""});
+const newEmptyItem=()=>({_key:Date.now()+Math.random(),producto:"",calibre:"",calibreInterno:"",color:"",ancho:"",alto:"",abertura:"",grosor:"",largo:"",cantidad:"",precioVenta:"",costo:""});
 
 // ═══ NUEVA ORDEN ═══════════════════════════════════════════
 function NewOrderModal({user,orders,onClose,onCreate}){
   const isG=user.role==="gerencia";
   const [orden,setOrden]=useState("");const [cliente,setCliente]=useState("");
+  const [remision,setRemision]=useState("");
+  const esStock=esStockCliente(cliente);
   const canSelectSede=isG||user.sede==="Santa Lucia";
   const [sedeTarget,setSedeTarget]=useState(canSelectSede?"Centro":user.sede);
   const [items,setItems]=useState([newEmptyItem()]);
@@ -1384,7 +1510,7 @@ function NewOrderModal({user,orders,onClose,onCreate}){
     for(let it of items){const e=validarItem(it);if(e){setErr(e);return;}}
     setLoading(true);
     const cleanItems=items.map(it=>enrichItem(it));
-    const r=await onCreate({orden:orden.trim(),cliente:cliente.trim(),sede:sedeTarget,items:cleanItems});
+    const r=await onCreate({orden:orden.trim(),cliente:cliente.trim(),remision:remision.trim(),sede:sedeTarget,items:cleanItems});
     setLoading(false);
     if(r)setErr(r); else onClose();
   };
@@ -1414,11 +1540,16 @@ function NewOrderModal({user,orders,onClose,onCreate}){
           </div>
         </div>
       </div>
+      <div style={{marginBottom:14}}>
+        <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Remisión</label>
+        <input style={inp} value={remision} onChange={e=>setRemision(e.target.value)} placeholder="No. de remisión (opcional)"/>
+      </div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
         <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.length})</label>
         <button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"6px 14px",cursor:"pointer",color:GREEN,fontSize:14,fontWeight:700}}>+ Agregar producto</button>
       </div>
-      {items.map((it,i)=><ItemCard key={it._key} item={it} index={i} onUpdate={v=>updateItem(i,v)} onRemove={()=>removeItem(i)} canRemove={items.length>1}/>)}
+      {esStock&&<div style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:10,padding:"8px 12px",fontSize:13,color:"#6d28d9",marginBottom:10}}>📦 Orden de inventario: no se piden precio de venta ni costo.</div>}
+      {items.map((it,i)=><ItemCard key={it._key} item={it} index={i} onUpdate={v=>updateItem(i,v)} onRemove={()=>removeItem(i)} canRemove={items.length>1} isG={isG} esStock={esStock}/>)}
       <div ref={itemsEndRef}/>
       <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"9px 14px",fontSize:14,color:"#991b1b",marginBottom:12}}>
         Creado por: <strong>{user.name}</strong> · Sede: <strong>{sedeTarget}</strong>
@@ -1432,12 +1563,47 @@ function NewOrderModal({user,orders,onClose,onCreate}){
   );
 }
 
+// ═══ EDICIÓN RÁPIDA (nombre + remisión) — todos los usuarios ═
+function QuickEditModal({order,onClose,onSave}){
+  const [cliente,setCliente]=useState(order.cliente||"");
+  const [remision,setRemision]=useState(order.remision||"");
+  const [loading,setLoading]=useState(false);const [err,setErr]=useState("");
+  const submit=async()=>{
+    if(!cliente.trim()){setErr("El cliente no puede quedar vacío");return;}
+    setLoading(true);
+    await onSave(order.orden,{cliente:cliente.trim(),remision:remision.trim()});
+    setLoading(false);onClose();
+  };
+  return(
+    <Modal title={`Editar datos — Orden #${order.orden}`} onClose={onClose} maxWidth={480}>
+      <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"9px 14px",fontSize:13,color:"#1d4ed8",marginBottom:14}}>
+        Cambia el nombre del cliente y la remisión. Cada cambio queda registrado en el historial de la orden.
+      </div>
+      <div style={{marginBottom:12}}>
+        <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente</label>
+        <input style={inp} value={cliente} onChange={e=>{setCliente(e.target.value);setErr("");}} autoFocus/>
+      </div>
+      <div style={{marginBottom:14}}>
+        <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Remisión</label>
+        <input style={inp} value={remision} onChange={e=>setRemision(e.target.value)} placeholder="No. de remisión"/>
+      </div>
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
+        <button onClick={submit} disabled={loading} style={{...btnR,flex:2}}>{loading?"Guardando...":"Guardar cambios"}</button>
+      </div>
+    </Modal>
+  );
+}
+
 // ═══ EDITAR ORDEN ══════════════════════════════════════════
-function EditOrderModal({order,onClose,onSave}){
+function EditOrderModal({order,isG,onClose,onSave}){
   const [cliente,setCliente]=useState(order.cliente);
+  const [remision,setRemision]=useState(order.remision||"");
   const existing=normalizeItems(order).map(it=>({...it,_key:Date.now()+Math.random()}));
   const [items,setItems]=useState(existing.length>0?existing:[newEmptyItem()]);
   const [loading,setLoading]=useState(false);const [err,setErr]=useState("");
+  const esStock=esStockCliente(cliente);
   const updateItem=(i,v)=>setItems(prev=>prev.map((x,idx)=>idx===i?v:x));
   const addItem=()=>setItems(prev=>[...prev,newEmptyItem()]);
   const removeItem=i=>setItems(prev=>prev.filter((_,idx)=>idx!==i));
@@ -1446,17 +1612,21 @@ function EditOrderModal({order,onClose,onSave}){
     for(let it of items){const e=validarItem(it);if(e){setErr(e);return;}}
     const cleanItems=items.map(it=>enrichItem(it));
     setLoading(true);
-    await onSave(order.orden,{cliente:cliente.trim(),items:cleanItems});
+    await onSave(order.orden,{cliente:cliente.trim(),remision:remision.trim(),items:cleanItems});
     setLoading(false);onClose();
   };
   return(
     <Modal title={`Editar Orden #${order.orden}`} onClose={onClose} maxWidth={580}>
-      <div style={{marginBottom:14}}><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente</label><input style={inp} value={cliente} onChange={e=>setCliente(e.target.value)}/></div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+        <div><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente</label><input style={inp} value={cliente} onChange={e=>setCliente(e.target.value)}/></div>
+        <div><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Remisión</label><input style={inp} value={remision} onChange={e=>setRemision(e.target.value)} placeholder="No. de remisión"/></div>
+      </div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
         <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.length})</label>
         <button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"6px 14px",cursor:"pointer",color:GREEN,fontSize:14,fontWeight:700}}>+ Agregar producto</button>
       </div>
-      {items.map((it,i)=><ItemCard key={it._key||i} item={it} index={i} onUpdate={v=>updateItem(i,v)} onRemove={()=>removeItem(i)} canRemove={items.length>1}/>)}
+      {esStock&&<div style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:10,padding:"8px 12px",fontSize:13,color:"#6d28d9",marginBottom:10}}>📦 Orden de inventario: no se piden precio de venta ni costo.</div>}
+      {items.map((it,i)=><ItemCard key={it._key||i} item={it} index={i} onUpdate={v=>updateItem(i,v)} onRemove={()=>removeItem(i)} canRemove={items.length>1} isG={isG} esStock={esStock}/>)}
       {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
       <div style={{display:"flex",gap:10}}>
         <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
@@ -1474,16 +1644,12 @@ function AssignOrderModal({order,allOrders,machines,user,isG,onClose,onAssign,on
   const [loading,setLoading]=useState(false);
   const [err,setErr]=useState("");
 
-  // Con multi-producto las maquinas pueden tener varios items activos
-  // Solo excluir selecciones actuales del mismo modal (no duplicar en un solo envío)
-  const selectedInModal=new Set(Object.values(sel).filter(Boolean));
-
+  // Con multi-producto una máquina puede tener varios items activos a la vez.
+  // Se permite asignar varios productos de la MISMA orden a la MISMA máquina
+  // y también repartirlos en máquinas distintas — sin restricciones de duplicado.
   const availableMachines=(itemIdx)=>{
     const sedesPermitidas=(isG||user.sede==="Santa Lucia")?["Centro","Santa Lucia"]:[user.sede];
-    return machines.filter(m=>
-      sedesPermitidas.includes(m.sede) &&
-      (!selectedInModal.has(m.id) || sel[itemIdx]===m.id)
-    );
+    return machines.filter(m=>sedesPermitidas.includes(m.sede));
   };
 
   const pendingItems=items.map((it,i)=>({...it,_idx:i})).filter(it=>it.status==="queue");
@@ -1812,22 +1978,41 @@ function CompleteItemModal({order,item,itemIndex,onClose,onComplete,onReturn}){
 }
 
 // ═══ DETALLE ═══════════════════════════════════════════════
-function DetailModal({order,onClose}){
+function DetailModal({order,isG,onClose,onQuickEdit,onSetEntrega}){
   const ss={queue:{bg:"#eff6ff",col:"#1d4ed8",txt:"En Cola"},active:{bg:"#fef2f2",col:"#991b1b",txt:"En Producción"},completed:{bg:"#f0fdf4",col:"#15803d",txt:"Completada"}};
   const oStatus=deriveOrderStatus(normalizeItems(order));
   const s=ss[oStatus]||{bg:"#f1f5f9",col:"#64748b",txt:oStatus};
   const items=normalizeItems(order);
+  const esStock=esStockCliente(order.cliente);
+  const ei=entregaInfo(order);
+  const entregado=order.estadoEntrega==="entregado";
+  const logs=Array.isArray(order.logs)?[...order.logs].sort((a,b)=>b.ts-a.ts):[];
   const meta=[
-    ["Cliente",order.cliente],["Sede",order.sede],
+    ["Cliente",order.cliente],["Remisión",order.remision||"—"],["Sede",order.sede],
     ["Creado por",order.vendedoraName],["Fecha creación",fmtDate(order.timestamp)],
     ...(order.completedAt?[["Completada el",fmtDate(order.completedAt)]]:[]),
+    ...(entregado&&order.fechaEntrega?[["Entregado el",fmtDate(order.fechaEntrega)]]:[]),
   ];
   return(
     <Modal title="Detalle de la Orden" onClose={onClose}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,gap:8,flexWrap:"wrap"}}>
         <span style={{fontSize:26,fontWeight:900,color:"#1e293b"}}>#{order.orden}</span>
-        <span style={{background:s.bg,color:s.col,borderRadius:999,padding:"4px 14px",fontSize:14,fontWeight:700}}>{s.txt}</span>
+        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+          <span style={{background:s.bg,color:s.col,borderRadius:999,padding:"4px 14px",fontSize:14,fontWeight:700}}>{s.txt}</span>
+          <span style={{background:ei.bg,color:ei.color,border:`1px solid ${ei.border}`,borderRadius:999,padding:"4px 14px",fontSize:14,fontWeight:700}}>{ei.label}</span>
+        </div>
       </div>
+
+      {/* Acciones rápidas */}
+      {(onQuickEdit||onSetEntrega)&&(
+        <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+          {onQuickEdit&&<button onClick={()=>{onClose();onQuickEdit(order);}} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:10,padding:"8px 14px",cursor:"pointer",color:"#4338ca",fontSize:14,fontWeight:700}}>✏ Editar datos</button>}
+          {onSetEntrega&&(entregado
+            ?<button onClick={()=>onSetEntrega(order.orden,"pendiente")} style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"8px 14px",cursor:"pointer",color:"#b45309",fontSize:14,fontWeight:700}}>Revertir entrega</button>
+            :<button onClick={()=>onSetEntrega(order.orden,"entregado")} style={{...btnG,padding:"8px 14px"}}>✓ Marcar entregado</button>)}
+        </div>
+      )}
+
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
         {meta.map(([l,v])=>(
           <div key={l} style={{background:"#f8fafc",border:"1px solid #f1f5f9",borderRadius:10,padding:"10px 12px"}}>
@@ -1845,6 +2030,8 @@ function DetailModal({order,onClose}){
             ...(it.producto==="eslabonada"||it.producto==="pvc"?[["M²",`${it.metros} m²`],["Ancho",`${it.ancho}m`],["Alto",`${it.alto}m`],["Abertura",it.abertura],["Calibre",it.calibre]]:[]),
             ...(it.producto==="pvc"?[["Cal.Int",it.calibreInterno],["Color",it.color]]:[]),
             ...(it.producto==="postes"?[["Calibre",it.calibre],["Grosor",`${it.grosor}"`],["Largo",`${it.largo}m`],["Cantidad",`${it.cantidad} un`]]:[]),
+            ...(!esStock?[["Precio venta",fmtMoney(it.precioVenta)]]:[]),
+            ...(!esStock&&isG?[["Costo",fmtMoney(it.costo)]]:[]),
           ];
           return(
             <div key={i} style={{border:`1.5px solid ${info.color}44`,borderRadius:12,overflow:"hidden"}}>
@@ -1867,6 +2054,26 @@ function DetailModal({order,onClose}){
           );
         })}
       </div>
+
+      {/* Registro de cambios */}
+      <div style={{fontWeight:700,fontSize:14,color:"#334155",marginBottom:8}}>Registro de cambios ({logs.length})</div>
+      {logs.length===0?(
+        <div style={{fontSize:13,color:"#94a3b8",marginBottom:16}}>Sin cambios registrados.</div>
+      ):(
+        <div style={{maxHeight:180,overflowY:"auto",background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 12px",marginBottom:16}}>
+          {logs.map((l,i)=>(
+            <div key={i} style={{padding:"6px 0",borderBottom:i<logs.length-1?"1px solid #e2e8f0":"none"}}>
+              <div style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
+                <span style={{fontSize:13,fontWeight:700,color:"#334155"}}>{l.accion}</span>
+                <span style={{fontSize:12,color:"#94a3b8",whiteSpace:"nowrap"}}>{fmtDate(l.ts)}</span>
+              </div>
+              {l.detalle&&<div style={{fontSize:12,color:"#64748b",marginTop:2}}>{l.detalle}</div>}
+              <div style={{fontSize:12,color:"#94a3b8",marginTop:1}}>por {l.usuario}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <button onClick={onClose} style={{width:"100%",background:DARK,border:"none",borderRadius:10,padding:"11px",fontSize:14,fontWeight:700,color:"#fff",cursor:"pointer"}}>Cerrar</button>
     </Modal>
   );
