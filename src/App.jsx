@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.17-3";
+const APP_VERSION="v2026.09.17-4";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -88,6 +88,23 @@ const ENTREGA_ESTADOS = {
   entregado: { label:"Entregado",            short:"Entregado", color:"#15803d", bg:"#f0fdf4", border:"#86efac" },
 };
 const entregaInfo = o => ENTREGA_ESTADOS[o?.estadoEntrega==="entregado"?"entregado":"pendiente"];
+
+// Estado combinado de la orden (producción + entrega):
+//   queue / active  → en proceso
+//   terminada       → producida pero SIN entregar
+//   completada      → producida y ENTREGADA (cerrada del todo)
+const orderDisplayStatus = o => {
+  const prod=deriveOrderStatus(normalizeItems(o));
+  if(prod!=="completed") return prod; // "queue" | "active"
+  return o?.estadoEntrega==="entregado" ? "completada" : "terminada";
+};
+const ORDER_ST = {
+  queue:      { bg:"#eff6ff", col:"#1d4ed8", txt:"En Cola" },
+  active:     { bg:"#fef2f2", col:"#991b1b", txt:"En Producción" },
+  terminada:  { bg:"#fffbeb", col:"#b45309", txt:"Terminada" },
+  completada: { bg:"#f0fdf4", col:"#15803d", txt:"Completada" },
+};
+const orderStInfo = o => ORDER_ST[orderDisplayStatus(o)] || ORDER_ST.queue;
 
 // Construye una entrada de log de cambios
 const makeLog = (user,accion,detalle="") => ({
@@ -172,7 +189,7 @@ const resumenItem = it => {
 };
 
 const exportExcel = (rows,includeCost=false) => {
-  const stat={queue:"En Cola",active:"En Produccion",completed:"Completada"};
+  const stat={queue:"En Cola",active:"En Produccion",completed:"Terminado"};
   // Usar tabulacion como separador - Excel lo reconoce universalmente sin importar configuracion regional
   const TAB="\t";
   // Limpiar el valor: quitar tabs y saltos de linea que rompen el formato
@@ -181,7 +198,7 @@ const exportExcel = (rows,includeCost=false) => {
 
   const headers=[
     "No.Orden","Cliente","Remision","Sede","Creado por","Estado Orden",
-    "Estado Entrega","Fecha Entrega","Fecha Creacion","Fecha Completado",
+    "Estado Entrega","Fecha Entrega","Fecha Creacion","Fecha Terminado",
     "Producto","Estado Producto","Maquina",
     "M2","Ancho(m)","Alto(m)","Abertura",
     "Calibre","Cal.Interno","Color","Grosor","Largo(m)","Cantidad",
@@ -191,7 +208,7 @@ const exportExcel = (rows,includeCost=false) => {
   const data=[];
   rows.forEach(o=>{
     const items=normalizeItems(o);
-    const est=stat[o.status]||o.status||"";
+    const est=ORDER_ST[orderDisplayStatus(o)]?.txt||"";
     const fc=fmtDate(o.timestamp)||"";
     const fcomp=o.completedAt?fmtDate(o.completedAt):fmtDate(normalizeItems(o).map(it=>it.completedAt).filter(Boolean).sort((a,b)=>b-a)[0])||"";
     const estEnt=o.estadoEntrega==="entregado"?"Entregado":"Pendiente";
@@ -368,6 +385,9 @@ function Shell({user,onLogout,orders,movimientos=[]}){
   const queueOrders=orders.filter(o=>deriveOrderStatus(normalizeItems(o))!=="completed");
   // Órdenes totalmente completadas
   const doneOrders=orders.filter(o=>deriveOrderStatus(normalizeItems(o))==="completed");
+  // Producidas y ya entregadas (completadas) vs producidas sin entregar (terminadas)
+  const entregadasCount=doneOrders.filter(o=>o.estadoEntrega==="entregado").length;
+  const terminadasCount=doneOrders.length-entregadasCount;
   // Número de items activos en total
   const activeItemCount=orders.reduce((acc,o)=>acc+normalizeItems(o).filter(it=>it.status==="active").length,0);
 
@@ -556,7 +576,8 @@ function Shell({user,onLogout,orders,movimientos=[]}){
             <span style={{color:"#4ade80"}}>● {MACHINES.filter(m=>!getMachineItem(m.id,orders)).length} libres</span>
             <span style={{color:"#f87171"}}>● {activeItemCount} items en producción</span>
             <span style={{color:"#60a5fa"}}>● {queueOrders.length} órdenes en cola</span>
-            <span style={{color:"#9ca3af"}}>● {doneOrders.length} completadas</span>
+            <span style={{color:"#f59e0b"}}>● {terminadasCount} terminadas (sin entregar)</span>
+            <span style={{color:"#9ca3af"}}>● {entregadasCount} entregadas</span>
           </div>
         </div>
       </div>
@@ -615,7 +636,7 @@ function Shell({user,onLogout,orders,movimientos=[]}){
 
 // ═══ BADGES ════════════════════════════════════════════════
 function ItemStatusBadge({item}){
-  if(item.status==="completed") return <span style={{background:"#f0fdf4",color:"#15803d",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>✓ Completado</span>;
+  if(item.status==="completed") return <span style={{background:"#f0fdf4",color:"#15803d",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>✓ Terminado</span>;
   if(item.status==="active")    return <span style={{background:"#fef2f2",color:RED,borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{item.machineLabel||"Activo"}</span>;
   return <span style={{background:"#eff6ff",color:"#1d4ed8",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>En Cola</span>;
 }
@@ -1157,7 +1178,7 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
                     <button onClick={handleConfirm} disabled={checkedCount===0}
                       style={{flex:1,background:checkedCount>0?GREEN:"#e2e8f0",border:"none",borderRadius:8,padding:"8px",
                         fontSize:14,fontWeight:700,color:checkedCount>0?"#fff":"#94a3b8",cursor:checkedCount>0?"pointer":"not-allowed"}}>
-                      ✓ Completar {checkedCount>0?`(${checkedCount})`:""}
+                      ✓ Terminar {checkedCount>0?`(${checkedCount})`:""}
                     </button>
                     {puedeAsignar&&<button onClick={e=>{e.stopPropagation();onAssignFree();}} disabled={!itemsEnCola}
                       style={{flex:1,background:itemsEnCola?"#eff6ff":"#e2e8f0",border:"none",borderRadius:8,padding:"8px",
@@ -1272,15 +1293,19 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
 
 // ═══ HISTORIAL ═════════════════════════════════════════════
 function HistoryTab({orders,allOrders,isG,onDel,onDetail,onQuickEdit,onSetEntrega}){
-  const [q,setQ]=useState("");const [view,setView]=useState("completed");
-  const pool=view==="all"?allOrders:orders;
-  const fil=pool.filter(o=>String(o.orden).toLowerCase().includes(q.toLowerCase())||o.cliente.toLowerCase().includes(q.toLowerCase())).sort((a,b)=>(b.completedAt||b.timestamp)-(a.completedAt||a.timestamp));
-  const ss={queue:{bg:"#eff6ff",col:"#1d4ed8",txt:"En Cola"},active:{bg:"#fef2f2",col:"#991b1b",txt:"En Producción"},completed:{bg:"#f0fdf4",col:"#15803d",txt:"Completada"}};
+  const [q,setQ]=useState("");const [view,setView]=useState("terminadas");
+  const entregada=o=>o.estadoEntrega==="entregado";
+  let base;
+  if(view==="all") base=allOrders;
+  else if(view==="completadas") base=orders.filter(entregada);      // producidas Y entregadas
+  else base=orders.filter(o=>!entregada(o));                        // terminadas: producidas sin entregar
+  const fil=base.filter(o=>String(o.orden).toLowerCase().includes(q.toLowerCase())||o.cliente.toLowerCase().includes(q.toLowerCase())).sort((a,b)=>(b.completedAt||b.timestamp)-(a.completedAt||a.timestamp));
   return(
     <div>
-      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+      <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
         <select value={view} onChange={e=>setView(e.target.value)} style={{...inp,flex:"0 0 auto",width:"auto"}}>
-          <option value="completed">Solo completadas</option>
+          <option value="terminadas">Terminadas (sin entregar)</option>
+          <option value="completadas">Completadas (entregadas)</option>
           <option value="all">Todas las órdenes</option>
         </select>
         <input style={{...inp,flex:1,minWidth:180}} placeholder="Buscar por No. Orden o cliente..." value={q} onChange={e=>setQ(e.target.value)}/>
@@ -1288,39 +1313,35 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail,onQuickEdit,onSetEntreg
       </div>
       <div style={{fontSize:14,color:"#94a3b8",marginBottom:10}}>{fil.length} registro(s)</div>
       {fil.length===0?(
-        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"60px 0",color:"#94a3b8"}}><div style={{fontSize:36,marginBottom:10,color:"#e2e8f0"}}>[ ]</div><div>Sin registros</div></div>
+        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"48px 0",color:"#94a3b8"}}><div style={{fontSize:32,marginBottom:8,color:"#e2e8f0"}}>[ ]</div><div>Sin registros</div></div>
       ):(
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {fil.map(o=>{
-            const s=ss[deriveOrderStatus(normalizeItems(o))]||{bg:"#f1f5f9",col:"#64748b",txt:""};
             const items=normalizeItems(o);
-            const ei=entregaInfo(o);
+            const st=orderStInfo(o);
             const compAt=o.completedAt?fmtDate(o.completedAt):fmtDate(items.map(it=>it.completedAt).filter(Boolean).sort((a,b)=>b-a)[0])||"—";
             return(
-              <div key={o.orden} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px"}}>
-                {/* Fila 1: número + estados + entrega */}
-                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:6}}>
-                  <span style={{fontWeight:900,color:"#1e293b",fontSize:17}}>#{o.orden}</span>
-                  <span style={{background:s.bg,color:s.col,borderRadius:999,padding:"1px 9px",fontSize:13,fontWeight:700,whiteSpace:"nowrap"}}>{s.txt}</span>
-                  <span style={{background:ei.bg,color:ei.color,border:`1px solid ${ei.border}`,borderRadius:999,padding:"1px 9px",fontSize:13,fontWeight:700,whiteSpace:"nowrap"}}>{ei.short}</span>
-                  <span style={{color:"#94a3b8",fontSize:14,marginLeft:"auto"}}>{o.sede}</span>
+              <div key={o.orden} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"10px 14px"}}>
+                {/* Línea 1: número + cliente + sede + estado (todo junto) */}
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
+                  <span style={{fontWeight:900,color:"#1e293b",fontSize:16}}>#{o.orden}</span>
+                  <span style={{fontWeight:600,color:"#334155",fontSize:15}}>{o.cliente}</span>
+                  <span style={{color:"#94a3b8",fontSize:13}}>· {o.sede}</span>
+                  <span style={{background:st.bg,color:st.col,borderRadius:999,padding:"1px 9px",fontSize:12,fontWeight:700,whiteSpace:"nowrap"}}>{st.txt}</span>
                 </div>
-                {/* Fila 2: cliente + productos */}
-                <div style={{fontWeight:600,color:"#475569",fontSize:15,marginBottom:4}}>{o.cliente}{o.remision?<span style={{color:"#94a3b8",fontWeight:500,fontSize:13}}> · Rem: {o.remision}</span>:null}</div>
-                <div style={{marginBottom:6}}><ProductoBadges items={items}/></div>
-                {/* Fila 3: meta */}
-                <div style={{fontSize:13,color:"#94a3b8",marginBottom:10}}>
-                  {o.vendedoraName} · Creado {fmtDate(o.timestamp)} · Completado {compAt}
-                  {o.fechaEntrega?` · Entregado ${fmtDate(o.fechaEntrega)}`:""}
+                {/* Línea 2: productos + meta */}
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:8}}>
+                  <ProductoBadges items={items}/>
+                  <span style={{fontSize:12,color:"#94a3b8"}}>{o.vendedoraName} · {compAt}{o.fechaEntrega?` · Entregado ${fmtDate(o.fechaEntrega)}`:""}{o.remision?` · Rem: ${o.remision}`:""}</span>
                 </div>
-                {/* Fila 4: acciones (siempre visibles, se acomodan solas) */}
-                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                  <button onClick={()=>onDetail(o)} style={{...btnS,padding:"7px 12px",fontSize:14}}>Ver detalle</button>
+                {/* Línea 3: acciones */}
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  <button onClick={()=>onDetail(o)} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#64748b",fontSize:14}}>Ver detalle</button>
                   {onSetEntrega&&(o.estadoEntrega==="entregado"
-                    ?<button onClick={()=>onSetEntrega(o.orden,"pendiente")} style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"7px 12px",cursor:"pointer",color:"#b45309",fontSize:14,fontWeight:600}}>Revertir entrega</button>
-                    :<button onClick={()=>onSetEntrega(o.orden,"entregado")} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"7px 12px",cursor:"pointer",color:"#15803d",fontSize:14,fontWeight:700}}>Marcar entregado</button>)}
-                  {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:10,padding:"7px 12px",cursor:"pointer",color:"#4338ca",fontSize:14,fontWeight:600}}>Editar datos</button>}
-                  {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"7px 12px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
+                    ?<button onClick={()=>onSetEntrega(o.orden,"pendiente")} style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#b45309",fontSize:14,fontWeight:600}}>Revertir entrega</button>
+                    :<button onClick={()=>onSetEntrega(o.orden,"entregado")} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#15803d",fontSize:14,fontWeight:700}}>Marcar entregado</button>)}
+                  {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#4338ca",fontSize:14,fontWeight:600}}>Editar datos</button>}
+                  {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
                 </div>
               </div>
             );
@@ -1918,7 +1939,7 @@ function CompleteItemModal({order,item,itemIndex,onClose,onComplete,onReturn}){
               </div>
             );
           })}
-          {allDoneAfter&&<div style={{marginTop:8,background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"6px 10px",fontSize:14,color:"#15803d",fontWeight:600}}>✓ Al completar este producto, la orden quedará 100% terminada</div>}
+          {allDoneAfter&&<div style={{marginTop:8,background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"6px 10px",fontSize:14,color:"#15803d",fontWeight:600}}>✓ Al terminar este producto, la orden quedará 100% terminada</div>}
         </div>
       )}
 
@@ -1941,7 +1962,7 @@ function CompleteItemModal({order,item,itemIndex,onClose,onComplete,onReturn}){
         <span style={{fontSize:14,color:"#64748b"}}>Producto revisado</span>
         <div style={{flex:1,height:2,background:GREEN,borderRadius:2}}/>
         <div style={{width:24,height:24,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:900,color:"#fff",flexShrink:0}}>2</div>
-        <span style={{fontSize:14,fontWeight:600,color:"#334155"}}>Confirmar entrega</span>
+        <span style={{fontSize:14,fontWeight:600,color:"#334155"}}>Confirmar</span>
       </div>
       <div style={{background:"#f0fdf4",border:"2px solid #86efac",borderRadius:12,padding:12,marginBottom:14}}>
         <div style={{fontSize:14,fontWeight:700,color:GREEN,marginBottom:6}}>Resumen del producto finalizado:</div>
@@ -1956,7 +1977,7 @@ function CompleteItemModal({order,item,itemIndex,onClose,onComplete,onReturn}){
       </div>
       <div style={{display:"flex",gap:10}}>
         <button onClick={()=>setPaso("review")} style={{...btnS,flex:1}}>← Volver</button>
-        <button onClick={goComplete} disabled={loading} style={{...btnG,flex:2}}>{loading?"Procesando...":"Sí, producto completado ✓"}</button>
+        <button onClick={goComplete} disabled={loading} style={{...btnG,flex:2}}>{loading?"Procesando...":"Sí, producto terminado ✓"}</button>
       </div>
     </Modal>
   );
@@ -1982,9 +2003,8 @@ function CompleteItemModal({order,item,itemIndex,onClose,onComplete,onReturn}){
 
 // ═══ DETALLE ═══════════════════════════════════════════════
 function DetailModal({order,isG,onClose,onQuickEdit,onSetEntrega}){
-  const ss={queue:{bg:"#eff6ff",col:"#1d4ed8",txt:"En Cola"},active:{bg:"#fef2f2",col:"#991b1b",txt:"En Producción"},completed:{bg:"#f0fdf4",col:"#15803d",txt:"Completada"}};
-  const oStatus=deriveOrderStatus(normalizeItems(order));
-  const s=ss[oStatus]||{bg:"#f1f5f9",col:"#64748b",txt:oStatus};
+  const ss={queue:{bg:"#eff6ff",col:"#1d4ed8",txt:"En Cola"},active:{bg:"#fef2f2",col:"#991b1b",txt:"En Producción"},completed:{bg:"#f0fdf4",col:"#15803d",txt:"Terminado"}};
+  const st=orderStInfo(order);
   const items=normalizeItems(order);
   const esStock=esStockCliente(order.cliente);
   const ei=entregaInfo(order);
@@ -1993,7 +2013,7 @@ function DetailModal({order,isG,onClose,onQuickEdit,onSetEntrega}){
   const meta=[
     ["Cliente",order.cliente],["Remisión",order.remision||"—"],["Sede",order.sede],
     ["Creado por",order.vendedoraName],["Fecha creación",fmtDate(order.timestamp)],
-    ...(order.completedAt?[["Completada el",fmtDate(order.completedAt)]]:[]),
+    ...(order.completedAt?[["Terminada el",fmtDate(order.completedAt)]]:[]),
     ...(entregado&&order.fechaEntrega?[["Entregado el",fmtDate(order.fechaEntrega)]]:[]),
   ];
   return(
@@ -2001,8 +2021,8 @@ function DetailModal({order,isG,onClose,onQuickEdit,onSetEntrega}){
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,gap:8,flexWrap:"wrap"}}>
         <span style={{fontSize:26,fontWeight:900,color:"#1e293b"}}>#{order.orden}</span>
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-          <span style={{background:s.bg,color:s.col,borderRadius:999,padding:"4px 14px",fontSize:14,fontWeight:700}}>{s.txt}</span>
-          <span style={{background:ei.bg,color:ei.color,border:`1px solid ${ei.border}`,borderRadius:999,padding:"4px 14px",fontSize:14,fontWeight:700}}>{ei.label}</span>
+          <span style={{background:st.bg,color:st.col,borderRadius:999,padding:"4px 14px",fontSize:14,fontWeight:700}}>{st.txt}</span>
+          {order.estadoEntrega==="entregado"&&<span style={{background:ei.bg,color:ei.color,border:`1px solid ${ei.border}`,borderRadius:999,padding:"4px 14px",fontSize:14,fontWeight:700}}>{ei.label}</span>}
         </div>
       </div>
 
