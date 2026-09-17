@@ -7,6 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
+const APP_VERSION="v2026.09.17";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -343,7 +344,13 @@ function Shell({user,onLogout,orders,movimientos=[]}){
   const isG=user.role==="gerencia";
   const isViewer=user.role==="viewer";
   const isLogistica=user.role==="logistica";
-  const canProd=!isViewer&&!isLogistica; // puede manipular produccion
+  const isVendedora=user.role==="vendedora";
+  // ── PERMISOS CENTRALIZADOS (misma regla por rol, sin importar la sede) ──
+  const canProd=isG||isVendedora;                 // crear/asignar/completar/editar productos
+  const canEditDatos=isG||isVendedora;            // editar nombre + remisión
+  const canDeliver=isG||isVendedora||isLogistica; // marcar entregado
+  const canMov=isG||isVendedora||isLogistica;     // movimientos (todos menos la pantalla TV)
+  const canDelete=isG;                            // eliminar órdenes
   const [tab,setTab]=useState(isLogistica?"movimientos":"machines");
 
   // Auto-logout por inactividad (30 min). Viewer (TV) nunca cierra sesion.
@@ -532,7 +539,7 @@ function Shell({user,onLogout,orders,movimientos=[]}){
             <img src={logoUrl} style={{width:38,height:38,borderRadius:9,flexShrink:0}} alt="Fox"/>
             <div>
               <div style={{fontSize:14,fontWeight:800,color:"#fff",lineHeight:1.2}}>Mallas y Alambres Fox</div>
-              <div style={{fontSize:14,color:"#f87171"}}>Gestión de Producción · Bogotá</div>
+              <div style={{fontSize:14,color:"#f87171"}}>Gestión de Producción · Bogotá <span style={{color:"#6b7280",fontSize:11,fontWeight:600,marginLeft:4}}>{APP_VERSION}</span></div>
             </div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -566,25 +573,25 @@ function Shell({user,onLogout,orders,movimientos=[]}){
       </div>
 
       <div style={{maxWidth:1280,margin:"0 auto",padding:16}}>
-        {tab==="machines"&&<MachinesTab machines={MACHINES} orders={orders} user={user} isG={isG}
+        {tab==="machines"&&<MachinesTab machines={MACHINES} orders={orders} user={user} isG={isG} canProd={canProd}
           onItemClick={(ord,it,idx)=>canProd&&setModal({t:"complete",order:ord,item:it,itemIndex:idx})}
           onCompleteItem={(orden,idx)=>canProd&&completeItem(orden,idx)}
           onAssignFree={mid=>canProd&&setModal({t:"pickItem",machineId:mid})}
           onNew={()=>canProd&&setModal({t:"new"})}/>}
-        {tab==="queue"&&<QueueTab orders={queueOrders} allOrders={orders} isG={isG&&!isViewer}
-          onNew={()=>!isViewer&&setModal({t:"new"})}
-          onAssignOrder={o=>!isViewer&&setModal({t:"assignOrder",order:o})}
-          onDel={isG&&!isViewer?(r=>{if(window.confirm(`¿Confirmas eliminar la orden #${r}?`))removeOrder(r);}):null}
+        {tab==="queue"&&<QueueTab orders={queueOrders} allOrders={orders} isG={isG}
+          onNew={canProd?(()=>setModal({t:"new"})):null}
+          onAssignOrder={canProd?(o=>setModal({t:"assignOrder",order:o})):null}
+          onDel={canDelete?(r=>{if(window.confirm(`¿Confirmas eliminar la orden #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
-          onQuickEdit={!isViewer?(o=>setModal({t:"quickEdit",order:o})):null}
+          onQuickEdit={canEditDatos?(o=>setModal({t:"quickEdit",order:o})):null}
           canFullEdit={canProd}
           onEdit={o=>canProd&&setModal({t:"edit",order:o})}/>}
-        {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onEditar={m=>setModal({t:"editarMov",mov:m})} onResolver={resolverAlerta}/>}
-        {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG&&!isViewer}
-          onDel={isG&&!isViewer?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
+        {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} canMov={canMov} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onEditar={m=>setModal({t:"editarMov",mov:m})} onResolver={resolverAlerta}/>}
+        {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG}
+          onDel={canDelete?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
-          onQuickEdit={!isViewer?(o=>setModal({t:"quickEdit",order:o})):null}
-          onSetEntrega={!isViewer?setEntrega:null}/>}
+          onQuickEdit={canEditDatos?(o=>setModal({t:"quickEdit",order:o})):null}
+          onSetEntrega={canDeliver?setEntrega:null}/>}
       </div>
 
       {modal?.t==="new"         &&<NewOrderModal    user={user} orders={orders} onClose={()=>setModal(null)} onCreate={createOrder}/>}
@@ -595,8 +602,8 @@ function Shell({user,onLogout,orders,movimientos=[]}){
       {modal?.t==="complete"    &&<CompleteItemModal order={modal.order} item={modal.item} itemIndex={modal.itemIndex} onClose={()=>setModal(null)} onComplete={completeItem} onReturn={returnItemToQueue}/>}
       {modal?.t==="detail"      &&<DetailModal      order={orders.find(o=>String(o.orden)===String(modal.order.orden))||modal.order} isG={isG}
           onClose={()=>setModal(null)}
-          onQuickEdit={!isViewer?(o=>setModal({t:"quickEdit",order:o})):null}
-          onSetEntrega={!isViewer?setEntrega:null}/>}
+          onQuickEdit={canEditDatos?(o=>setModal({t:"quickEdit",order:o})):null}
+          onSetEntrega={canDeliver?setEntrega:null}/>}
       {modal?.t==="newMov"     &&<NewMovimientoModal user={user} movimientos={movimientos} onClose={()=>setModal(null)} onCreate={createMovimiento}/>}
       {modal?.t==="recibirMov" &&<RecibirMovimientoModal mov={modal.mov} user={user} onClose={()=>setModal(null)} onRecibir={recibirMovimiento}/>}
       {modal?.t==="editarMov" &&<EditarMovimientoModal mov={modal.mov} onClose={()=>setModal(null)} onSave={editarMovimiento}/>}
@@ -634,7 +641,7 @@ const MOV_ESTADOS = {
   discrepancia:{ label:"Discrepancia",color:"#dc2626", bg:"#fef2f2", border:"#fecaca" },
 };
 
-function MovimientosTab({movimientos,user,isG,onNew,onRecibir,onEditar,onResolver}){
+function MovimientosTab({movimientos,user,isG,canMov=true,onNew,onRecibir,onEditar,onResolver}){
   const isLogistica=user.role==="logistica";
   const [filtro,setFiltro]=useState("todos");
   const filtrados=filtro==="todos"?movimientos:movimientos.filter(m=>m.estado===filtro);
@@ -677,7 +684,7 @@ function MovimientosTab({movimientos,user,isG,onNew,onRecibir,onEditar,onResolve
             </button>
           ))}
         </div>
-        <button onClick={onNew} style={{background:RED,border:"none",color:"#fff",borderRadius:10,padding:"8px 18px",fontSize:14,fontWeight:700,cursor:"pointer"}}>+ Nuevo Envío</button>
+        {canMov&&<button onClick={onNew} style={{background:RED,border:"none",color:"#fff",borderRadius:10,padding:"8px 18px",fontSize:14,fontWeight:700,cursor:"pointer"}}>+ Nuevo Envío</button>}
       </div>
 
       {/* Lista */}
@@ -1013,7 +1020,7 @@ function EditarMovimientoModal({mov,onClose,onSave}){
 }
 
 
-function MachinesTab({machines,orders,user,isG,onItemClick,onCompleteItem,onAssignFree,onNew}){
+function MachinesTab({machines,orders,user,isG,canProd,onItemClick,onCompleteItem,onAssignFree,onNew}){
   const canRename=user.username==="natalia";
   const [names,setNames]=useState(()=>Object.fromEntries(machines.map(m=>[m.id,m.name])));
   const [editing,setEditing]=useState(null);
@@ -1023,9 +1030,9 @@ function MachinesTab({machines,orders,user,isG,onItemClick,onCompleteItem,onAssi
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}}>
         <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"9px 14px",fontSize:14,color:"#991b1b",flex:1}}>
           Cada máquina puede tener <strong>múltiples productos activos</strong>. Clic en máquina <strong>ROJA</strong> para finalizar productos. Clic en <strong>VERDE</strong> para asignar.
-          {!isG&&<span style={{display:"block",marginTop:4}}>Solo puedes asignar a las máquinas de tu sede.</span>}
+          {canProd&&!isG&&<span style={{display:"block",marginTop:4}}>Puedes asignar a máquinas de ambas sedes.</span>}
         </div>
-        <button onClick={onNew} style={btnR}>+ Nueva Orden</button>
+        {canProd&&<button onClick={onNew} style={btnR}>+ Nueva Orden</button>}
       </div>
       {["Centro","Santa Lucia"].map(sede=>(
         <div key={sede} style={{marginBottom:24}}>
@@ -1037,7 +1044,7 @@ function MachinesTab({machines,orders,user,isG,onItemClick,onCompleteItem,onAssi
             {machines.filter(m=>m.sede===sede).map(m=>{
               const entries=getMachineItems(m.id,orders);
               const busy=entries.length>0;
-              const puedeAsignar=isG||(user.sede===sede);
+              const puedeAsignar=isG||user.role==="vendedora"; // vendedoras y gerencia: cualquier sede
               const itemsEnCola=orders.reduce((acc,o)=>acc+normalizeItems(o).filter(it=>it.status==="queue").length,0);
               const displayName=names[m.id]||m.name;
               return <MachCard key={m.id} machine={{...m,name:displayName}} entries={entries} busy={busy}
@@ -1179,7 +1186,7 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
                 {itemsEnCola?"+ Asignar producto":"Sin productos en cola"}
               </button>
             ):(
-              <div style={{fontSize:14,color:"#94a3b8",background:"#f8fafc",borderRadius:8,padding:"8px"}}>Solo tu sede puede asignar a esta máquina</div>
+              <div style={{fontSize:14,color:"#94a3b8",background:"#f8fafc",borderRadius:8,padding:"8px"}}>Tu perfil no asigna producción</div>
             )}
           </div>
         )}
@@ -1196,13 +1203,13 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
     <div>
       <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
         <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar por No. Orden o cliente..." value={q} onChange={e=>setQ(e.target.value)}/>
-        <button onClick={onNew} style={btnR}>+ Nueva Orden</button>
+        {onNew&&<button onClick={onNew} style={btnR}>+ Nueva Orden</button>}
       </div>
       {fil.length===0?(
         <div style={{textAlign:"center",padding:"64px 0",color:"#94a3b8"}}>
           <div style={{fontSize:36,marginBottom:12,color:"#e2e8f0"}}>[ ]</div>
           <div style={{fontWeight:600,marginBottom:6}}>{q?"Sin resultados":"Cola vacía"}</div>
-          {!q&&<button onClick={onNew} style={{background:"none",border:"none",color:RED,fontSize:14,cursor:"pointer",textDecoration:"underline"}}>+ Crear primera orden</button>}
+          {!q&&onNew&&<button onClick={onNew} style={{background:"none",border:"none",color:RED,fontSize:14,cursor:"pointer",textDecoration:"underline"}}>+ Crear primera orden</button>}
         </div>
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1242,7 +1249,7 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
                   </div>
                   {/* Acciones */}
                   <div style={{display:"flex",gap:6,flexShrink:0,flexDirection:"column",alignItems:"stretch"}}>
-                    {enCola>0&&<button onClick={()=>onAssignOrder(o)} style={{...btnR,padding:"7px 14px",fontSize:14,whiteSpace:"nowrap"}}>Asignar productos</button>}
+                    {enCola>0&&onAssignOrder&&<button onClick={()=>onAssignOrder(o)} style={{...btnR,padding:"7px 14px",fontSize:14,whiteSpace:"nowrap"}}>Asignar productos</button>}
                     <button onClick={()=>onDetail(o)} style={{...btnS,padding:"7px 10px",fontSize:14}}>Ver detalle</button>
                     {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#4338ca",fontSize:14,fontWeight:600}}>Editar datos</button>}
                     {canFullEdit&&onEdit&&<button onClick={()=>onEdit(o)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#0369a1",fontSize:14,fontWeight:600}}>Editar productos</button>}
@@ -1474,7 +1481,7 @@ function NewOrderModal({user,orders,onClose,onCreate}){
   const [orden,setOrden]=useState("");const [cliente,setCliente]=useState("");
   const [remision,setRemision]=useState("");
   const esStock=esStockCliente(cliente);
-  const canSelectSede=isG||user.sede==="Santa Lucia";
+  const canSelectSede=true; // todas las vendedoras y gerencia pueden elegir sede destino
   const [sedeTarget,setSedeTarget]=useState(canSelectSede?"Centro":user.sede);
   const [items,setItems]=useState([newEmptyItem()]);
   const [err,setErr]=useState("");const [loading,setLoading]=useState(false);
@@ -1648,7 +1655,7 @@ function AssignOrderModal({order,allOrders,machines,user,isG,onClose,onAssign,on
   // Se permite asignar varios productos de la MISMA orden a la MISMA máquina
   // y también repartirlos en máquinas distintas — sin restricciones de duplicado.
   const availableMachines=(itemIdx)=>{
-    const sedesPermitidas=(isG||user.sede==="Santa Lucia")?["Centro","Santa Lucia"]:[user.sede];
+    const sedesPermitidas=["Centro","Santa Lucia"]; // vendedoras y gerencia: ambas sedes
     return machines.filter(m=>sedesPermitidas.includes(m.sede));
   };
 
@@ -1680,8 +1687,8 @@ function AssignOrderModal({order,allOrders,machines,user,isG,onClose,onAssign,on
       </div>
 
       {!isG&&(
-        <div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"9px 14px",fontSize:14,color:"#92400e",marginBottom:14}}>
-          Solo puedes asignar a máquinas de tu sede: <strong>{user.sede}</strong>
+        <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"9px 14px",fontSize:14,color:"#1d4ed8",marginBottom:14}}>
+          Puedes asignar a máquinas de <strong>ambas sedes</strong>.
         </div>
       )}
 
@@ -1704,7 +1711,7 @@ function AssignOrderModal({order,allOrders,machines,user,isG,onClose,onAssign,on
                 <div style={{padding:12,background:info.bg+"88"}}>
                   <div style={{fontSize:14,fontWeight:600,color:info.color,marginBottom:8}}>Asignar a máquina:</div>
                   {available.length===0?(
-                    <div style={{fontSize:14,color:"#94a3b8",fontStyle:"italic"}}>No hay máquinas disponibles{!isG?" en tu sede":""}</div>
+                    <div style={{fontSize:14,color:"#94a3b8",fontStyle:"italic"}}>No hay máquinas disponibles</div>
                   ):(
                     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:6}}>
                       {/* Opción: no asignar todavía */}
@@ -1761,7 +1768,7 @@ function AssignOrderModal({order,allOrders,machines,user,isG,onClose,onAssign,on
 // ═══ PICK ITEM PARA UNA MÁQUINA LIBRE ══════════════════════
 function PickItemModal({machineId,orders,allOrders,user,isG,machines,onClose,onAssign}){
   const machine=machines.find(m=>m.id===machineId);
-  if(!isG&&machine.sede!==user.sede){
+  if(!isG&&user.role!=="vendedora"&&machine.sede!==user.sede){
     return(
       <Modal title="Asignación restringida" onClose={onClose}>
         <div style={{background:"#fffbeb",border:"2px solid #f59e0b",borderRadius:14,padding:16,textAlign:"center"}}>
