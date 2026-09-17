@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.17";
+const APP_VERSION="v2026.09.17-2";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -585,6 +585,7 @@ function Shell({user,onLogout,orders,movimientos=[]}){
           onDetail={o=>setModal({t:"detail",order:o})}
           onQuickEdit={canEditDatos?(o=>setModal({t:"quickEdit",order:o})):null}
           canFullEdit={canProd}
+          onSetEntrega={canDeliver?setEntrega:null}
           onEdit={o=>canProd&&setModal({t:"edit",order:o})}/>}
         {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} canMov={canMov} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onEditar={m=>setModal({t:"editarMov",mov:m})} onResolver={resolverAlerta}/>}
         {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG}
@@ -1196,7 +1197,7 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
 }
 
 // ═══ COLA DE ÓRDENES ═══════════════════════════════════════
-function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdit,onQuickEdit,canFullEdit}){
+function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdit,onQuickEdit,canFullEdit,onSetEntrega}){
   const [q,setQ]=useState("");
   const fil=orders.filter(o=>String(o.orden).toLowerCase().includes(q.toLowerCase())||o.cliente.toLowerCase().includes(q.toLowerCase()));
   return(
@@ -1230,6 +1231,7 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
                       {enCola>0&&<span style={{background:"#eff6ff",color:"#1d4ed8",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{enCola} en cola</span>}
                       {listos>0&&<span style={{background:"#f0fdf4",color:"#15803d",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{listos} listos</span>}
                       <span style={{color:"#94a3b8",fontSize:14}}>{o.sede}</span>
+                      {o.estadoEntrega==="entregado"&&<span style={{background:"#f0fdf4",color:"#15803d",border:"1px solid #86efac",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>✓ Entregado</span>}
                     </div>
                     <div style={{fontWeight:600,color:"#475569",fontSize:14,marginBottom:6}}>{o.cliente}{o.remision?<span style={{color:"#94a3b8",fontWeight:500}}> · Rem: {o.remision}</span>:null}</div>
                     {/* Items de la orden con su estado individual */}
@@ -1253,6 +1255,9 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
                     <button onClick={()=>onDetail(o)} style={{...btnS,padding:"7px 10px",fontSize:14}}>Ver detalle</button>
                     {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#4338ca",fontSize:14,fontWeight:600}}>Editar datos</button>}
                     {canFullEdit&&onEdit&&<button onClick={()=>onEdit(o)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#0369a1",fontSize:14,fontWeight:600}}>Editar productos</button>}
+                    {onSetEntrega&&(o.estadoEntrega==="entregado"
+                      ?<button onClick={()=>onSetEntrega(o.orden,"pendiente")} style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#b45309",fontSize:14,fontWeight:600}}>Revertir entrega</button>
+                      :<button onClick={()=>onSetEntrega(o.orden,"entregado")} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#15803d",fontSize:14,fontWeight:700}}>Marcar entregado</button>)}
                     {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
                   </div>
                 </div>
