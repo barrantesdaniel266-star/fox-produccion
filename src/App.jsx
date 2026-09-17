@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.17-2";
+const APP_VERSION="v2026.09.17-3";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -1283,59 +1283,50 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail,onQuickEdit,onSetEntreg
           <option value="completed">Solo completadas</option>
           <option value="all">Todas las órdenes</option>
         </select>
-        <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar por No. Orden o cliente..." value={q} onChange={e=>setQ(e.target.value)}/>
-        <button onClick={()=>exportExcel(fil,isG)} style={btnG}>Exportar Excel</button>
+        <input style={{...inp,flex:1,minWidth:180}} placeholder="Buscar por No. Orden o cliente..." value={q} onChange={e=>setQ(e.target.value)}/>
+        {isG&&<button onClick={()=>exportExcel(fil,isG)} style={btnG}>Exportar Excel</button>}
       </div>
       <div style={{fontSize:14,color:"#94a3b8",marginBottom:10}}>{fil.length} registro(s)</div>
-      <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",overflow:"hidden"}}>
-        {fil.length===0?(
-          <div style={{textAlign:"center",padding:"60px 0",color:"#94a3b8"}}><div style={{fontSize:36,marginBottom:10,color:"#e2e8f0"}}>[ ]</div><div>Sin registros</div></div>
-        ):(
-          <div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
-              <thead>
-                <tr style={{background:"#f8fafc",borderBottom:"1px solid #e2e8f0"}}>
-                  {["No.Orden","Cliente","Productos","Sede","Creado por","Estado","Entrega","Creado","Completado","Acciones"].map(h=>(
-                    <th key={h} style={{padding:"10px 14px",textAlign:"left",fontSize:14,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.4,whiteSpace:"nowrap"}}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {fil.map((o,i)=>{
-                  const s=ss[deriveOrderStatus(normalizeItems(o))]||{bg:"#f1f5f9",col:"#64748b",txt:""};
-                  const items=normalizeItems(o);
-                  return(
-                    <tr key={o.orden} style={{borderBottom:"1px solid #f1f5f9",background:i%2===0?"#fff":"#fafafa"}}>
-                      <td style={{padding:"10px 14px",fontWeight:800,color:"#1e293b"}}>#{o.orden}</td>
-                      <td style={{padding:"10px 14px",color:"#334155",maxWidth:110,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.cliente}</td>
-                      <td style={{padding:"10px 14px",minWidth:160}}><ProductoBadges items={items}/></td>
-                      <td style={{padding:"10px 14px",color:"#475569"}}>{o.sede}</td>
-                      <td style={{padding:"10px 14px",color:"#475569",whiteSpace:"nowrap"}}>{o.vendedoraName}</td>
-                      <td style={{padding:"10px 14px"}}><span style={{background:s.bg,color:s.col,borderRadius:999,padding:"2px 9px",fontSize:14,fontWeight:700,whiteSpace:"nowrap"}}>{s.txt}</span></td>
-                      <td style={{padding:"10px 14px",whiteSpace:"nowrap"}}>
-                        {(()=>{const ei=entregaInfo(o);return <span style={{background:ei.bg,color:ei.color,border:`1px solid ${ei.border}`,borderRadius:999,padding:"2px 9px",fontSize:13,fontWeight:700}}>{ei.short}</span>;})()}
-                        {o.fechaEntrega&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{fmtDate(o.fechaEntrega)}</div>}
-                      </td>
-                      <td style={{padding:"10px 14px",color:"#94a3b8",whiteSpace:"nowrap"}}>{fmtDate(o.timestamp)}</td>
-                      <td style={{padding:"10px 14px",color:"#94a3b8",whiteSpace:"nowrap"}}>{o.completedAt?fmtDate(o.completedAt):fmtDate(normalizeItems(o).map(it=>it.completedAt).filter(Boolean).sort((a,b)=>b-a)[0])||"—"}</td>
-                      <td style={{padding:"10px 14px"}}>
-                        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-                          <button onClick={()=>onDetail(o)} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#64748b",fontSize:14}}>Ver</button>
-                          {onSetEntrega&&(o.estadoEntrega==="entregado"
-                            ?<button onClick={()=>onSetEntrega(o.orden,"pendiente")} style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#b45309",fontSize:14}}>Revertir</button>
-                            :<button onClick={()=>onSetEntrega(o.orden,"entregado")} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#15803d",fontSize:14,fontWeight:600}}>Entregar</button>)}
-                          {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#4338ca",fontSize:14}}>Editar</button>}
-                          {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:7,padding:"4px 8px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {fil.length===0?(
+        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"60px 0",color:"#94a3b8"}}><div style={{fontSize:36,marginBottom:10,color:"#e2e8f0"}}>[ ]</div><div>Sin registros</div></div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {fil.map(o=>{
+            const s=ss[deriveOrderStatus(normalizeItems(o))]||{bg:"#f1f5f9",col:"#64748b",txt:""};
+            const items=normalizeItems(o);
+            const ei=entregaInfo(o);
+            const compAt=o.completedAt?fmtDate(o.completedAt):fmtDate(items.map(it=>it.completedAt).filter(Boolean).sort((a,b)=>b-a)[0])||"—";
+            return(
+              <div key={o.orden} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px"}}>
+                {/* Fila 1: número + estados + entrega */}
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:6}}>
+                  <span style={{fontWeight:900,color:"#1e293b",fontSize:17}}>#{o.orden}</span>
+                  <span style={{background:s.bg,color:s.col,borderRadius:999,padding:"1px 9px",fontSize:13,fontWeight:700,whiteSpace:"nowrap"}}>{s.txt}</span>
+                  <span style={{background:ei.bg,color:ei.color,border:`1px solid ${ei.border}`,borderRadius:999,padding:"1px 9px",fontSize:13,fontWeight:700,whiteSpace:"nowrap"}}>{ei.short}</span>
+                  <span style={{color:"#94a3b8",fontSize:14,marginLeft:"auto"}}>{o.sede}</span>
+                </div>
+                {/* Fila 2: cliente + productos */}
+                <div style={{fontWeight:600,color:"#475569",fontSize:15,marginBottom:4}}>{o.cliente}{o.remision?<span style={{color:"#94a3b8",fontWeight:500,fontSize:13}}> · Rem: {o.remision}</span>:null}</div>
+                <div style={{marginBottom:6}}><ProductoBadges items={items}/></div>
+                {/* Fila 3: meta */}
+                <div style={{fontSize:13,color:"#94a3b8",marginBottom:10}}>
+                  {o.vendedoraName} · Creado {fmtDate(o.timestamp)} · Completado {compAt}
+                  {o.fechaEntrega?` · Entregado ${fmtDate(o.fechaEntrega)}`:""}
+                </div>
+                {/* Fila 4: acciones (siempre visibles, se acomodan solas) */}
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  <button onClick={()=>onDetail(o)} style={{...btnS,padding:"7px 12px",fontSize:14}}>Ver detalle</button>
+                  {onSetEntrega&&(o.estadoEntrega==="entregado"
+                    ?<button onClick={()=>onSetEntrega(o.orden,"pendiente")} style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"7px 12px",cursor:"pointer",color:"#b45309",fontSize:14,fontWeight:600}}>Revertir entrega</button>
+                    :<button onClick={()=>onSetEntrega(o.orden,"entregado")} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"7px 12px",cursor:"pointer",color:"#15803d",fontSize:14,fontWeight:700}}>Marcar entregado</button>)}
+                  {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:10,padding:"7px 12px",cursor:"pointer",color:"#4338ca",fontSize:14,fontWeight:600}}>Editar datos</button>}
+                  {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"7px 12px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
