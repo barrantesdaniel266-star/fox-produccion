@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.19";
+const APP_VERSION="v2026.09.19-2";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -633,7 +633,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       direccion: cli.direccion||prev.direccion||"",
       updatedAt: Date.now(),
     };
-    await setDoc(doc(db,"clientes",id),merged,{merge:true});
+    try{ await setDoc(doc(db,"clientes",id),merged,{merge:true}); }catch(e){ /* best-effort: no romper la orden/venta si falla */ }
   };
   // Crea/actualiza clientes a partir de TODAS las órdenes y ventas ya registradas
   const sincronizarClientes=async()=>{
@@ -780,7 +780,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
           onSetEntrega={canDeliver?setEntrega:null}
           onEdit={o=>canProd&&setModal({t:"edit",order:o})}/>}
         {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} canMov={canMov} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onEditar={m=>setModal({t:"editarMov",mov:m})} onResolver={resolverAlerta}/>}
-        {tab==="inventario"&&<InventarioTab inventario={inventario} lowStock={lowStock} user={user} isG={isG} canStock={!isViewer}          onNuevo={()=>isG&&setModal({t:"invNuevo"})}
+        {tab==="inventario"&&<InventarioTab inventario={inventario} orders={orders} lowStock={lowStock} user={user} isG={isG} canStock={!isViewer}          onNuevo={()=>isG&&setModal({t:"invNuevo"})}
           onEditar={p=>isG&&setModal({t:"invEditar",prod:p})}
           onEliminar={isG?(p=>{if(window.confirm(`¿Eliminar "${p.nombre}" del inventario?`))deleteProducto(p.id);}):null}
           onEntrada={p=>!isViewer&&setModal({t:"invMov",prod:p,tipo:"entrada"})}
@@ -2305,12 +2305,35 @@ const ORIGEN_INFO = {
   importado: { label:"Importado", bg:"#f5f3ff", col:"#7c3aed" },
 };
 
-function InventarioTab({inventario,lowStock,user,isG,canStock,onNuevo,onEditar,onEliminar,onEntrada,onSalida,onKardex}){
+function InventarioTab({inventario,orders=[],lowStock,user,isG,canStock,onNuevo,onEditar,onEliminar,onEntrada,onSalida,onKardex}){
   const [q,setQ]=useState("");
   const fil=[...inventario]
     .filter(p=>String(p.nombre||"").toLowerCase().includes(q.toLowerCase()))
     .sort((a,b)=>String(a.nombre||"").localeCompare(String(b.nombre||"")));
   const total=inventario.length;
+
+  // Producción física en bodega, derivada de las órdenes:
+  //  - "sin entregar": producido para un cliente pero aún no entregado
+  //  - "stock": producido en órdenes de inventario/stock
+  const bodega={};
+  (orders||[]).forEach(o=>{
+    const isStock=esStockCliente(o.cliente);
+    const entregado=o.estadoEntrega==="entregado";
+    if(entregado&&!isStock) return; // ya salió de bodega
+    const sede=SEDES.includes(o.sede)?o.sede:"Centro";
+    normalizeItems(o).forEach(it=>{
+      if(it.status!=="completed") return; // solo lo ya producido
+      const unidad=it.producto==="postes"?"un":"m²";
+      const qty=it.producto==="postes"?(Number(it.cantidad)||0):(Number(it.metros)||0);
+      if(!qty) return;
+      if(!bodega[it.producto]) bodega[it.producto]={unidad,sinEntregar:0,stock:0,sedes:{}};
+      const b=isStock?"stock":"sinEntregar";
+      bodega[it.producto][b]+=qty;
+      if(!bodega[it.producto].sedes[sede]) bodega[it.producto].sedes[sede]={sinEntregar:0,stock:0};
+      bodega[it.producto].sedes[sede][b]+=qty;
+    });
+  });
+  const bodegaList=Object.entries(bodega);
 
   return(
     <div>
@@ -2329,7 +2352,39 @@ function InventarioTab({inventario,lowStock,user,isG,canStock,onNuevo,onEditar,o
         </div>
       )}
 
+      {/* Producción en bodega (derivada de las órdenes) */}
+      {bodegaList.length>0&&(
+        <div style={{marginBottom:18}}>
+          <div style={{fontSize:15,fontWeight:800,color:"#334155",marginBottom:4}}>📋 Producción en bodega (según órdenes)</div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:10}}>Lo ya producido que sigue físicamente en bodega: pendiente de entregar + lo fabricado para stock. Se calcula solo de las órdenes.</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
+            {bodegaList.map(([prod,d])=>{
+              const info=infoProducto(prod);
+              return(
+                <div key={prod} style={{background:"#fff",border:`1.5px solid ${info.color}44`,borderRadius:12,padding:"12px 14px"}}>
+                  <div style={{fontWeight:800,color:info.color,fontSize:15,marginBottom:8}}>{labelProducto(prod)}</div>
+                  <div style={{display:"flex",gap:8,marginBottom:8}}>
+                    <div style={{flex:1,background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"8px",textAlign:"center"}}>
+                      <div style={{fontSize:17,fontWeight:900,color:"#b45309"}}>{d.sinEntregar} <span style={{fontSize:12}}>{d.unidad}</span></div>
+                      <div style={{fontSize:11,color:"#92400e"}}>Sin entregar</div>
+                    </div>
+                    <div style={{flex:1,background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:10,padding:"8px",textAlign:"center"}}>
+                      <div style={{fontSize:17,fontWeight:900,color:"#7c3aed"}}>{d.stock} <span style={{fontSize:12}}>{d.unidad}</span></div>
+                      <div style={{fontSize:11,color:"#6d28d9"}}>Para stock</div>
+                    </div>
+                  </div>
+                  <div style={{fontSize:11,color:"#94a3b8"}}>
+                    {SEDES.filter(s=>d.sedes[s]&&(d.sedes[s].sinEntregar||d.sedes[s].stock)).map(s=>`${s}: ${(d.sedes[s].sinEntregar+d.sedes[s].stock)} ${d.unidad}`).join(" · ")||"—"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Toolbar */}
+      <div style={{fontSize:15,fontWeight:800,color:"#334155",marginBottom:8}}>Existencias (catálogo)</div>
       <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
         <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar producto..." value={q} onChange={e=>setQ(e.target.value)}/>
         {isG&&<button onClick={onNuevo} style={btnR}>+ Nuevo producto</button>}
