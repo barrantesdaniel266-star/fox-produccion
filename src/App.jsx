@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.18-4";
+const APP_VERSION="v2026.09.19";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -91,6 +91,11 @@ const infoProducto  = id => PRODUCTOS.find(x=>x.id===id)||{color:"#64748b",bg:"#
 const esStockCliente = cliente =>
   String(cliente||"").toLowerCase().includes("stock") ||
   String(cliente||"").toLowerCase().includes("inventario");
+
+// Identificador estable de cliente a partir del nombre (une órdenes, ventas y clientes)
+const clienteId = nombre => String(nombre||"").trim().toLowerCase()
+  .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  .replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");
 
 // Formatea valores de dinero en pesos colombianos
 const fmtMoney = v => {
@@ -437,6 +442,8 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       estadoEntrega:"pendiente",fechaEntrega:null,
       logs:[makeLog(user,"Creó la orden",d.remision?`Remisión: ${d.remision}`:"")],
     }));
+    // Crea/actualiza el cliente automáticamente (salvo órdenes de stock)
+    if(d.cliente&&!esStockCliente(d.cliente)) await upsertCliente({nombre:d.cliente});
     return null;
   };
 
@@ -452,6 +459,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       cliente,remision,
       logs:withLogs(o,makeLog(user,"Editó datos de la orden",cambios.join(" · "))),
     }));
+    if(cliente&&!esStockCliente(cliente)) await upsertCliente({nombre:cliente});
   };
 
   // Marca la entrega (entregado / pendiente) con fecha y log
@@ -521,6 +529,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       ...changes,
       logs:withLogs(o,makeLog(user,"Editó la orden (productos/datos)")),
     }));
+    if(changes.cliente&&!esStockCliente(changes.cliente)) await upsertCliente({nombre:changes.cliente});
   };
   const createMovimiento=async(data)=>{
     const num="MOV-"+String(movimientos.length+1).padStart(3,"0");
@@ -610,10 +619,37 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
     return Math.max(base-1,...(nums.length?nums:[base-1]))+1;
   };
   const upsertCliente=async cli=>{
-    if(!cli||(!cli.nombre&&!cli.docNumero)) return;
-    const cid=String(cli.docNumero||cli.nombre||"").trim().toLowerCase().replace(/\s+/g,"_");
-    if(!cid) return;
-    await setDoc(doc(db,"clientes",cid),{...cli,id:cid,updatedAt:Date.now()},{merge:true});
+    if(!cli||!cli.nombre) return;
+    const id=clienteId(cli.nombre);
+    if(!id) return;
+    const prev=clientes.find(c=>c.id===id)||{};
+    // Enriquece sin borrar datos ya guardados (una orden solo trae el nombre; una venta trae más)
+    const merged={
+      id, nombre:cli.nombre.trim(),
+      docTipo: cli.docTipo||prev.docTipo||"NIT",
+      docNumero: cli.docNumero||prev.docNumero||"",
+      telefono: cli.telefono||prev.telefono||"",
+      email: cli.email||prev.email||"",
+      direccion: cli.direccion||prev.direccion||"",
+      updatedAt: Date.now(),
+    };
+    await setDoc(doc(db,"clientes",id),merged,{merge:true});
+  };
+  // Crea/actualiza clientes a partir de TODAS las órdenes y ventas ya registradas
+  const sincronizarClientes=async()=>{
+    const nombres=new Map();
+    orders.forEach(o=>{ if(o.cliente&&!esStockCliente(o.cliente)) nombres.set(clienteId(o.cliente),o.cliente); });
+    remisiones.forEach(d=>{ const n=d.cliente?.nombre; if(n) nombres.set(clienteId(n),n); });
+    let creados=0;
+    await withSave(async()=>{
+      for(const [id,nombre] of nombres){
+        if(!id) continue;
+        if(clientes.find(c=>c.id===id)) continue; // ya existe
+        await setDoc(doc(db,"clientes",id),{id,nombre:String(nombre).trim(),docTipo:"NIT",docNumero:"",telefono:"",email:"",direccion:"",updatedAt:Date.now()},{merge:true});
+        creados++;
+      }
+    });
+    alert(creados>0?`Se crearon ${creados} cliente(s) nuevos desde las órdenes y ventas.`:"Todos los clientes ya estaban sincronizados.");
   };
   const createDocumento=async d=>{
     const numero=nextNumero(d.tipo);
@@ -753,8 +789,10 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
         {tab==="ventas"&&<VentasTab remisiones={remisiones} user={user} canProd={canProd}
           onNueva={tipo=>canProd&&setModal({t:"nuevaVenta",tipo})}
           onImprimir={doc=>setModal({t:"verDoc",doc})}/>}
-        {tab==="clientes"&&<ClientesTab clientes={clientes} remisiones={remisiones} canProd={canProd}
-          onEditar={canProd?(c=>setModal({t:"cliente",cli:c})):null}/>}
+        {tab==="clientes"&&<ClientesTab clientes={clientes} remisiones={remisiones} orders={orders} isG={isG} canProd={canProd}
+          onVer={c=>setModal({t:"clienteDetalle",cli:c})}
+          onEditar={canProd?(c=>setModal({t:"cliente",cli:c})):null}
+          onSync={isG?sincronizarClientes:null}/>}
         {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG}
           onDel={canDelete?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
@@ -784,6 +822,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       {modal?.t==="verDoc"    &&<VerDocumentoModal doc={modal.doc} onClose={()=>setModal(null)}/>}
       {modal?.t==="pasarInv"  &&<PasarInventarioModal order={modal.order} inventario={inventario} onClose={()=>setModal(null)} onSave={pasarOrdenAInventario}/>}
       {modal?.t==="cliente"   &&<ClienteModal cli={modal.cli} onClose={()=>setModal(null)} onSave={saveCliente}/>}
+      {modal?.t==="clienteDetalle"&&<ClienteDetalleModal cli={modal.cli} orders={orders} remisiones={remisiones} onClose={()=>setModal(null)} onEditar={canProd?(c=>setModal({t:"cliente",cli:c})):null} onVerOrden={o=>setModal({t:"detail",order:o})}/>}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}*{box-sizing:border-box}`}</style>
     </div>
   );
@@ -2925,15 +2964,11 @@ function VerDocumentoModal({doc,onClose}){
 }
 
 // ═══ CLIENTES (mini-CRM) ═══════════════════════════════════
-function ClientesTab({clientes,remisiones,canProd,onEditar}){
+function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onSync}){
   const [q,setQ]=useState("");
-  const stats={};
-  (remisiones||[]).forEach(d=>{
-    const key=String(d.cliente?.docNumero||d.cliente?.nombre||"").trim().toLowerCase().replace(/\s+/g,"_");
-    if(!key) return;
-    if(!stats[key]) stats[key]={docs:0,total:0};
-    stats[key].docs++; stats[key].total+=Number(d.total)||0;
-  });
+  const remStats={},ordStats={};
+  (remisiones||[]).forEach(d=>{ const k=clienteId(d.cliente?.nombre); if(!k) return; (remStats[k]=remStats[k]||{docs:0,total:0}); remStats[k].docs++; remStats[k].total+=Number(d.total)||0; });
+  (orders||[]).forEach(o=>{ if(esStockCliente(o.cliente)) return; const k=clienteId(o.cliente); if(!k) return; ordStats[k]=(ordStats[k]||0)+1; });
   const lista=[...clientes]
     .filter(c=>String(c.nombre||"").toLowerCase().includes(q.toLowerCase())||String(c.docNumero||"").includes(q))
     .sort((a,b)=>String(a.nombre||"").localeCompare(String(b.nombre||"")));
@@ -2941,26 +2976,28 @@ function ClientesTab({clientes,remisiones,canProd,onEditar}){
     <div>
       <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
         <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar cliente por nombre o documento..." value={q} onChange={e=>setQ(e.target.value)}/>
+        {onSync&&<button onClick={onSync} style={{...btnS,fontWeight:700}}>🔄 Sincronizar desde órdenes</button>}
       </div>
       <div style={{fontSize:14,color:"#94a3b8",marginBottom:10}}>{lista.length} cliente(s)</div>
       {lista.length===0?(
         <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"56px 0",color:"#94a3b8"}}>
           <div style={{fontSize:34,marginBottom:10}}>👤</div>
           <div style={{fontWeight:600}}>Aún no hay clientes</div>
-          <div style={{fontSize:13,marginTop:4}}>Se van creando solos al registrar ventas y remisiones.</div>
+          <div style={{fontSize:13,marginTop:4}}>Se crean solos con cada orden y venta. Usa "Sincronizar desde órdenes" para traer los existentes.</div>
         </div>
       ):(
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
           {lista.map(c=>{
-            const st=stats[c.id]||{docs:0,total:0};
+            const rs=remStats[c.id]||{docs:0,total:0};
+            const oc=ordStats[c.id]||0;
             return(
-              <div key={c.id} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px"}}>
+              <div key={c.id} onClick={()=>onVer&&onVer(c)} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px",cursor:onVer?"pointer":"default"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
                   <div style={{minWidth:0}}>
                     <div style={{fontWeight:800,color:"#1e293b",fontSize:16}}>{c.nombre||"—"}</div>
                     <div style={{fontSize:13,color:"#94a3b8"}}>{c.docTipo||"Doc"}: {c.docNumero||"—"}</div>
                   </div>
-                  {onEditar&&<button onClick={()=>onEditar(c)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:"#0369a1",fontSize:13,fontWeight:600}}>Editar</button>}
+                  {onEditar&&<button onClick={e=>{e.stopPropagation();onEditar(c);}} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:"#0369a1",fontSize:13,fontWeight:600}}>Editar</button>}
                 </div>
                 <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:2,fontSize:13,color:"#475569"}}>
                   <div>📞 {c.telefono||<span style={{color:"#cbd5e1"}}>sin teléfono</span>}</div>
@@ -2968,9 +3005,10 @@ function ClientesTab({clientes,remisiones,canProd,onEditar}){
                   <div>📍 {c.direccion||<span style={{color:"#cbd5e1"}}>sin dirección</span>}</div>
                 </div>
                 <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid #f1f5f9",display:"flex",justifyContent:"space-between",fontSize:13}}>
-                  <span style={{color:"#94a3b8"}}>{st.docs} documento(s)</span>
-                  <span style={{fontWeight:700,color:"#1e293b"}}>{cop(st.total)}</span>
+                  <span style={{color:"#94a3b8"}}>{oc} orden(es) · {rs.docs} venta(s)</span>
+                  <span style={{fontWeight:700,color:"#1e293b"}}>{cop(rs.total)}</span>
                 </div>
+                {onVer&&<div style={{marginTop:6,fontSize:12,color:"#4338ca",fontWeight:600}}>Ver historial →</div>}
               </div>
             );
           })}
@@ -3059,6 +3097,76 @@ function PasarInventarioModal({order,inventario,onClose,onSave}){
         <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
         <button onClick={submit} disabled={loading||inventario.length===0} style={{...btnR,flex:2}}>{loading?"Pasando...":"Pasar a inventario"}</button>
       </div>
+    </Modal>
+  );
+}
+
+// ═══ DETALLE DE CLIENTE (historial de órdenes y ventas) ════
+function ClienteDetalleModal({cli,orders,remisiones,onClose,onEditar,onVerOrden}){
+  const ordenesCli=(orders||[]).filter(o=>!esStockCliente(o.cliente)&&clienteId(o.cliente)===cli.id).sort((a,b)=>b.timestamp-a.timestamp);
+  const ventasCli=(remisiones||[]).filter(d=>clienteId(d.cliente?.nombre)===cli.id).sort((a,b)=>b.timestamp-a.timestamp);
+  const totalComprado=ventasCli.reduce((a,d)=>a+(Number(d.total)||0),0);
+  return(
+    <Modal title="Ficha del cliente" onClose={onClose} maxWidth={600}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:12}}>
+        <div>
+          <div style={{fontSize:20,fontWeight:900,color:"#1e293b"}}>{cli.nombre}</div>
+          <div style={{fontSize:13,color:"#94a3b8"}}>{cli.docTipo||"Doc"}: {cli.docNumero||"—"}</div>
+        </div>
+        {onEditar&&<button onClick={()=>onEditar(cli)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#0369a1",fontSize:13,fontWeight:700}}>Editar datos</button>}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8,fontSize:13}}>
+        <div style={{background:"#f8fafc",border:"1px solid #f1f5f9",borderRadius:10,padding:"8px 10px"}}>📞 {cli.telefono||"—"}</div>
+        <div style={{background:"#f8fafc",border:"1px solid #f1f5f9",borderRadius:10,padding:"8px 10px",overflow:"hidden",textOverflow:"ellipsis"}}>✉ {cli.email||"—"}</div>
+        <div style={{background:"#f8fafc",border:"1px solid #f1f5f9",borderRadius:10,padding:"8px 10px"}}>📍 {cli.direccion||"—"}</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
+        <div style={{background:"#eff6ff",borderRadius:10,padding:"8px",textAlign:"center"}}><div style={{fontSize:18,fontWeight:900,color:"#1d4ed8"}}>{ordenesCli.length}</div><div style={{fontSize:11,color:"#64748b"}}>Órdenes</div></div>
+        <div style={{background:"#fef2f2",borderRadius:10,padding:"8px",textAlign:"center"}}><div style={{fontSize:18,fontWeight:900,color:RED}}>{ventasCli.length}</div><div style={{fontSize:11,color:"#64748b"}}>Ventas</div></div>
+        <div style={{background:"#f0fdf4",borderRadius:10,padding:"8px",textAlign:"center"}}><div style={{fontSize:16,fontWeight:900,color:"#15803d"}}>{cop(totalComprado)}</div><div style={{fontSize:11,color:"#64748b"}}>Comprado</div></div>
+      </div>
+
+      <div style={{fontWeight:700,fontSize:14,color:"#334155",marginBottom:8}}>Órdenes de producción ({ordenesCli.length})</div>
+      {ordenesCli.length===0?(
+        <div style={{fontSize:13,color:"#94a3b8",marginBottom:16}}>Sin órdenes registradas.</div>
+      ):(
+        <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
+          {ordenesCli.map(o=>{
+            const st=orderStInfo(o);const items=normalizeItems(o);
+            return(
+              <div key={o.orden} onClick={()=>onVerOrden&&onVerOrden(o)} style={{border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 12px",cursor:onVerOrden?"pointer":"default"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <span style={{fontWeight:800,color:"#1e293b",fontSize:14}}>#{o.orden}</span>
+                  <span style={{background:st.bg,color:st.col,borderRadius:999,padding:"1px 8px",fontSize:12,fontWeight:700}}>{st.txt}</span>
+                  <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{fmtDate(o.timestamp)}</span>
+                </div>
+                <div style={{marginTop:4}}><ProductoBadges items={items}/></div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div style={{fontWeight:700,fontSize:14,color:"#334155",marginBottom:8}}>Ventas y cotizaciones ({ventasCli.length})</div>
+      {ventasCli.length===0?(
+        <div style={{fontSize:13,color:"#94a3b8",marginBottom:16}}>Sin ventas registradas.</div>
+      ):(
+        <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
+          {ventasCli.map(d=>{
+            const esRem=d.tipo==="remision";
+            return(
+              <div key={d.id} style={{display:"flex",alignItems:"center",gap:8,border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 12px"}}>
+                <span style={{background:esRem?"#fef2f2":"#eff6ff",color:esRem?RED:"#1d4ed8",borderRadius:999,padding:"1px 8px",fontSize:11,fontWeight:800}}>{esRem?"REMISIÓN":"COTIZACIÓN"}</span>
+                <span style={{fontWeight:700,color:"#1e293b",fontSize:14}}>N° {d.numero}</span>
+                <span style={{fontSize:12,color:"#94a3b8"}}>{fmtDate(d.timestamp)}</span>
+                <span style={{marginLeft:"auto",fontWeight:700,color:"#1e293b"}}>{cop(d.total)}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <button onClick={onClose} style={{width:"100%",background:DARK,border:"none",borderRadius:10,padding:"11px",fontSize:14,fontWeight:700,color:"#fff",cursor:"pointer"}}>Cerrar</button>
     </Modal>
   );
 }
