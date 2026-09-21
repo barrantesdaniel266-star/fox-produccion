@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.17-4";
+const APP_VERSION="v2026.09.18-4";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -40,6 +40,23 @@ const PRODUCTOS = [
 ];
 
 const SEDES = ["Centro","Santa Lucia","La Granja"];
+
+// Datos de la empresa (para remisiones y cotizaciones)
+const EMPRESA = {
+  nombre:"MALLAS & ALAMBRES FOX",
+  email:"mallasyalambresfox@gmail.com",
+  sedes:[
+    { nombre:"Sede Centro",       dir:"Calle 12 # 15-87",        tels:"321 424 0407 · 322 914 7720" },
+    { nombre:"Sede Santa Lucía",  dir:"Carrera 21 # 44 Sur - 62", tels:"320 315 9731 · 320 320 2481 · 312 384 4768" },
+  ],
+  ciudad:"Bogotá",
+  nota:"Transcurridos treinta (30) días calendario desde la fecha de compra, no nos hacemos responsables por la conservación, custodia o devolución del mismo.",
+};
+const IVA_DEFAULT = 19;      // %
+const RETE_DEFAULT = 2.5;    // %
+// Números iniciales — cámbialos al próximo número real de tu talonario para no duplicar
+const REMISION_INICIAL = 3463;
+const COTIZACION_INICIAL = 1;
 
 const MOV_PRODUCTOS = [
   { id:"eslabonada",  label:"Malla Eslabonada",  unidad:"m²",     conDesc:true },
@@ -266,6 +283,20 @@ export default function App(){
     return onSnapshot(q2,snap=>setMovimientos(snap.docs.map(d=>d.data())),()=>{});
   },[]);
 
+  const [inventario,setInventario]=useState([]);
+  useEffect(()=>{
+    return onSnapshot(collection(db,"inventario"),snap=>setInventario(snap.docs.map(d=>d.data())),()=>{});
+  },[]);
+
+  const [remisiones,setRemisiones]=useState([]);
+  useEffect(()=>{
+    return onSnapshot(collection(db,"remisiones"),snap=>setRemisiones(snap.docs.map(d=>d.data())),()=>{});
+  },[]);
+  const [clientes,setClientes]=useState([]);
+  useEffect(()=>{
+    return onSnapshot(collection(db,"clientes"),snap=>setClientes(snap.docs.map(d=>d.data())),()=>{});
+  },[]);
+
   useEffect(()=>{
     const q=query(collection(db,"orders"),orderBy("timestamp","desc"));
     return onSnapshot(q,
@@ -295,7 +326,7 @@ export default function App(){
 
   if(!ready)return <Splash error={dbErr}/>;
   if(!user)return <Login onLogin={login}/>;
-  return <Shell user={user} onLogout={logout} orders={orders} movimientos={movimientos}/>;
+  return <Shell user={user} onLogout={logout} orders={orders} movimientos={movimientos} inventario={inventario} remisiones={remisiones} clientes={clientes}/>;
 }
 
 // ═══ SPLASH ════════════════════════════════════════════════
@@ -354,7 +385,7 @@ function Login({onLogin}){
 }
 
 // ═══ SHELL ═════════════════════════════════════════════════
-function Shell({user,onLogout,orders,movimientos=[]}){
+function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],clientes=[]}){
   // tab init deferred below after isLogistica is defined
   const [modal,setModal]=useState(null);
   const [saving,setSaving]=useState(false);
@@ -541,6 +572,107 @@ function Shell({user,onLogout,orders,movimientos=[]}){
     }));
   };
 
+  // ── INVENTARIO ─────────────────────────────────────────────
+  const createProducto=async d=>{
+    if(inventario.find(p=>p.nombre?.trim().toLowerCase()===d.nombre.trim().toLowerCase()))
+      return "Ya existe un producto con ese nombre";
+    const id="inv_"+Date.now();
+    await withSave(()=>setDoc(doc(db,"inventario",id),{
+      id, nombre:d.nombre.trim(), unidad:d.unidad, origen:d.origen, minimo:Number(d.minimo)||0,
+      stock:{ "Centro":0, "Santa Lucia":0, "La Granja":0 },
+      mov:[{ts:Date.now(),tipo:"alta",sede:"—",cant:0,motivo:"Producto creado",usuario:user.name}],
+      creadoPor:user.name, timestamp:Date.now(),
+    }));
+    return null;
+  };
+  const editProducto=async(id,changes)=>{ await withSave(()=>updateDoc(doc(db,"inventario",id),{...changes,minimo:Number(changes.minimo)||0})); };
+  const deleteProducto=async id=>{ await withSave(()=>deleteDoc(doc(db,"inventario",id))); };
+  const moverInventario=async(id,{sede,cant,tipo,motivo})=>{
+    const p=inventario.find(x=>x.id===id);
+    if(!p) return;
+    const q=Math.abs(Number(cant)||0);
+    if(q<=0) return;
+    const delta = tipo==="salida" ? -q : q;
+    const actual=Number(p.stock?.[sede])||0;
+    const nuevoStock={ ...(p.stock||{}), [sede]: Math.max(0, actual+delta) };
+    const entry={ ts:Date.now(), tipo, sede, cant:q, motivo:motivo||"", usuario:user.name };
+    const mov=[...(Array.isArray(p.mov)?p.mov:[]), entry].slice(-120);
+    await withSave(()=>updateDoc(doc(db,"inventario",id),{stock:nuevoStock, mov}));
+  };
+  // Productos con stock en o por debajo del mínimo (para alertas)
+  const lowStock=[];
+  inventario.forEach(p=>{ if((p.minimo||0)>0) SEDES.forEach(s=>{ if((Number(p.stock?.[s])||0)<=p.minimo) lowStock.push({producto:p,sede:s}); }); });
+
+  // ── VENTAS / REMISIONES / COTIZACIONES ─────────────────────
+  const nextNumero=tipo=>{
+    const base=tipo==="remision"?REMISION_INICIAL:COTIZACION_INICIAL;
+    const nums=remisiones.filter(d=>d.tipo===tipo).map(d=>Number(d.numero)||0);
+    return Math.max(base-1,...(nums.length?nums:[base-1]))+1;
+  };
+  const upsertCliente=async cli=>{
+    if(!cli||(!cli.nombre&&!cli.docNumero)) return;
+    const cid=String(cli.docNumero||cli.nombre||"").trim().toLowerCase().replace(/\s+/g,"_");
+    if(!cid) return;
+    await setDoc(doc(db,"clientes",cid),{...cli,id:cid,updatedAt:Date.now()},{merge:true});
+  };
+  const createDocumento=async d=>{
+    const numero=nextNumero(d.tipo);
+    const id=(d.tipo==="remision"?"rem_":"cot_")+Date.now();
+    await withSave(async()=>{
+      // Actualiza/crea el cliente (mini-CRM) con los datos capturados al imprimir
+      await upsertCliente(d.cliente);
+      // Descuenta del stock si es una remisión vendida desde inventario
+      if(d.tipo==="remision"&&d.origen==="stock"){
+        for(const it of d.items){
+          if(!it.productoId) continue;
+          const p=inventario.find(x=>x.id===it.productoId);
+          if(!p) continue;
+          const sede=it.sede||d.sede;
+          const actual=Number(p.stock?.[sede])||0;
+          const nuevoStock={...(p.stock||{}),[sede]:Math.max(0,actual-(Number(it.cantidad)||0))};
+          const entry={ts:Date.now(),tipo:"salida",sede,cant:Number(it.cantidad)||0,motivo:`Remisión #${numero} · ${d.cliente?.nombre||""}`,usuario:user.name};
+          const mov=[...(Array.isArray(p.mov)?p.mov:[]),entry].slice(-120);
+          await updateDoc(doc(db,"inventario",p.id),{stock:nuevoStock,mov});
+        }
+      }
+      await setDoc(doc(db,"remisiones",id),{
+        id,tipo:d.tipo,numero,origen:d.origen||null,ordenRef:d.ordenRef||null,
+        cliente:d.cliente||{},sede:d.sede||user.sede,items:d.items||[],
+        subtotal:d.subtotal||0,iva:d.iva||{aplica:false,porc:0,valor:0},retefuente:d.retefuente||{aplica:false,porc:0,valor:0},
+        total:d.total||0,abono:d.abono||0,saldo:d.saldo||0,
+        creadoPor:user.username,creadoPorNombre:user.name,timestamp:Date.now(),
+      });
+    });
+    return {numero,id};
+  };
+
+  // Pasar una orden terminada (no comprada) al inventario/stock
+  const pasarOrdenAInventario=async(orden,asigns)=>{
+    const o=orders.find(x=>String(x.orden)===String(orden));
+    if(!o) return;
+    await withSave(async()=>{
+      for(const a of asigns){
+        if(!a.productoId||!(Number(a.cant)>0)) continue;
+        const p=inventario.find(x=>x.id===a.productoId);
+        if(!p) continue;
+        const actual=Number(p.stock?.[a.sede])||0;
+        const nuevoStock={...(p.stock||{}),[a.sede]:actual+(Number(a.cant)||0)};
+        const entry={ts:Date.now(),tipo:"entrada",sede:a.sede,cant:Number(a.cant)||0,motivo:`Orden #${orden} no comprada`,usuario:user.name};
+        const mov=[...(Array.isArray(p.mov)?p.mov:[]),entry].slice(-120);
+        await updateDoc(doc(db,"inventario",p.id),{stock:nuevoStock,mov});
+      }
+      await updateDoc(doc(db,"orders",String(orden)),{
+        pasadaAInventario:true,
+        logs:withLogs(o,makeLog(user,"Pasada a inventario","El cliente no compró; productos enviados al stock")),
+      });
+    });
+  };
+
+  const saveCliente=async cli=>{
+    if(!cli?.id) return;
+    await withSave(()=>setDoc(doc(db,"clientes",cli.id),{...cli,updatedAt:Date.now()},{merge:true}));
+  };
+
 
 
   const movPendientes=movimientos.filter(m=>m.estado==="enviado"&&m.destino===user.sede&&!isG&&!isLogistica).length;
@@ -549,6 +681,9 @@ function Shell({user,onLogout,orders,movimientos=[]}){
     {id:"queue",      label:"Cola de Órdenes", count:queueOrders.length},
     {id:"history",    label:"Historial",       count:doneOrders.length},
     {id:"movimientos",label:"🚚 Movimientos",  count:movimientos.filter(m=>m.estado==="enviado"||m.estado==="discrepancia").length},
+    {id:"inventario", label:"📦 Inventario",    count:lowStock.length},
+    {id:"ventas",     label:"🧾 Ventas",         count:0},
+    {id:"clientes",   label:"👤 Clientes",       count:0},
   ];
 
   return(
@@ -609,10 +744,22 @@ function Shell({user,onLogout,orders,movimientos=[]}){
           onSetEntrega={canDeliver?setEntrega:null}
           onEdit={o=>canProd&&setModal({t:"edit",order:o})}/>}
         {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} canMov={canMov} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onEditar={m=>setModal({t:"editarMov",mov:m})} onResolver={resolverAlerta}/>}
+        {tab==="inventario"&&<InventarioTab inventario={inventario} lowStock={lowStock} user={user} isG={isG} canStock={!isViewer}          onNuevo={()=>isG&&setModal({t:"invNuevo"})}
+          onEditar={p=>isG&&setModal({t:"invEditar",prod:p})}
+          onEliminar={isG?(p=>{if(window.confirm(`¿Eliminar "${p.nombre}" del inventario?`))deleteProducto(p.id);}):null}
+          onEntrada={p=>!isViewer&&setModal({t:"invMov",prod:p,tipo:"entrada"})}
+          onSalida={p=>!isViewer&&setModal({t:"invMov",prod:p,tipo:"salida"})}
+          onKardex={p=>setModal({t:"invKardex",prod:p})}/>}
+        {tab==="ventas"&&<VentasTab remisiones={remisiones} user={user} canProd={canProd}
+          onNueva={tipo=>canProd&&setModal({t:"nuevaVenta",tipo})}
+          onImprimir={doc=>setModal({t:"verDoc",doc})}/>}
+        {tab==="clientes"&&<ClientesTab clientes={clientes} remisiones={remisiones} canProd={canProd}
+          onEditar={canProd?(c=>setModal({t:"cliente",cli:c})):null}/>}
         {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG}
           onDel={canDelete?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
           onQuickEdit={canEditDatos?(o=>setModal({t:"quickEdit",order:o})):null}
+          onPasarInv={!isViewer?(o=>setModal({t:"pasarInv",order:o})):null}
           onSetEntrega={canDeliver?setEntrega:null}/>}
       </div>
 
@@ -629,6 +776,14 @@ function Shell({user,onLogout,orders,movimientos=[]}){
       {modal?.t==="newMov"     &&<NewMovimientoModal user={user} movimientos={movimientos} onClose={()=>setModal(null)} onCreate={createMovimiento}/>}
       {modal?.t==="recibirMov" &&<RecibirMovimientoModal mov={modal.mov} user={user} onClose={()=>setModal(null)} onRecibir={recibirMovimiento}/>}
       {modal?.t==="editarMov" &&<EditarMovimientoModal mov={modal.mov} onClose={()=>setModal(null)} onSave={editarMovimiento}/>}
+      {modal?.t==="invNuevo"  &&<ProductoModal onClose={()=>setModal(null)} onSave={createProducto}/>}
+      {modal?.t==="invEditar" &&<ProductoModal prod={modal.prod} onClose={()=>setModal(null)} onSave={d=>editProducto(modal.prod.id,d)}/>}
+      {modal?.t==="invMov"    &&<MovInventarioModal prod={modal.prod} tipo={modal.tipo} onClose={()=>setModal(null)} onSave={moverInventario}/>}
+      {modal?.t==="invKardex" &&<KardexModal prod={modal.prod} onClose={()=>setModal(null)}/>}
+      {modal?.t==="nuevaVenta"&&<NuevaVentaModal tipo={modal.tipo} user={user} inventario={inventario} orders={orders} clientes={clientes} onClose={()=>setModal(null)} onCreate={createDocumento} onDone={doc=>setModal({t:"verDoc",doc})}/>}
+      {modal?.t==="verDoc"    &&<VerDocumentoModal doc={modal.doc} onClose={()=>setModal(null)}/>}
+      {modal?.t==="pasarInv"  &&<PasarInventarioModal order={modal.order} inventario={inventario} onClose={()=>setModal(null)} onSave={pasarOrdenAInventario}/>}
+      {modal?.t==="cliente"   &&<ClienteModal cli={modal.cli} onClose={()=>setModal(null)} onSave={saveCliente}/>}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}*{box-sizing:border-box}`}</style>
     </div>
   );
@@ -1292,7 +1447,7 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
 }
 
 // ═══ HISTORIAL ═════════════════════════════════════════════
-function HistoryTab({orders,allOrders,isG,onDel,onDetail,onQuickEdit,onSetEntrega}){
+function HistoryTab({orders,allOrders,isG,onDel,onDetail,onQuickEdit,onSetEntrega,onPasarInv}){
   const [q,setQ]=useState("");const [view,setView]=useState("terminadas");
   const entregada=o=>o.estadoEntrega==="entregado";
   let base;
@@ -1341,6 +1496,8 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail,onQuickEdit,onSetEntreg
                     ?<button onClick={()=>onSetEntrega(o.orden,"pendiente")} style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#b45309",fontSize:14,fontWeight:600}}>Revertir entrega</button>
                     :<button onClick={()=>onSetEntrega(o.orden,"entregado")} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#15803d",fontSize:14,fontWeight:700}}>Marcar entregado</button>)}
                   {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#4338ca",fontSize:14,fontWeight:600}}>Editar datos</button>}
+                  {onPasarInv&&orderDisplayStatus(o)==="terminada"&&!o.pasadaAInventario&&<button onClick={()=>onPasarInv(o)} style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#7c3aed",fontSize:14,fontWeight:700}}>📦 Pasar a inventario</button>}
+                  {o.pasadaAInventario&&<span style={{background:"#f5f3ff",color:"#7c3aed",border:"1px solid #ddd6fe",borderRadius:999,padding:"5px 10px",fontSize:13,fontWeight:700}}>En inventario</span>}
                   {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
                 </div>
               </div>
@@ -2098,6 +2255,810 @@ function DetailModal({order,isG,onClose,onQuickEdit,onSetEntrega}){
       )}
 
       <button onClick={onClose} style={{width:"100%",background:DARK,border:"none",borderRadius:10,padding:"11px",fontSize:14,fontWeight:700,color:"#fff",cursor:"pointer"}}>Cerrar</button>
+    </Modal>
+  );
+}
+
+// ═══ INVENTARIO ════════════════════════════════════════════
+const UNIDADES = ["rollos","m²","unidades","kg","metros","cajas"];
+const ORIGEN_INFO = {
+  producido: { label:"Producido", bg:"#eff6ff", col:"#1d4ed8" },
+  importado: { label:"Importado", bg:"#f5f3ff", col:"#7c3aed" },
+};
+
+function InventarioTab({inventario,lowStock,user,isG,canStock,onNuevo,onEditar,onEliminar,onEntrada,onSalida,onKardex}){
+  const [q,setQ]=useState("");
+  const fil=[...inventario]
+    .filter(p=>String(p.nombre||"").toLowerCase().includes(q.toLowerCase()))
+    .sort((a,b)=>String(a.nombre||"").localeCompare(String(b.nombre||"")));
+  const total=inventario.length;
+
+  return(
+    <div>
+      {/* Alerta de bajo stock */}
+      {lowStock.length>0&&(
+        <div style={{background:"#fef2f2",border:"1.5px solid #fecaca",borderRadius:12,padding:"12px 18px",marginBottom:16}}>
+          <div style={{fontWeight:700,color:"#dc2626",fontSize:15,marginBottom:6}}>⚠ {lowStock.length} alerta(s) de bajo stock</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            {lowStock.slice(0,12).map(({producto,sede},i)=>(
+              <span key={i} style={{background:"#fff",border:"1px solid #fecaca",borderRadius:999,padding:"2px 10px",fontSize:13,color:"#991b1b",fontWeight:600}}>
+                {producto.nombre} · {sede}: {Number(producto.stock?.[sede])||0} {producto.unidad}
+              </span>
+            ))}
+            {lowStock.length>12&&<span style={{fontSize:13,color:"#991b1b",alignSelf:"center"}}>+{lowStock.length-12} más</span>}
+          </div>
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
+        <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar producto..." value={q} onChange={e=>setQ(e.target.value)}/>
+        {isG&&<button onClick={onNuevo} style={btnR}>+ Nuevo producto</button>}
+      </div>
+      <div style={{fontSize:14,color:"#94a3b8",marginBottom:10}}>{fil.length} de {total} producto(s)</div>
+
+      {fil.length===0?(
+        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"56px 0",color:"#94a3b8"}}>
+          <div style={{fontSize:34,marginBottom:10}}>📦</div>
+          <div style={{fontWeight:600,marginBottom:6}}>{q?"Sin resultados":"Aún no hay productos en el inventario"}</div>
+          {!q&&isG&&<button onClick={onNuevo} style={{background:"none",border:"none",color:RED,fontSize:14,cursor:"pointer",textDecoration:"underline"}}>+ Crear el primer producto</button>}
+        </div>
+      ):(
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
+          {fil.map(p=>{
+            const oi=ORIGEN_INFO[p.origen]||ORIGEN_INFO.producido;
+            const totalStock=SEDES.reduce((a,s)=>a+(Number(p.stock?.[s])||0),0);
+            return(
+              <div key={p.id} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:10}}>
+                  <div style={{minWidth:0}}>
+                    <div style={{fontWeight:800,color:"#1e293b",fontSize:16,lineHeight:1.2}}>{p.nombre}</div>
+                    <div style={{display:"flex",gap:6,alignItems:"center",marginTop:4,flexWrap:"wrap"}}>
+                      <span style={{background:oi.bg,color:oi.col,borderRadius:999,padding:"1px 9px",fontSize:12,fontWeight:700}}>{oi.label}</span>
+                      <span style={{fontSize:13,color:"#94a3b8"}}>Total: <strong style={{color:"#334155"}}>{totalStock} {p.unidad}</strong></span>
+                      {p.minimo>0&&<span style={{fontSize:12,color:"#94a3b8"}}>· mín {p.minimo}</span>}
+                    </div>
+                  </div>
+                  {isG&&(
+                    <div style={{display:"flex",gap:4,flexShrink:0}}>
+                      <button onClick={()=>onEditar(p)} title="Editar" style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,padding:"4px 8px",cursor:"pointer",color:"#0369a1",fontSize:13}}>✏</button>
+                      {onEliminar&&<button onClick={()=>onEliminar(p)} title="Eliminar" style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"4px 8px",cursor:"pointer",color:"#dc2626",fontSize:13}}>🗑</button>}
+                    </div>
+                  )}
+                </div>
+
+                {/* Stock por sede */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:10}}>
+                  {SEDES.map(s=>{
+                    const v=Number(p.stock?.[s])||0;
+                    const bajo=(p.minimo||0)>0&&v<=p.minimo;
+                    return(
+                      <div key={s} style={{background:bajo?"#fef2f2":"#f8fafc",border:`1px solid ${bajo?"#fecaca":"#e2e8f0"}`,borderRadius:10,padding:"8px 6px",textAlign:"center"}}>
+                        <div style={{fontSize:11,color:bajo?"#dc2626":"#94a3b8",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{s}</div>
+                        <div style={{fontSize:18,fontWeight:900,color:bajo?"#dc2626":"#1e293b"}}>{v}</div>
+                        {bajo&&<div style={{fontSize:10,color:"#dc2626",fontWeight:700}}>BAJO</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Acciones */}
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {canStock&&<button onClick={()=>onEntrada(p)} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#15803d",fontSize:14,fontWeight:700}}>+ Entrada</button>}
+                  {canStock&&<button onClick={()=>onSalida(p)} style={{background:"#fff7ed",border:"1px solid #fed7aa",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#c2410c",fontSize:14,fontWeight:700}}>− Salida</button>}
+                  <button onClick={()=>onKardex(p)} style={{...btnS,padding:"6px 12px",fontSize:14}}>Movimientos</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProductoModal({prod,onClose,onSave}){
+  const editing=!!prod;
+  const [nombre,setNombre]=useState(prod?.nombre||"");
+  const [unidad,setUnidad]=useState(prod?.unidad||"rollos");
+  const [origen,setOrigen]=useState(prod?.origen||"importado");
+  const [minimo,setMinimo]=useState(prod?.minimo!=null?String(prod.minimo):"");
+  const [err,setErr]=useState("");const [loading,setLoading]=useState(false);
+  const submit=async()=>{
+    if(!nombre.trim()){setErr("Ingresa el nombre del producto");return;}
+    setLoading(true);
+    const r=await onSave({nombre:nombre.trim(),unidad,origen,minimo:Number(minimo)||0});
+    setLoading(false);
+    if(r){setErr(r);return;}
+    onClose();
+  };
+  return(
+    <Modal title={editing?`Editar producto`:"Nuevo producto de inventario"} onClose={onClose} maxWidth={480}>
+      <Field label="Nombre del producto *">
+        <input style={inp} value={nombre} onChange={e=>{setNombre(e.target.value);setErr("");}} placeholder="Ej: Malla eslabonada cal 12 verde"/>
+      </Field>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <Field label="Unidad *">
+          <select style={inp} value={unidad} onChange={e=>setUnidad(e.target.value)}>
+            {UNIDADES.map(u=><option key={u} value={u}>{u}</option>)}
+          </select>
+        </Field>
+        <Field label="Origen *">
+          <select style={inp} value={origen} onChange={e=>setOrigen(e.target.value)}>
+            <option value="importado">Importado</option>
+            <option value="producido">Producido</option>
+          </select>
+        </Field>
+      </div>
+      <Field label="Stock mínimo (alerta cuando el stock baje a este número; 0 = sin alerta)">
+        <NumInp value={minimo} onChange={setMinimo} placeholder="0"/>
+      </Field>
+      {editing&&<div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"9px 12px",fontSize:13,color:"#64748b",marginBottom:12}}>Las existencias por sede se ajustan con <strong>Entrada</strong> y <strong>Salida</strong>, no aquí.</div>}
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
+        <button onClick={submit} disabled={loading} style={{...btnR,flex:2}}>{loading?"Guardando...":editing?"Guardar cambios":"Crear producto"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+function MovInventarioModal({prod,tipo,onClose,onSave}){
+  const esEntrada=tipo==="entrada";
+  const [sede,setSede]=useState("Centro");
+  const [cant,setCant]=useState("");
+  const [motivo,setMotivo]=useState(esEntrada?"Importación":"Venta");
+  const [loading,setLoading]=useState(false);const [err,setErr]=useState("");
+  const motivos=esEntrada?["Importación","Producción para stock","Devolución de cliente","Ajuste"]:["Venta","Remisión","Merma/daño","Ajuste"];
+  const actual=Number(prod.stock?.[sede])||0;
+  const q=Math.abs(Number(cant)||0);
+  const resultante=esEntrada?actual+q:Math.max(0,actual-q);
+  const submit=async()=>{
+    if(q<=0){setErr("Ingresa una cantidad válida");return;}
+    if(!esEntrada&&q>actual){setErr(`Solo hay ${actual} ${prod.unidad} en ${sede}. No puedes sacar más de lo que hay.`);return;}
+    setLoading(true);
+    await onSave(prod.id,{sede,cant:q,tipo,motivo});
+    setLoading(false);onClose();
+  };
+  return(
+    <Modal title={`${esEntrada?"Entrada":"Salida"} · ${prod.nombre}`} onClose={onClose} maxWidth={460}>
+      <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:14,color:"#475569"}}>
+        Existencias actuales en <strong>{sede}</strong>: <strong>{actual} {prod.unidad}</strong>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <Field label="Sede *">
+          <select style={inp} value={sede} onChange={e=>setSede(e.target.value)}>
+            {SEDES.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        </Field>
+        <Field label={`Cantidad (${prod.unidad}) *`}>
+          <NumInp value={cant} onChange={v=>{setCant(v);setErr("");}} placeholder="0"/>
+        </Field>
+      </div>
+      <Field label="Motivo">
+        <select style={inp} value={motivo} onChange={e=>setMotivo(e.target.value)}>
+          {motivos.map(m=><option key={m} value={m}>{m}</option>)}
+        </select>
+      </Field>
+      <div style={{background:esEntrada?"#f0fdf4":"#fff7ed",border:`1px solid ${esEntrada?"#86efac":"#fed7aa"}`,borderRadius:10,padding:"9px 14px",marginBottom:14,fontSize:14,fontWeight:700,color:esEntrada?"#15803d":"#c2410c"}}>
+        Quedará: {resultante} {prod.unidad} en {sede}
+      </div>
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
+        <button onClick={submit} disabled={loading} style={{...(esEntrada?btnG:btnR),flex:2}}>{loading?"Guardando...":esEntrada?"Registrar entrada":"Registrar salida"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+function KardexModal({prod,onClose}){
+  const movs=Array.isArray(prod.mov)?[...prod.mov].sort((a,b)=>b.ts-a.ts):[];
+  const tipoInfo={entrada:{txt:"Entrada",col:"#15803d",bg:"#f0fdf4"},salida:{txt:"Salida",col:"#c2410c",bg:"#fff7ed"},alta:{txt:"Alta",col:"#64748b",bg:"#f1f5f9"},ajuste:{txt:"Ajuste",col:"#1d4ed8",bg:"#eff6ff"}};
+  return(
+    <Modal title={`Movimientos · ${prod.nombre}`} onClose={onClose} maxWidth={520}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:14}}>
+        {SEDES.map(s=>(
+          <div key={s} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 6px",textAlign:"center"}}>
+            <div style={{fontSize:11,color:"#94a3b8",fontWeight:600}}>{s}</div>
+            <div style={{fontSize:18,fontWeight:900,color:"#1e293b"}}>{Number(prod.stock?.[s])||0}</div>
+          </div>
+        ))}
+      </div>
+      {movs.length===0?(
+        <div style={{textAlign:"center",color:"#94a3b8",padding:"24px 0"}}>Sin movimientos registrados</div>
+      ):(
+        <div style={{maxHeight:340,overflowY:"auto",display:"flex",flexDirection:"column",gap:6}}>
+          {movs.map((m,i)=>{
+            const ti=tipoInfo[m.tipo]||tipoInfo.ajuste;
+            return(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:10,border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 12px"}}>
+                <span style={{background:ti.bg,color:ti.col,borderRadius:999,padding:"2px 10px",fontSize:12,fontWeight:700,whiteSpace:"nowrap"}}>{ti.txt}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:700,color:"#334155"}}>{m.tipo==="alta"?"—":`${m.tipo==="salida"?"−":"+"}${m.cant} ${prod.unidad}`} <span style={{fontWeight:500,color:"#64748b"}}>{m.sede!=="—"?`· ${m.sede}`:""}</span></div>
+                  <div style={{fontSize:12,color:"#94a3b8"}}>{m.motivo} · {m.usuario} · {fmtDate(m.ts)}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <button onClick={onClose} style={{width:"100%",background:DARK,border:"none",borderRadius:10,padding:"11px",fontSize:14,fontWeight:700,color:"#fff",cursor:"pointer",marginTop:14}}>Cerrar</button>
+    </Modal>
+  );
+}
+
+// ═══ VENTAS / REMISIONES / COTIZACIONES ════════════════════
+const docFecha = ts => { const d=new Date(ts||Date.now()); const p=n=>String(n).padStart(2,"0"); return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`; };
+const cop = n => "$ "+(Number(n)||0).toLocaleString("es-CO");
+const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+function buildDocHtml(doc){
+  const esRem=doc.tipo==="remision";
+  const titulo=esRem?"REMISIÓN":"COTIZACIÓN";
+  const c=doc.cliente||{};
+  const rows=(doc.items||[]).map(it=>{
+    const vt=it.valorTotal!=null?it.valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0);
+    return `<tr><td class="c">${esc(it.cantidad)} ${esc(it.unidad)}</td><td>${esc(it.descripcion)}</td><td class="r">${cop(it.valorUnit)}</td><td class="r">${cop(vt)}</td></tr>`;
+  }).join("");
+  const iva=doc.iva||{}, rete=doc.retefuente||{};
+  const totLines=[
+    `<tr><td class="tl">Subtotal</td><td class="r">${cop(doc.subtotal)}</td></tr>`,
+    iva.aplica?`<tr><td class="tl">IVA (${iva.porc}%)</td><td class="r">${cop(iva.valor)}</td></tr>`:"",
+    rete.aplica?`<tr><td class="tl">Retefuente (${rete.porc}%)</td><td class="r">- ${cop(rete.valor)}</td></tr>`:"",
+    `<tr class="big"><td class="tl">TOTAL</td><td class="r">${cop(doc.total)}</td></tr>`,
+    esRem?`<tr><td class="tl">Abono</td><td class="r">${cop(doc.abono)}</td></tr>`:"",
+    esRem?`<tr><td class="tl">Saldo</td><td class="r">${cop(doc.saldo)}</td></tr>`:"",
+  ].join("");
+  const sedes=EMPRESA.sedes.map(s=>`<div style="font-size:10px"><b>${s.nombre}</b> · ${s.dir}<br>${s.tels}</div>`).join("");
+  const footer=esRem
+    ? `<div class="firmas"><div>Recibí conforme<br>_______________________<br>FIRMA C.C. / NIT</div><div>Entregado<br>_______________________<br>FIRMA C.C. / NIT</div></div>`
+    : `<div class="blurb"><b>Somos ${EMPRESA.nombre}.</b> Fabricamos e importamos malla eslabonada, malla PVC, postes y más, con despacho a todo el país desde ${EMPRESA.ciudad}. Cotización válida por 15 días. ¡Contáctanos!<br>${EMPRESA.email}</div>`;
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${titulo} ${doc.numero||""}</title>
+<style>
+  @page{size:letter;margin:12mm}
+  *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+  body{margin:0;color:#111}
+  .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #111;padding-bottom:8px}
+  .brand{font-size:22px;font-weight:900;letter-spacing:.5px}
+  .doc{border:2px solid #111;border-radius:6px;padding:4px 10px;text-align:center}
+  .doc .t{font-size:12px;font-weight:700}.doc .n{font-size:20px;font-weight:900;color:#E8262A}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  .cli td{padding:3px 6px;font-size:12px;border:1px solid #999}
+  .items th{background:#f0d9d9;border:1px solid #999;padding:5px;font-size:11px;text-align:left}
+  .items td{border:1px solid #999;padding:6px;font-size:12px;vertical-align:top}
+  .items td.c{text-align:center;white-space:nowrap}.items td.r,.items th.r{text-align:right}
+  .tot{width:auto;float:right;margin-top:8px}
+  .tot td{padding:3px 10px;font-size:12px}.tot td.tl{text-align:right;font-weight:700}.tot td.r{text-align:right;border-bottom:1px solid #ccc;min-width:120px}
+  .tot tr.big td{font-size:15px;font-weight:900;color:#E8262A}
+  .nota{clear:both;font-size:9px;color:#444;margin-top:14px;border-top:1px solid #ccc;padding-top:6px}
+  .firmas{display:flex;gap:40px;margin-top:30px;font-size:10px;text-align:center}
+  .firmas>div{flex:1}
+  .blurb{margin-top:20px;font-size:11px;background:#f7f7f7;border:1px solid #ddd;border-radius:6px;padding:10px}
+</style></head>
+<body onload="setTimeout(function(){window.print()},250)">
+  <div class="hd">
+    <div><div class="brand">${EMPRESA.nombre}</div>${sedes}<div style="font-size:10px">${EMPRESA.email}</div></div>
+    <div><div class="doc"><div class="t">- ${titulo} -</div><div class="n">N° ${doc.numero||"—"}</div></div><div style="font-size:11px;text-align:right;margin-top:4px">Fecha: ${docFecha(doc.timestamp)}</div></div>
+  </div>
+  <table class="cli"><tr>
+    <td style="width:60%"><b>Cliente:</b> ${esc(c.nombre)}</td>
+    <td><b>${c.docTipo||"CC/NIT"}:</b> ${esc(c.docNumero)}</td></tr>
+    <tr><td><b>Dirección:</b> ${esc(c.direccion)}</td><td><b>Teléfono:</b> ${esc(c.telefono)}</td></tr>
+    <tr><td colspan="2"><b>E-mail:</b> ${esc(c.email)}</td></tr>
+  </table>
+  <table class="items"><thead><tr><th>Cantidad</th><th>Descripción del producto</th><th class="r">Valor unit.</th><th class="r">Valor total</th></tr></thead><tbody>${rows}</tbody></table>
+  <table class="tot"><tbody>${totLines}</tbody></table>
+  <div class="nota"><b>NOTA:</b> ${esc(EMPRESA.nota)}</div>
+  ${footer}
+</body></html>`;
+}
+
+// Formato tiquete 80mm para impresora térmica (Epson TM-T20III)
+function buildTirillaHtml(doc){
+  const esRem=doc.tipo==="remision";
+  const titulo=esRem?"REMISIÓN":"COTIZACIÓN";
+  const c=doc.cliente||{};
+  const line="--------------------------------";
+  const money=n=>cop(n);
+  const items=(doc.items||[]).map(it=>{
+    const vt=it.valorTotal!=null?it.valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0);
+    return `<div class="it"><div class="d">${esc(it.descripcion)}</div><div class="q">${esc(it.cantidad)} ${esc(it.unidad)} x ${money(it.valorUnit)}<span class="v">${money(vt)}</span></div></div>`;
+  }).join("");
+  const iva=doc.iva||{}, rete=doc.retefuente||{};
+  const tot=[
+    `<div class="row"><span>Subtotal</span><span>${money(doc.subtotal)}</span></div>`,
+    iva.aplica?`<div class="row"><span>IVA ${iva.porc}%</span><span>${money(iva.valor)}</span></div>`:"",
+    rete.aplica?`<div class="row"><span>Retefuente ${rete.porc}%</span><span>-${money(rete.valor)}</span></div>`:"",
+    `<div class="row big"><span>TOTAL</span><span>${money(doc.total)}</span></div>`,
+    esRem?`<div class="row"><span>Abono</span><span>${money(doc.abono)}</span></div>`:"",
+    esRem?`<div class="row"><span>Saldo</span><span>${money(doc.saldo)}</span></div>`:"",
+  ].join("");
+  const sedes=EMPRESA.sedes.map(s=>`<div class="sede">${s.nombre}<br>${s.dir}<br>${s.tels}</div>`).join("");
+  const pie=esRem
+    ? `<div class="nota">${esc(EMPRESA.nota)}</div><div class="firma">Recibido conforme:<br><br>____________________</div><div class="ty">¡Gracias por su compra!</div>`
+    : `<div class="nota">Cotización válida por 15 días. Somos ${EMPRESA.nombre}: fabricamos e importamos malla, postes y más.</div><div class="ty">¡Gracias por preferirnos!</div>`;
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${titulo} ${doc.numero||""}</title>
+<style>
+  @page{size:80mm auto;margin:0}
+  *{box-sizing:border-box}
+  body{width:80mm;margin:0;padding:3mm 3mm 6mm;font-family:'Segoe UI',Arial,sans-serif;color:#000;font-size:12px;line-height:1.35}
+  .center{text-align:center}
+  .brand{font-weight:900;font-size:15px;text-align:center}
+  .sede{text-align:center;font-size:10px;margin-top:2px}
+  .email{text-align:center;font-size:10px;margin-top:2px}
+  .sep{border-top:1px dashed #000;margin:6px 0}
+  .doc{display:flex;justify-content:space-between;font-weight:800;font-size:13px}
+  .cli{font-size:11px;margin-top:2px}
+  .it{margin:4px 0}
+  .it .d{font-size:11px}
+  .it .q{display:flex;justify-content:space-between;font-size:11px;color:#000}
+  .it .q .v{font-weight:700}
+  .row{display:flex;justify-content:space-between;font-size:12px}
+  .row.big{font-weight:900;font-size:14px;margin:2px 0}
+  .nota{font-size:9px;margin-top:6px}
+  .firma{font-size:10px;margin-top:14px}
+  .ty{text-align:center;font-weight:700;margin-top:8px;font-size:12px}
+</style></head>
+<body onload="setTimeout(function(){window.print()},250)">
+  <div class="brand">${EMPRESA.nombre}</div>
+  ${sedes}
+  <div class="email">${EMPRESA.email}</div>
+  <div class="sep"></div>
+  <div class="doc"><span>${titulo}</span><span>N° ${doc.numero||"—"}</span></div>
+  <div class="cli">Fecha: ${docFecha(doc.timestamp)}</div>
+  <div class="cli">Cliente: ${esc(c.nombre)}</div>
+  <div class="cli">${c.docTipo||"Doc"}: ${esc(c.docNumero)}${c.telefono?` · Tel: ${esc(c.telefono)}`:""}</div>
+  ${c.direccion?`<div class="cli">Dir: ${esc(c.direccion)}</div>`:""}
+  <div class="sep"></div>
+  ${items}
+  <div class="sep"></div>
+  ${tot}
+  <div class="sep"></div>
+  ${pie}
+</body></html>`;
+}
+
+function imprimirDocumento(doc,formato){
+  const w=window.open("","_blank");
+  if(!w){ alert("Permite las ventanas emergentes para imprimir."); return; }
+  const html=formato==="carta"?buildDocHtml(doc):buildTirillaHtml(doc);
+  w.document.open(); w.document.write(html); w.document.close();
+}
+function waDocLink(doc){
+  const c=doc.cliente||{};
+  const digits=(c.telefono||"").replace(/\D/g,"");
+  const phone=digits?(digits.startsWith("57")?digits:"57"+digits):"";
+  const lineas=(doc.items||[]).map(it=>`• ${it.cantidad||""} ${it.unidad||""} ${it.descripcion||""} — ${cop((Number(it.cantidad)||0)*(Number(it.valorUnit)||0))}`).join("\n");
+  const titulo=doc.tipo==="remision"?"REMISIÓN":"COTIZACIÓN";
+  const txt=`*${EMPRESA.nombre}*\n${titulo} N° ${doc.numero||""}\n\n${lineas}\n\n*Total: ${cop(doc.total)}*\n\n${doc.tipo==="cotizacion"?"Cotización válida por 15 días. ":""}${EMPRESA.email}`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(txt)}`;
+}
+function mailtoDoc(doc){
+  const c=doc.cliente||{};
+  const titulo=doc.tipo==="remision"?"Remisión":"Cotización";
+  const body=`${titulo} N° ${doc.numero||""} - ${EMPRESA.nombre}\n\nTotal: ${cop(doc.total)}\n\n${EMPRESA.email}`;
+  return `mailto:${c.email||""}?subject=${encodeURIComponent(titulo+" N° "+(doc.numero||"")+" - "+EMPRESA.nombre)}&body=${encodeURIComponent(body)}`;
+}
+
+function VentasTab({remisiones,user,canProd,onNueva,onImprimir}){
+  const [q,setQ]=useState("");const [filtro,setFiltro]=useState("todas");
+  const lista=[...remisiones]
+    .filter(d=>filtro==="todas"||d.tipo===(filtro==="remisiones"?"remision":"cotizacion"))
+    .filter(d=>String(d.numero).includes(q)||String(d.cliente?.nombre||"").toLowerCase().includes(q.toLowerCase()))
+    .sort((a,b)=>b.timestamp-a.timestamp);
+  return(
+    <div>
+      <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
+        <div style={{display:"flex",gap:6}}>
+          {[["todas","Todas"],["remisiones","Remisiones"],["cotizaciones","Cotizaciones"]].map(([v,l])=>(
+            <button key={v} onClick={()=>setFiltro(v)} style={{background:filtro===v?"#1e293b":"#f8fafc",border:"1.5px solid",borderColor:filtro===v?"#1e293b":"#e2e8f0",borderRadius:8,padding:"6px 14px",cursor:"pointer",fontSize:13,fontWeight:600,color:filtro===v?"#fff":"#64748b"}}>{l}</button>
+          ))}
+        </div>
+        <input style={{...inp,flex:1,minWidth:160}} placeholder="Buscar por N° o cliente..." value={q} onChange={e=>setQ(e.target.value)}/>
+        {canProd&&<button onClick={()=>onNueva("cotizacion")} style={{...btnS,fontWeight:700}}>+ Cotización</button>}
+        {canProd&&<button onClick={()=>onNueva("remision")} style={btnR}>+ Nueva Remisión</button>}
+      </div>
+      <div style={{fontSize:14,color:"#94a3b8",marginBottom:10}}>{lista.length} documento(s)</div>
+      {lista.length===0?(
+        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"56px 0",color:"#94a3b8"}}>
+          <div style={{fontSize:34,marginBottom:10}}>🧾</div>
+          <div style={{fontWeight:600}}>Aún no hay remisiones ni cotizaciones</div>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {lista.map(d=>{
+            const esRem=d.tipo==="remision";
+            return(
+              <div key={d.id} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"12px 14px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
+                  <span style={{background:esRem?"#fef2f2":"#eff6ff",color:esRem?RED:"#1d4ed8",borderRadius:999,padding:"1px 10px",fontSize:12,fontWeight:800}}>{esRem?"REMISIÓN":"COTIZACIÓN"}</span>
+                  <span style={{fontWeight:900,color:"#1e293b",fontSize:16}}>N° {d.numero}</span>
+                  <span style={{fontWeight:600,color:"#334155",fontSize:15}}>{d.cliente?.nombre||"—"}</span>
+                  {esRem&&d.origen&&<span style={{fontSize:12,color:"#94a3b8"}}>· {d.origen==="stock"?"desde stock":"desde producción"}</span>}
+                  <span style={{marginLeft:"auto",fontWeight:800,color:"#1e293b"}}>{cop(d.total)}</span>
+                </div>
+                <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>{d.creadoPorNombre} · {fmtDate(d.timestamp)}{esRem&&d.saldo>0?` · Saldo ${cop(d.saldo)}`:""}</div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  <button onClick={()=>onImprimir(d)} style={{...btnS,padding:"5px 12px",fontSize:14,fontWeight:700}}>Ver / Imprimir</button>
+                  <a href={waDocLink(d)} target="_blank" rel="noreferrer" style={{textDecoration:"none",background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"5px 12px",color:"#15803d",fontSize:14,fontWeight:700}}>WhatsApp</a>
+                  {d.cliente?.email&&<a href={mailtoDoc(d)} style={{textDecoration:"none",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"5px 12px",color:"#1d4ed8",fontSize:14,fontWeight:700}}>Email</a>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,clientes,onClose,onCreate,onDone}){
+  const [tipo,setTipo]=useState(tipoInit||"remision");
+  const esRem=tipo==="remision";
+  const [origen,setOrigen]=useState("stock");
+  const [ordenRef,setOrdenRef]=useState(null);
+  const [sede,setSede]=useState(user.sede==="Ambas Sedes"||!SEDES.includes(user.sede)?"Centro":user.sede);
+  const [cli,setCli]=useState({docTipo:"NIT",docNumero:"",nombre:"",telefono:"",email:"",direccion:""});
+  const [items,setItems]=useState([{productoId:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
+  const [ivaOn,setIvaOn]=useState(false);const [ivaPorc,setIvaPorc]=useState(String(IVA_DEFAULT));
+  const [reteOn,setReteOn]=useState(false);const [retePorc,setRetePorc]=useState(String(RETE_DEFAULT));
+  const [abono,setAbono]=useState("");
+  const [qOrden,setQOrden]=useState("");
+  const [loading,setLoading]=useState(false);const [err,setErr]=useState("");
+
+  const setItem=(i,k,v)=>setItems(p=>p.map((x,idx)=>idx===i?{...x,[k]:v}:x));
+  const addItem=()=>setItems(p=>[...p,{productoId:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
+  const rmItem=i=>setItems(p=>p.filter((_,idx)=>idx!==i));
+
+  // Buscar cliente por documento
+  const buscarCli=num=>{
+    setCli(c=>({...c,docNumero:num}));
+    const found=clientes.find(x=>String(x.docNumero||"")===String(num));
+    if(found) setCli({docTipo:found.docTipo||"NIT",docNumero:found.docNumero||"",nombre:found.nombre||"",telefono:found.telefono||"",email:found.email||"",direccion:found.direccion||""});
+  };
+  // Elegir orden de producción -> prefill
+  const ordersFil=orders.filter(o=>String(o.orden).includes(qOrden)||String(o.cliente||"").toLowerCase().includes(qOrden.toLowerCase())).slice(0,6);
+  const pickOrden=o=>{
+    setOrdenRef(o.orden);
+    setCli(c=>({...c,nombre:o.cliente||c.nombre}));
+    const its=normalizeItems(o).map(it=>({productoId:null,descripcion:`${labelProducto(it.producto)} — ${resumenItem(it)}`,cantidad:it.metros||it.cantidad||"",unidad:it.producto==="postes"?"unidades":"m²",valorUnit:it.precioVenta||""}));
+    setItems(its.length?its:[{productoId:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
+    setQOrden("");
+  };
+  const pickProducto=(i,pid)=>{
+    const p=inventario.find(x=>x.id===pid);
+    setItems(prev=>prev.map((x,idx)=>idx===i?{...x,productoId:pid||null,descripcion:p?p.nombre:x.descripcion,unidad:p?p.unidad:x.unidad}:x));
+  };
+
+  const subtotal=items.reduce((a,it)=>a+(Number(it.cantidad)||0)*(Number(it.valorUnit)||0),0);
+  const ivaVal=ivaOn?Math.round(subtotal*(Number(ivaPorc)||0)/100):0;
+  const reteVal=reteOn?Math.round(subtotal*(Number(retePorc)||0)/100):0;
+  const total=subtotal+ivaVal-reteVal;
+  const saldo=Math.max(0,total-(Number(abono)||0));
+
+  const submit=async()=>{
+    if(!cli.nombre.trim()){setErr("Ingresa el nombre del cliente");return;}
+    const its=items.filter(it=>it.descripcion&&Number(it.cantidad)>0);
+    if(its.length===0){setErr("Agrega al menos un producto con cantidad");return;}
+    if(esRem&&origen==="stock"){
+      for(const it of its){
+        if(it.productoId){
+          const p=inventario.find(x=>x.id===it.productoId);
+          const disp=Number(p?.stock?.[sede])||0;
+          if(Number(it.cantidad)>disp){setErr(`Stock insuficiente de "${p?.nombre}" en ${sede} (hay ${disp} ${p?.unidad})`);return;}
+        }
+      }
+    }
+    const data={
+      tipo, origen:esRem?origen:null, ordenRef:esRem&&origen==="produccion"?ordenRef:null,
+      sede, cliente:{...cli,nombre:cli.nombre.trim()},
+      items:its.map(it=>({productoId:it.productoId||null,descripcion:it.descripcion,cantidad:Number(it.cantidad)||0,unidad:it.unidad||"",valorUnit:Number(it.valorUnit)||0,valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0)})),
+      subtotal, iva:{aplica:ivaOn,porc:Number(ivaPorc)||0,valor:ivaVal}, retefuente:{aplica:reteOn,porc:Number(retePorc)||0,valor:reteVal},
+      total, abono:esRem?Number(abono)||0:0, saldo:esRem?saldo:0,
+    };
+    setLoading(true);
+    const r=await onCreate(data);
+    setLoading(false);
+    onDone({...data,numero:r?.numero,timestamp:Date.now(),creadoPorNombre:user.name});
+  };
+
+  return(
+    <Modal title={esRem?"Nueva Remisión (venta)":"Nueva Cotización"} onClose={onClose} maxWidth={680}>
+      {/* Tipo + origen */}
+      <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+        {[["remision","Remisión (venta)"],["cotizacion","Cotización"]].map(([v,l])=>(
+          <button key={v} onClick={()=>setTipo(v)} style={{flex:1,minWidth:130,border:`2px solid ${tipo===v?RED:"#e2e8f0"}`,background:tipo===v?"#fef2f2":"#fff",borderRadius:10,padding:"8px",cursor:"pointer",fontWeight:700,color:tipo===v?RED:"#334155"}}>{l}</button>
+        ))}
+      </div>
+      {esRem&&(
+        <div style={{display:"flex",gap:8,marginBottom:12}}>
+          {[["stock","Vender desde stock"],["produccion","Desde orden de producción"]].map(([v,l])=>(
+            <button key={v} onClick={()=>{setOrigen(v);setOrdenRef(null);}} style={{flex:1,border:`2px solid ${origen===v?"#7c3aed":"#e2e8f0"}`,background:origen===v?"#f5f3ff":"#fff",borderRadius:10,padding:"7px",cursor:"pointer",fontWeight:700,fontSize:13,color:origen===v?"#7c3aed":"#334155"}}>{l}</button>
+          ))}
+        </div>
+      )}
+
+      {/* Orden de producción */}
+      {esRem&&origen==="produccion"&&(
+        <div style={{marginBottom:12,background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:10,padding:10}}>
+          {ordenRef?(
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:14,fontWeight:700,color:"#6d28d9"}}>Orden #{ordenRef} seleccionada</span>
+              <button onClick={()=>{setOrdenRef(null);}} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:13}}>Cambiar</button>
+            </div>
+          ):(
+            <>
+              <input style={{...inp,fontSize:13,marginBottom:6}} placeholder="Buscar orden por N° o cliente..." value={qOrden} onChange={e=>setQOrden(e.target.value)}/>
+              {qOrden&&ordersFil.map(o=>(
+                <div key={o.orden} onClick={()=>pickOrden(o)} style={{padding:"6px 8px",borderRadius:8,cursor:"pointer",fontSize:13,color:"#334155",background:"#fff",border:"1px solid #e2e8f0",marginBottom:4}}>#{o.orden} · {o.cliente}</div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Sede */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+        <div>
+          <label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Sede</label>
+          <select style={{...inp,fontSize:13}} value={sede} onChange={e=>setSede(e.target.value)}>{SEDES.map(s=><option key={s} value={s}>{s}</option>)}</select>
+        </div>
+        <div>
+          <label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Documento</label>
+          <select style={{...inp,fontSize:13}} value={cli.docTipo} onChange={e=>setCli(c=>({...c,docTipo:e.target.value}))}><option value="NIT">NIT</option><option value="CC">CC</option></select>
+        </div>
+        <div>
+          <label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>N° documento</label>
+          <input style={{...inp,fontSize:13}} value={cli.docNumero} onChange={e=>buscarCli(e.target.value)} placeholder="830109420-1"/>
+        </div>
+      </div>
+
+      {/* Datos del cliente (se actualizan al imprimir) */}
+      <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"8px 12px",fontSize:12,color:"#1d4ed8",marginBottom:8}}>Al guardar, estos datos del cliente se actualizan/guardan automáticamente (nombre, teléfono, correo, dirección).</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:6}}>
+        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Cliente *</label><input style={inp} value={cli.nombre} onChange={e=>{setCli(c=>({...c,nombre:e.target.value}));setErr("");}} list="cli-list"/><datalist id="cli-list">{clientes.map(c=><option key={c.id} value={c.nombre}/>)}</datalist></div>
+        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Teléfono</label><input style={inp} value={cli.telefono} onChange={e=>setCli(c=>({...c,telefono:e.target.value}))}/></div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>E-mail</label><input style={inp} value={cli.email} onChange={e=>setCli(c=>({...c,email:e.target.value}))} placeholder="cliente@correo.com"/></div>
+        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Dirección</label><input style={inp} value={cli.direccion} onChange={e=>setCli(c=>({...c,direccion:e.target.value}))}/></div>
+      </div>
+
+      {/* Items */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.length})</label>
+        <button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"5px 12px",cursor:"pointer",color:GREEN,fontSize:13,fontWeight:700}}>+ Agregar</button>
+      </div>
+      {items.map((it,i)=>{
+        const prod=it.productoId?inventario.find(x=>x.id===it.productoId):null;
+        const disp=prod?Number(prod.stock?.[sede])||0:null;
+        return(
+          <div key={i} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:10,marginBottom:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+              <span style={{fontSize:12,fontWeight:700,color:"#64748b"}}>Item {i+1}{disp!=null?` · disponible: ${disp} ${prod.unidad}`:""}</span>
+              {items.length>1&&<button onClick={()=>rmItem(i)} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:12}}>✕</button>}
+            </div>
+            {esRem&&origen==="stock"&&(
+              <select style={{...inp,fontSize:13,marginBottom:6}} value={it.productoId||""} onChange={e=>pickProducto(i,e.target.value)}>
+                <option value="">Elegir producto del inventario...</option>
+                {inventario.map(p=><option key={p.id} value={p.id}>{p.nombre} ({Number(p.stock?.[sede])||0} {p.unidad})</option>)}
+              </select>
+            )}
+            <input style={{...inp,fontSize:13,marginBottom:6}} placeholder="Descripción del producto" value={it.descripcion} onChange={e=>setItem(i,"descripcion",e.target.value)}/>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,alignItems:"end"}}>
+              <div><label style={{fontSize:11,color:"#94a3b8"}}>Cantidad</label><input style={{...inp,fontSize:13}} type="number" value={it.cantidad} onChange={e=>{setItem(i,"cantidad",e.target.value);setErr("");}}/></div>
+              <div><label style={{fontSize:11,color:"#94a3b8"}}>Unidad</label><input style={{...inp,fontSize:13}} value={it.unidad} onChange={e=>setItem(i,"unidad",e.target.value)} placeholder="m² / rollos"/></div>
+              <div><label style={{fontSize:11,color:"#94a3b8"}}>Valor unit.</label><input style={{...inp,fontSize:13}} type="number" value={it.valorUnit} onChange={e=>setItem(i,"valorUnit",e.target.value)}/></div>
+              <div style={{textAlign:"right",fontSize:13,fontWeight:700,color:"#1e293b",paddingBottom:8}}>{cop((Number(it.cantidad)||0)*(Number(it.valorUnit)||0))}</div>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Impuestos */}
+      <div style={{display:"flex",gap:16,flexWrap:"wrap",marginBottom:10,marginTop:4}}>
+        <label style={{display:"flex",alignItems:"center",gap:6,fontSize:14,color:"#334155",cursor:"pointer"}}>
+          <input type="checkbox" checked={ivaOn} onChange={e=>setIvaOn(e.target.checked)}/> IVA
+          {ivaOn&&<input style={{...inp,width:60,padding:"4px 8px",fontSize:13}} type="number" value={ivaPorc} onChange={e=>setIvaPorc(e.target.value)}/>}{ivaOn&&"%"}
+        </label>
+        <label style={{display:"flex",alignItems:"center",gap:6,fontSize:14,color:"#334155",cursor:"pointer"}}>
+          <input type="checkbox" checked={reteOn} onChange={e=>setReteOn(e.target.checked)}/> Retefuente
+          {reteOn&&<input style={{...inp,width:60,padding:"4px 8px",fontSize:13}} type="number" value={retePorc} onChange={e=>setRetePorc(e.target.value)}/>}{reteOn&&"%"}
+        </label>
+      </div>
+
+      {/* Totales */}
+      <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"10px 14px",marginBottom:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#64748b"}}><span>Subtotal</span><span>{cop(subtotal)}</span></div>
+        {ivaOn&&<div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#64748b"}}><span>IVA ({ivaPorc}%)</span><span>{cop(ivaVal)}</span></div>}
+        {reteOn&&<div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#64748b"}}><span>Retefuente ({retePorc}%)</span><span>- {cop(reteVal)}</span></div>}
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:17,fontWeight:900,color:"#1e293b",marginTop:4}}><span>TOTAL</span><span>{cop(total)}</span></div>
+        {esRem&&(
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8,gap:8}}>
+            <span style={{fontSize:14,color:"#64748b"}}>Abono</span>
+            <input style={{...inp,width:140,fontSize:13,textAlign:"right"}} type="number" value={abono} onChange={e=>setAbono(e.target.value)} placeholder="0"/>
+            <span style={{fontSize:14,color:"#64748b"}}>Saldo</span>
+            <span style={{fontSize:15,fontWeight:800,color:saldo>0?RED:GREEN}}>{cop(saldo)}</span>
+          </div>
+        )}
+      </div>
+
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
+        <button onClick={submit} disabled={loading} style={{...btnR,flex:2}}>{loading?"Guardando...":esRem?"Guardar y ver remisión":"Guardar y ver cotización"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+function VerDocumentoModal({doc,onClose}){
+  const esRem=doc.tipo==="remision";
+  return(
+    <Modal title={`${esRem?"Remisión":"Cotización"} N° ${doc.numero||""}`} onClose={onClose} maxWidth={520}>
+      <div style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:14,color:"#15803d",fontWeight:700}}>
+        ✓ Guardado{esRem&&doc.origen==="stock"?" — el stock ya fue descontado":""}
+      </div>
+      <div style={{border:"1px solid #e2e8f0",borderRadius:10,padding:14,marginBottom:14}}>
+        <div style={{fontWeight:800,fontSize:16,color:"#1e293b"}}>{doc.cliente?.nombre||"—"}</div>
+        <div style={{fontSize:13,color:"#94a3b8",marginBottom:8}}>{doc.cliente?.docTipo} {doc.cliente?.docNumero} · {docFecha(doc.timestamp)}</div>
+        {(doc.items||[]).map((it,i)=>(
+          <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#475569",padding:"3px 0",borderBottom:"1px solid #f1f5f9"}}>
+            <span>{it.cantidad} {it.unidad} · {it.descripcion}</span>
+            <span style={{fontWeight:600}}>{cop(it.valorTotal)}</span>
+          </div>
+        ))}
+        <div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:16,marginTop:8,color:"#1e293b"}}><span>TOTAL</span><span>{cop(doc.total)}</span></div>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        <button onClick={()=>imprimirDocumento(doc,"tirilla")} style={{...btnR,width:"100%"}}>🖨 Imprimir tiquete (Epson TM-T20)</button>
+        <button onClick={()=>imprimirDocumento(doc,"carta")} style={{...btnS,width:"100%",fontWeight:700}}>📄 PDF tamaño carta (para email)</button>
+        <div style={{display:"flex",gap:8}}>
+          <a href={waDocLink(doc)} target="_blank" rel="noreferrer" style={{flex:1,textAlign:"center",textDecoration:"none",...btnG,padding:"11px"}}>Enviar por WhatsApp</a>
+          <a href={mailtoDoc(doc)} style={{flex:1,textAlign:"center",textDecoration:"none",...btnS,padding:"11px",fontWeight:700}}>Enviar por Email</a>
+        </div>
+        <button onClick={onClose} style={{...btnS,width:"100%"}}>Cerrar</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ═══ CLIENTES (mini-CRM) ═══════════════════════════════════
+function ClientesTab({clientes,remisiones,canProd,onEditar}){
+  const [q,setQ]=useState("");
+  const stats={};
+  (remisiones||[]).forEach(d=>{
+    const key=String(d.cliente?.docNumero||d.cliente?.nombre||"").trim().toLowerCase().replace(/\s+/g,"_");
+    if(!key) return;
+    if(!stats[key]) stats[key]={docs:0,total:0};
+    stats[key].docs++; stats[key].total+=Number(d.total)||0;
+  });
+  const lista=[...clientes]
+    .filter(c=>String(c.nombre||"").toLowerCase().includes(q.toLowerCase())||String(c.docNumero||"").includes(q))
+    .sort((a,b)=>String(a.nombre||"").localeCompare(String(b.nombre||"")));
+  return(
+    <div>
+      <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
+        <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar cliente por nombre o documento..." value={q} onChange={e=>setQ(e.target.value)}/>
+      </div>
+      <div style={{fontSize:14,color:"#94a3b8",marginBottom:10}}>{lista.length} cliente(s)</div>
+      {lista.length===0?(
+        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"56px 0",color:"#94a3b8"}}>
+          <div style={{fontSize:34,marginBottom:10}}>👤</div>
+          <div style={{fontWeight:600}}>Aún no hay clientes</div>
+          <div style={{fontSize:13,marginTop:4}}>Se van creando solos al registrar ventas y remisiones.</div>
+        </div>
+      ):(
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
+          {lista.map(c=>{
+            const st=stats[c.id]||{docs:0,total:0};
+            return(
+              <div key={c.id} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+                  <div style={{minWidth:0}}>
+                    <div style={{fontWeight:800,color:"#1e293b",fontSize:16}}>{c.nombre||"—"}</div>
+                    <div style={{fontSize:13,color:"#94a3b8"}}>{c.docTipo||"Doc"}: {c.docNumero||"—"}</div>
+                  </div>
+                  {onEditar&&<button onClick={()=>onEditar(c)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:"#0369a1",fontSize:13,fontWeight:600}}>Editar</button>}
+                </div>
+                <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:2,fontSize:13,color:"#475569"}}>
+                  <div>📞 {c.telefono||<span style={{color:"#cbd5e1"}}>sin teléfono</span>}</div>
+                  <div>✉ {c.email||<span style={{color:"#cbd5e1"}}>sin correo</span>}</div>
+                  <div>📍 {c.direccion||<span style={{color:"#cbd5e1"}}>sin dirección</span>}</div>
+                </div>
+                <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid #f1f5f9",display:"flex",justifyContent:"space-between",fontSize:13}}>
+                  <span style={{color:"#94a3b8"}}>{st.docs} documento(s)</span>
+                  <span style={{fontWeight:700,color:"#1e293b"}}>{cop(st.total)}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClienteModal({cli,onClose,onSave}){
+  const [c,setC]=useState({docTipo:cli?.docTipo||"NIT",docNumero:cli?.docNumero||"",nombre:cli?.nombre||"",telefono:cli?.telefono||"",email:cli?.email||"",direccion:cli?.direccion||""});
+  const [loading,setLoading]=useState(false);const [err,setErr]=useState("");
+  const set=(k,v)=>setC(p=>({...p,[k]:v}));
+  const submit=async()=>{
+    if(!c.nombre.trim()){setErr("El nombre no puede quedar vacío");return;}
+    setLoading(true);
+    await onSave({...cli,...c,nombre:c.nombre.trim(),id:cli.id});
+    setLoading(false);onClose();
+  };
+  return(
+    <Modal title={`Editar cliente`} onClose={onClose} maxWidth={480}>
+      <Field label="Nombre *"><input style={inp} value={c.nombre} onChange={e=>{set("nombre",e.target.value);setErr("");}}/></Field>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:10}}>
+        <Field label="Tipo"><select style={inp} value={c.docTipo} onChange={e=>set("docTipo",e.target.value)}><option value="NIT">NIT</option><option value="CC">CC</option></select></Field>
+        <Field label="N° documento"><input style={inp} value={c.docNumero} onChange={e=>set("docNumero",e.target.value)}/></Field>
+      </div>
+      <Field label="Teléfono"><input style={inp} value={c.telefono} onChange={e=>set("telefono",e.target.value)}/></Field>
+      <Field label="E-mail"><input style={inp} value={c.email} onChange={e=>set("email",e.target.value)}/></Field>
+      <Field label="Dirección"><input style={inp} value={c.direccion} onChange={e=>set("direccion",e.target.value)}/></Field>
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
+        <button onClick={submit} disabled={loading} style={{...btnR,flex:2}}>{loading?"Guardando...":"Guardar cambios"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ═══ PASAR ORDEN (no comprada) A INVENTARIO ════════════════
+function PasarInventarioModal({order,inventario,onClose,onSave}){
+  const items=normalizeItems(order);
+  const [asigns,setAsigns]=useState(items.map(it=>({
+    productoId:"", sede:order.sede&&SEDES.includes(order.sede)?order.sede:"Centro",
+    cant: it.producto==="postes"?(it.cantidad||""):(it.metros||it.cantidad||""),
+    descripcion:`${labelProducto(it.producto)} — ${resumenItem(it)}`,
+  })));
+  const [loading,setLoading]=useState(false);const [err,setErr]=useState("");
+  const setA=(i,k,v)=>setAsigns(p=>p.map((x,idx)=>idx===i?{...x,[k]:v}:x));
+  const submit=async()=>{
+    const validas=asigns.filter(a=>a.productoId&&Number(a.cant)>0);
+    if(validas.length===0){setErr("Asigna al menos un producto del catálogo con cantidad");return;}
+    setLoading(true);
+    await onSave(order.orden,validas);
+    setLoading(false);onClose();
+  };
+  return(
+    <Modal title={`Pasar orden #${order.orden} a inventario`} onClose={onClose} maxWidth={620}>
+      <div style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:10,padding:"9px 14px",fontSize:13,color:"#6d28d9",marginBottom:14}}>
+        Úsalo cuando el cliente <strong>no compró</strong> la orden. Cada producto que asignes se <strong>suma al stock</strong> de la sede elegida. Los productos deben existir en el catálogo de Inventario.
+      </div>
+      {inventario.length===0&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:13,marginBottom:12}}>No hay productos en el inventario todavía. Créalos primero en el tab 📦 Inventario.</div>}
+      {asigns.map((a,i)=>(
+        <div key={i} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:12,marginBottom:10}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#334155",marginBottom:8}}>{a.descripcion}</div>
+          <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:8}}>
+            <div>
+              <label style={{fontSize:11,color:"#94a3b8",display:"block",marginBottom:3}}>Producto del catálogo</label>
+              <select style={{...inp,fontSize:13}} value={a.productoId} onChange={e=>setA(i,"productoId",e.target.value)}>
+                <option value="">— No pasar —</option>
+                {inventario.map(p=><option key={p.id} value={p.id}>{p.nombre} ({p.unidad})</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{fontSize:11,color:"#94a3b8",display:"block",marginBottom:3}}>Sede</label>
+              <select style={{...inp,fontSize:13}} value={a.sede} onChange={e=>setA(i,"sede",e.target.value)}>{SEDES.map(s=><option key={s} value={s}>{s}</option>)}</select>
+            </div>
+            <div>
+              <label style={{fontSize:11,color:"#94a3b8",display:"block",marginBottom:3}}>Cantidad</label>
+              <input style={{...inp,fontSize:13}} type="number" value={a.cant} onChange={e=>{setA(i,"cant",e.target.value);setErr("");}}/>
+            </div>
+          </div>
+        </div>
+      ))}
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
+        <button onClick={submit} disabled={loading||inventario.length===0} style={{...btnR,flex:2}}>{loading?"Pasando...":"Pasar a inventario"}</button>
+      </div>
     </Modal>
   );
 }
