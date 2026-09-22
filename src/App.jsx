@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.20";
+const APP_VERSION="v2026.09.21";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -70,7 +70,21 @@ const MOV_PRODUCTOS = [
   { id:"gaviones",    label:"Gaviones",           unidad:"unid",   conDesc:true  },
 ];
 
-const ABERTURA_SIZES = ['1"','1"1/2','2"','2"1/4','2"1/2'];
+const ABERTURA_SIZES = ['1"','1 1/4"','1 1/2"','2"','2 1/4"','2 1/2"','3"'];
+// ── Formatos estándar para captura de productos (edítalos si falta alguno) ──
+const OPC_CALIBRE  = ["8","9","10","10.5","11","12","12.5","13","14","16"];
+const OPC_ABERTURA = ['1"','1 1/4"','1 1/2"','2"','2 1/4"','2 1/2"','3"'];
+const OPC_ALTO     = ["1.0","1.2","1.5","1.8","2.0","2.2","2.5","3.0"];   // metros (alto)
+const OPC_ANCHO    = ["5","10","15","20","25"];                             // metros (largo del rollo)
+const OPC_GROSOR   = ['1 1/2"','2"'];                                       // postes
+const OPC_LARGO    = ["2.0","2.3","2.5","3.0"];                             // metros (postes)
+const OPC_COLOR    = ["Verde","Negro","Blanco","Gris"];
+// Normaliza un valor para AGRUPAR (½→1/2, quita comillas/espacios, minúsculas) — une "2 1/2" y "2½"
+const normKey = v => String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  .replace(/½/g,"1/2").replace(/¼/g,"1/4").replace(/¾/g,"3/4")
+  .toLowerCase().replace(/["\s]+/g,"");
+// Normaliza para MOSTRAR (½→1/2) manteniendo legibilidad
+const normDisp = v => String(v||"").replace(/½/g,"1/2").replace(/¼/g,"1/4").replace(/¾/g,"3/4").trim();
 const STORAGE_KEY = "fox_orders_v8";
 
 // ═══ UTILIDADES ════════════════════════════════════════════
@@ -1611,6 +1625,25 @@ function NumInp({value,onChange,placeholder="",unit=""}){
     </div>
   );
 }
+// Lista de formatos estándar + opción "Otro" (para tamaños no usados antes)
+function SelectOpc({value,onChange,options,placeholder="Seleccionar...",num=false,unit=""}){
+  const enLista=value!==""&&value!=null&&options.includes(String(value));
+  const [otro,setOtro]=useState(value!==""&&value!=null&&!enLista);
+  const modo=otro?"__otro__":(enLista?String(value):"");
+  return(
+    <div>
+      <select style={{...inp,fontSize:14}} value={modo}
+        onChange={e=>{ const v=e.target.value; if(v==="__otro__"){ setOtro(true); onChange(""); } else { setOtro(false); onChange(v); } }}>
+        <option value="">{placeholder}</option>
+        {options.map(o=><option key={o} value={o}>{o}{unit?` ${unit}`:""}</option>)}
+        <option value="__otro__">Otro…</option>
+      </select>
+      {otro&&(
+        <input type={num?"number":"text"} step="any" style={{...inp,fontSize:14,marginTop:6}} value={value} onChange={e=>onChange(e.target.value)} placeholder={`Otro${unit?` (${unit})`:""}...`}/>
+      )}
+    </div>
+  );
+}
 
 // ═══ CAMPOS POR TIPO DE PRODUCTO ═══════════════════════════
 function ItemFields({item,onChange}){
@@ -1620,21 +1653,21 @@ function ItemFields({item,onChange}){
     return(
       <div style={{marginTop:8}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-          <div><label style={{fontSize:14,color:"#94a3b8",display:"block",marginBottom:3}}>Ancho</label><NumInp value={item.ancho} onChange={v=>set("ancho",v)} placeholder="1.00" unit="m"/></div>
-          <div><label style={{fontSize:14,color:"#94a3b8",display:"block",marginBottom:3}}>Alto / Largo</label><NumInp value={item.alto} onChange={v=>set("alto",v)} placeholder="3.00" unit="m"/></div>
+          <div><label style={{fontSize:14,color:"#94a3b8",display:"block",marginBottom:3}}>Ancho / Largo del rollo</label><SelectOpc value={item.ancho} onChange={v=>set("ancho",v)} options={OPC_ANCHO} num unit="m" placeholder="Ancho..."/></div>
+          <div><label style={{fontSize:14,color:"#94a3b8",display:"block",marginBottom:3}}>Alto</label><SelectOpc value={item.alto} onChange={v=>set("alto",v)} options={OPC_ALTO} num unit="m" placeholder="Alto..."/></div>
         </div>
         <div style={{background:metros?"#f0fdf4":"#f8fafc",border:`1.5px solid ${metros?"#86efac":"#e2e8f0"}`,borderRadius:8,padding:"8px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
           <span style={{fontSize:14,color:"#64748b"}}>Metros cuadrados</span>
           <span style={{fontSize:16,fontWeight:900,color:metros?GREEN:"#94a3b8"}}>{metros?`${metros} m²`:"—"}</span>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          <Field label="Abertura *"><select style={{...inp,fontSize:14}} value={item.abertura||""} onChange={e=>set("abertura",e.target.value)}><option value="">Seleccionar...</option>{ABERTURA_SIZES.map(s=><option key={s} value={s}>{s}</option>)}</select></Field>
-          <Field label="Calibre *"><NumInp value={item.calibre||""} onChange={v=>set("calibre",v)} placeholder="Ej: 11"/></Field>
+          <Field label="Abertura *"><SelectOpc value={item.abertura} onChange={v=>set("abertura",v)} options={OPC_ABERTURA} placeholder="Abertura..."/></Field>
+          <Field label="Calibre *"><SelectOpc value={item.calibre} onChange={v=>set("calibre",v)} options={OPC_CALIBRE} num placeholder="Calibre..."/></Field>
         </div>
         {item.producto==="pvc"&&(
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-            <Field label="Calibre interno *"><NumInp value={item.calibreInterno||""} onChange={v=>set("calibreInterno",v)} placeholder="Ej: 9"/></Field>
-            <Field label="Color *"><input style={{...inp,fontSize:14}} value={item.color||""} onChange={e=>set("color",e.target.value)} placeholder="Verde, Negro..."/></Field>
+            <Field label="Calibre interno *"><SelectOpc value={item.calibreInterno} onChange={v=>set("calibreInterno",v)} options={OPC_CALIBRE} num placeholder="Cal. interno..."/></Field>
+            <Field label="Color *"><SelectOpc value={item.color} onChange={v=>set("color",v)} options={OPC_COLOR} placeholder="Color..."/></Field>
           </div>
         )}
       </div>
@@ -1643,9 +1676,9 @@ function ItemFields({item,onChange}){
   if(item.producto==="postes"){
     return(
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginTop:8}}>
-        <Field label="Calibre *"><NumInp value={item.calibre||""} onChange={v=>set("calibre",v)} placeholder="Ej: 14"/></Field>
-        <Field label={'Grosor *'}><select style={{...inp,fontSize:14}} value={item.grosor||""} onChange={e=>set("grosor",e.target.value)}><option value="">Seleccionar...</option><option value="1.5">1½"</option><option value="2">2"</option></select></Field>
-        <Field label="Largo (m) *"><NumInp value={item.largo||""} onChange={v=>set("largo",v)} placeholder="2.0" unit="m"/></Field>
+        <Field label="Calibre *"><SelectOpc value={item.calibre} onChange={v=>set("calibre",v)} options={OPC_CALIBRE} num placeholder="Calibre..."/></Field>
+        <Field label="Grosor *"><SelectOpc value={item.grosor} onChange={v=>set("grosor",v)} options={OPC_GROSOR} placeholder="Grosor..."/></Field>
+        <Field label="Largo (m) *"><SelectOpc value={item.largo} onChange={v=>set("largo",v)} options={OPC_LARGO} num unit="m" placeholder="Largo..."/></Field>
         <Field label="Cantidad *"><NumInp value={item.cantidad||""} onChange={v=>set("cantidad",v)} placeholder="10" unit="un"/></Field>
       </div>
     );
@@ -2357,26 +2390,10 @@ function InventarioTab({inventario,orders=[],lowStock,user,isG,canStock,onNuevo,
   const [q,setQ]=useState("");
   const [cat,setCat]=useState("Todas");
   const [estado,setEstado]=useState("todos"); // todos | bajo | agotado
+  const fq=v=>{ const n=Number(v)||0; return Number.isInteger(n)?n:Math.round(n*10)/10; };
 
-  const estadoDe=p=>{ const t=SEDES.reduce((a,s)=>a+(Number(p.stock?.[s])||0),0); if(t<=0) return "agotado"; if((p.minimo||0)>0&&t<=p.minimo) return "bajo"; return "ok"; };
-  const ST={ ok:{txt:"En stock",col:"#15803d",bg:"#f0fdf4",bd:"#86efac"}, bajo:{txt:"Bajo",col:"#b45309",bg:"#fffbeb",bd:"#fde68a"}, agotado:{txt:"Agotado",col:"#dc2626",bg:"#fef2f2",bd:"#fecaca"} };
-
-  const withTotal=inventario.map(p=>({p,total:SEDES.reduce((a,s)=>a+(Number(p.stock?.[s])||0),0),est:estadoDe(p)}));
-  const kpi={ total:inventario.length, ok:withTotal.filter(x=>x.est==="ok").length, bajo:withTotal.filter(x=>x.est==="bajo").length, agotado:withTotal.filter(x=>x.est==="agotado").length };
-  const cats=["Todas",...INV_CATEGORIAS.filter(c=>inventario.some(p=>(p.categoria||"Otro")===c))];
-
-  const fil=withTotal
-    .filter(x=>cat==="Todas"||(x.p.categoria||"Otro")===cat)
-    .filter(x=>estado==="todos"||x.est===estado)
-    .filter(x=>{ const s=(invLabel(x.p)+" "+(x.p.nombre||"")).toLowerCase(); return s.includes(q.toLowerCase()); })
-    .sort((a,b)=>invLabel(a.p).localeCompare(invLabel(b.p)));
-  // Agrupar por categoría
-  const grupos={};
-  fil.forEach(x=>{ const c=x.p.categoria||"Otro"; (grupos[c]=grupos[c]||[]).push(x); });
-
-  // Producción física en bodega (derivada de las órdenes)
-  const bodega={};
-  PRODUCTOS.forEach(p=>{ bodega[p.id]={unidad:p.id==="postes"?"un":"m²",sinEntregar:0,stock:0,sedes:{}}; });
+  // ── STOCK REAL derivado de las órdenes (a nivel de calibre/medida) ──
+  const derMap={};
   (orders||[]).forEach(o=>{
     const isStock=esStockCliente(o.cliente);
     const entregado=o.estadoEntrega==="entregado";
@@ -2384,16 +2401,40 @@ function InventarioTab({inventario,orders=[],lowStock,user,isG,canStock,onNuevo,
     const sede=SEDES.includes(o.sede)?o.sede:"Centro";
     normalizeItems(o).forEach(it=>{
       if(it.status!=="completed") return;
-      if(!bodega[it.producto]) bodega[it.producto]={unidad:it.producto==="postes"?"un":"m²",sinEntregar:0,stock:0,sedes:{}};
       const qty=it.producto==="postes"?(Number(it.cantidad)||0):(Number(it.metros)||(Number(it.ancho)*Number(it.alto))||0);
       if(!qty) return;
-      const b=isStock?"stock":"sinEntregar";
-      bodega[it.producto][b]+=qty;
-      if(!bodega[it.producto].sedes[sede]) bodega[it.producto].sedes[sede]={sinEntregar:0,stock:0};
-      bodega[it.producto].sedes[sede][b]+=qty;
+      const categoria=labelProducto(it.producto);
+      const calibre=it.producto==="pvc"?normDisp(`${it.calibre||""}${it.calibreInterno?("/"+it.calibreInterno):""}`):normDisp(it.calibre||"");
+      const medida=it.producto==="postes"
+        ? [it.grosor&&(normDisp(it.grosor)+'"'),it.largo&&(normDisp(it.largo)+"m")].filter(Boolean).join(" · ")
+        : [it.abertura&&("Ab "+normDisp(it.abertura)),(it.ancho&&it.alto)&&(normDisp(it.ancho)+"×"+normDisp(it.alto)+"m")].filter(Boolean).join(" · ");
+      const color=it.producto==="pvc"?normDisp(it.color||""):"";
+      const unidad=it.producto==="postes"?"un":"m²";
+      // Clave normalizada: une "2 1/2" y "2½", mayúsculas/minúsculas, comillas y espacios
+      const key=[it.producto,normKey(calibre),normKey(medida),normKey(color)].join("|");
+      if(!derMap[key]) derMap[key]={id:"der_"+clienteId(key),derivado:true,categoria,calibre,medida,color,unidad,stock:{"Centro":0,"Santa Lucia":0,"La Granja":0},sinEntregar:0,paraStock:0};
+      const d=derMap[key];
+      d.stock[sede]=(d.stock[sede]||0)+qty;
+      if(isStock) d.paraStock+=qty; else d.sinEntregar+=qty;
     });
   });
-  const bodegaList=Object.entries(bodega);
+  const derivados=Object.values(derMap);
+  const all=[...inventario.map(p=>({...p,derivado:false})),...derivados];
+
+  const estadoDe=p=>{ const t=SEDES.reduce((a,s)=>a+(Number(p.stock?.[s])||0),0); if(t<=0) return "agotado"; if((p.minimo||0)>0&&t<=p.minimo) return "bajo"; return "ok"; };
+  const ST={ ok:{txt:"En stock",col:"#15803d",bg:"#f0fdf4",bd:"#86efac"}, bajo:{txt:"Bajo",col:"#b45309",bg:"#fffbeb",bd:"#fde68a"}, agotado:{txt:"Agotado",col:"#dc2626",bg:"#fef2f2",bd:"#fecaca"} };
+
+  const withTotal=all.map(p=>({p,total:SEDES.reduce((a,s)=>a+(Number(p.stock?.[s])||0),0),est:estadoDe(p)}));
+  const kpi={ total:all.length, ok:withTotal.filter(x=>x.est==="ok").length, bajo:withTotal.filter(x=>x.est==="bajo").length, agotado:withTotal.filter(x=>x.est==="agotado").length };
+  const cats=["Todas",...INV_CATEGORIAS.filter(c=>all.some(p=>(p.categoria||"Otro")===c))];
+
+  const fil=withTotal
+    .filter(x=>cat==="Todas"||(x.p.categoria||"Otro")===cat)
+    .filter(x=>estado==="todos"||x.est===estado)
+    .filter(x=>{ const s=(invLabel(x.p)+" "+(x.p.nombre||"")).toLowerCase(); return s.includes(q.toLowerCase()); })
+    .sort((a,b)=>invLabel(a.p).localeCompare(invLabel(b.p)));
+  const grupos={};
+  fil.forEach(x=>{ const c=x.p.categoria||"Otro"; (grupos[c]=grupos[c]||[]).push(x); });
 
   const Kpi=({label,value,color,bg,onClick,active})=>(
     <div onClick={onClick} style={{flex:1,minWidth:120,background:active?color:bg,border:`1.5px solid ${active?color:"#e2e8f0"}`,borderRadius:14,padding:"12px 14px",cursor:onClick?"pointer":"default"}}>
@@ -2404,7 +2445,6 @@ function InventarioTab({inventario,orders=[],lowStock,user,isG,canStock,onNuevo,
 
   return(
     <div>
-      {/* Indicadores */}
       <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
         <Kpi label="Productos" value={kpi.total} color="#1e293b" bg="#f8fafc" onClick={()=>{setEstado("todos");setCat("Todas");}} active={estado==="todos"&&cat==="Todas"}/>
         <Kpi label="En stock" value={kpi.ok} color="#15803d" bg="#f0fdf4" onClick={()=>setEstado(estado==="ok"?"todos":"ok")} active={estado==="ok"}/>
@@ -2412,12 +2452,10 @@ function InventarioTab({inventario,orders=[],lowStock,user,isG,canStock,onNuevo,
         <Kpi label="Agotados" value={kpi.agotado} color="#dc2626" bg="#fef2f2" onClick={()=>setEstado(estado==="agotado"?"todos":"agotado")} active={estado==="agotado"}/>
       </div>
 
-      {/* Buscador + nuevo */}
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
         <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar por nombre, calibre o medida..." value={q} onChange={e=>setQ(e.target.value)}/>
-        {isG&&<button onClick={onNuevo} style={btnR}>+ Nuevo producto</button>}
+        {isG&&<button onClick={onNuevo} style={btnR}>+ Producto importado</button>}
       </div>
-      {/* Chips de categoría */}
       <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
         {cats.map(c=>(
           <button key={c} onClick={()=>setCat(c)} style={{background:cat===c?"#1e293b":"#f8fafc",border:"1.5px solid",borderColor:cat===c?"#1e293b":"#e2e8f0",borderRadius:999,padding:"5px 14px",cursor:"pointer",fontSize:13,fontWeight:600,color:cat===c?"#fff":"#64748b"}}>{c}</button>
@@ -2427,8 +2465,7 @@ function InventarioTab({inventario,orders=[],lowStock,user,isG,canStock,onNuevo,
       {fil.length===0?(
         <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"56px 0",color:"#94a3b8"}}>
           <div style={{fontSize:34,marginBottom:10}}>📦</div>
-          <div style={{fontWeight:600,marginBottom:6}}>{inventario.length===0?"Aún no hay productos en el inventario":"Sin resultados con estos filtros"}</div>
-          {inventario.length===0&&isG&&<button onClick={onNuevo} style={{background:"none",border:"none",color:RED,fontSize:14,cursor:"pointer",textDecoration:"underline"}}>+ Crear el primer producto</button>}
+          <div style={{fontWeight:600,marginBottom:6}}>{all.length===0?"Aún no hay stock. Se llena solo con la producción de las órdenes.":"Sin resultados con estos filtros"}</div>
         </div>
       ):(
         Object.entries(grupos).map(([categoria,rows])=>(
@@ -2440,7 +2477,7 @@ function InventarioTab({inventario,orders=[],lowStock,user,isG,canStock,onNuevo,
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
               {rows.map(({p,total,est})=>{
-                const s=ST[est];const oi=ORIGEN_INFO[p.origen]||ORIGEN_INFO.producido;
+                const s=ST[est];const der=p.derivado;const oi=ORIGEN_INFO[p.origen]||ORIGEN_INFO.producido;
                 return(
                   <div key={p.id} style={{background:"#fff",border:`1.5px solid ${est==="ok"?"#e2e8f0":s.bd}`,borderRadius:14,overflow:"hidden"}}>
                     <div style={{padding:"12px 14px",borderBottom:"1px solid #f1f5f9"}}>
@@ -2448,79 +2485,54 @@ function InventarioTab({inventario,orders=[],lowStock,user,isG,canStock,onNuevo,
                         <div style={{minWidth:0}}>
                           <div style={{fontWeight:800,color:"#1e293b",fontSize:15,lineHeight:1.25}}>{invLabel(p)}</div>
                           <div style={{display:"flex",gap:6,alignItems:"center",marginTop:5,flexWrap:"wrap"}}>
-                            <span style={{background:oi.bg,color:oi.col,borderRadius:999,padding:"1px 8px",fontSize:11,fontWeight:700}}>{oi.label}</span>
+                            {der
+                              ? <span style={{background:"#eef2ff",color:"#4338ca",borderRadius:999,padding:"1px 8px",fontSize:11,fontWeight:700}}>Producción</span>
+                              : <span style={{background:oi.bg,color:oi.col,borderRadius:999,padding:"1px 8px",fontSize:11,fontWeight:700}}>{oi.label}</span>}
                             {p.calibre&&<span style={{background:"#f1f5f9",color:"#475569",borderRadius:999,padding:"1px 8px",fontSize:11,fontWeight:600}}>Cal {p.calibre}</span>}
                             {p.medida&&<span style={{background:"#f1f5f9",color:"#475569",borderRadius:999,padding:"1px 8px",fontSize:11,fontWeight:600}}>{p.medida}</span>}
                           </div>
                         </div>
                         <div style={{textAlign:"right",flexShrink:0}}>
-                          <div style={{fontSize:22,fontWeight:900,color:s.col,lineHeight:1}}>{total}</div>
+                          <div style={{fontSize:22,fontWeight:900,color:s.col,lineHeight:1}}>{fq(total)}</div>
                           <div style={{fontSize:11,color:"#94a3b8"}}>{p.unidad}</div>
                         </div>
                       </div>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
                         <span style={{background:s.bg,color:s.col,border:`1px solid ${s.bd}`,borderRadius:999,padding:"1px 10px",fontSize:12,fontWeight:700}}>{s.txt}</span>
-                        {(p.minimo||0)>0&&<span style={{fontSize:12,color:"#94a3b8"}}>mínimo {p.minimo}</span>}
+                        {der
+                          ? <span style={{fontSize:11,color:"#94a3b8"}}>{fq(p.sinEntregar)} sin entregar · {fq(p.paraStock)} stock</span>
+                          : ((p.minimo||0)>0&&<span style={{fontSize:12,color:"#94a3b8"}}>mínimo {p.minimo}</span>)}
                       </div>
                     </div>
-                    {/* Stock por sede */}
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,padding:"10px 14px"}}>
                       {SEDES.map(se=>{
                         const v=Number(p.stock?.[se])||0;
                         const e2=v<=0?"agotado":((p.minimo||0)>0&&v<=p.minimo?"bajo":"ok");const c2=ST[e2];
                         return(
                           <div key={se} style={{background:c2.bg,border:`1px solid ${c2.bd}`,borderRadius:10,padding:"6px 4px",textAlign:"center"}}>
-                            <div style={{fontSize:16,fontWeight:900,color:c2.col}}>{v}</div>
+                            <div style={{fontSize:16,fontWeight:900,color:c2.col}}>{fq(v)}</div>
                             <div style={{fontSize:10,color:"#94a3b8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{se}</div>
                           </div>
                         );
                       })}
                     </div>
-                    {/* Acciones */}
-                    <div style={{display:"flex",gap:6,padding:"0 14px 12px",flexWrap:"wrap"}}>
-                      {canStock&&<button onClick={()=>onEntrada(p)} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#15803d",fontSize:14,fontWeight:700}}>+ Entrada</button>}
-                      {canStock&&<button onClick={()=>onSalida(p)} style={{background:"#fff7ed",border:"1px solid #fed7aa",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#c2410c",fontSize:14,fontWeight:700}}>− Salida</button>}
-                      <button onClick={()=>onKardex(p)} style={{...btnS,padding:"6px 10px",fontSize:14}}>Movimientos</button>
-                      {isG&&<button onClick={()=>onEditar(p)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,padding:"6px 10px",cursor:"pointer",color:"#0369a1",fontSize:14}}>✏</button>}
-                      {isG&&onEliminar&&<button onClick={()=>onEliminar(p)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"6px 10px",cursor:"pointer",color:"#dc2626",fontSize:14}}>🗑</button>}
-                    </div>
+                    {der?(
+                      <div style={{padding:"0 14px 12px",fontSize:11,color:"#94a3b8"}}>Se actualiza solo con la producción de las órdenes.</div>
+                    ):(
+                      <div style={{display:"flex",gap:6,padding:"0 14px 12px",flexWrap:"wrap"}}>
+                        {canStock&&<button onClick={()=>onEntrada(p)} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#15803d",fontSize:14,fontWeight:700}}>+ Entrada</button>}
+                        {canStock&&<button onClick={()=>onSalida(p)} style={{background:"#fff7ed",border:"1px solid #fed7aa",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#c2410c",fontSize:14,fontWeight:700}}>− Salida</button>}
+                        <button onClick={()=>onKardex(p)} style={{...btnS,padding:"6px 10px",fontSize:14}}>Movimientos</button>
+                        {isG&&<button onClick={()=>onEditar(p)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,padding:"6px 10px",cursor:"pointer",color:"#0369a1",fontSize:14}}>✏</button>}
+                        {isG&&onEliminar&&<button onClick={()=>onEliminar(p)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"6px 10px",cursor:"pointer",color:"#dc2626",fontSize:14}}>🗑</button>}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           </div>
         ))
-      )}
-
-      {/* Producción en bodega (según órdenes) */}
-      {bodegaList.some(([,d])=>d.sinEntregar||d.stock)&&(
-        <div style={{marginTop:22,paddingTop:18,borderTop:"1px solid #e2e8f0"}}>
-          <div style={{fontSize:15,fontWeight:800,color:"#334155",marginBottom:4}}>Producción en bodega (según órdenes)</div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:10}}>Lo ya producido que sigue físicamente en bodega: pendiente de entregar + lo fabricado para stock. Se calcula solo de las órdenes.</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
-            {bodegaList.map(([prod,d])=>{
-              const info=infoProducto(prod);
-              return(
-                <div key={prod} style={{background:"#fff",border:`1.5px solid ${info.color}44`,borderRadius:12,padding:"12px 14px"}}>
-                  <div style={{fontWeight:800,color:info.color,fontSize:15,marginBottom:8}}>{labelProducto(prod)}</div>
-                  <div style={{display:"flex",gap:8,marginBottom:8}}>
-                    <div style={{flex:1,background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"8px",textAlign:"center"}}>
-                      <div style={{fontSize:17,fontWeight:900,color:"#b45309"}}>{d.sinEntregar} <span style={{fontSize:12}}>{d.unidad}</span></div>
-                      <div style={{fontSize:11,color:"#92400e"}}>Sin entregar</div>
-                    </div>
-                    <div style={{flex:1,background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:10,padding:"8px",textAlign:"center"}}>
-                      <div style={{fontSize:17,fontWeight:900,color:"#7c3aed"}}>{d.stock} <span style={{fontSize:12}}>{d.unidad}</span></div>
-                      <div style={{fontSize:11,color:"#6d28d9"}}>Para stock</div>
-                    </div>
-                  </div>
-                  <div style={{fontSize:11,color:"#94a3b8"}}>
-                    {SEDES.filter(se=>d.sedes[se]&&(d.sedes[se].sinEntregar||d.sedes[se].stock)).map(se=>`${se}: ${(d.sedes[se].sinEntregar+d.sedes[se].stock)} ${d.unidad}`).join(" · ")||"—"}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
       )}
     </div>
   );
