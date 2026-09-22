@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.21-4";
+const APP_VERSION="v2026.09.21-5";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -1754,7 +1754,7 @@ function PriceFields({item,onChange,isG}){
       <div style={{fontSize:12,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>Precios</div>
       <div style={{display:"grid",gridTemplateColumns:isG?"1fr 1fr":"1fr",gap:8}}>
         <div>
-          <label style={{fontSize:13,color:"#64748b",display:"block",marginBottom:3,fontWeight:600}}>Precio de venta</label>
+          <label style={{fontSize:13,color:"#64748b",display:"block",marginBottom:3,fontWeight:600}}>Precio de venta (total del ítem)</label>
           <NumInp value={item.precioVenta} onChange={v=>set("precioVenta",v)} placeholder="0" unit="$"/>
         </div>
         {isG&&(
@@ -2975,7 +2975,13 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
     setOrdenRef(o.orden);
     const found=findClienteByNombre(clientes,o.cliente);
     setCli(c=>found?{docTipo:found.docTipo||"NIT",docNumero:found.docNumero||"",nombre:o.cliente||c.nombre,telefono:found.telefono||"",email:found.email||"",direccion:found.direccion||""}:{...c,nombre:o.cliente||c.nombre});
-    const its=normalizeItems(o).map(it=>({productoId:null,skuKey:null,descripcion:`${labelProducto(it.producto)} — ${resumenItem(it)}`,cantidad:it.metros||it.cantidad||"",unidad:it.producto==="postes"?"unidades":"m²",valorUnit:it.precioVenta||""}));
+    const its=normalizeItems(o).map(it=>{
+      const cant=Number(it.metros||it.cantidad||0);
+      const pv=Number(it.precioVenta||0);
+      // precioVenta guardado es el TOTAL del ítem -> valor unitario = total / cantidad
+      const unit=(pv>0&&cant>0)?Math.round(pv/cant):pv;
+      return {productoId:null,skuKey:null,descripcion:`${labelProducto(it.producto)} — ${resumenItem(it)}`,cantidad:it.metros||it.cantidad||"",unidad:it.producto==="postes"?"unidades":"m²",valorUnit:unit||""};
+    });
     setItems(its.length?its:[{productoId:null,skuKey:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
     setQOrden("");
   };
