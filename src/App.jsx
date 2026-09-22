@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.19-2";
+const APP_VERSION="v2026.09.19-3";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -96,6 +96,19 @@ const esStockCliente = cliente =>
 const clienteId = nombre => String(nombre||"").trim().toLowerCase()
   .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
   .replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");
+
+// Todos los ids (nombre + alias) que pertenecen a un cliente ya fusionado
+const clienteMatchIds = c => {
+  const s=new Set();
+  if(c?.id) s.add(c.id);
+  (c?.aliases||[]).forEach(a=>{ const id=clienteId(a); if(id) s.add(id); });
+  return s;
+};
+// Encuentra el cliente canónico para un nombre (revisa nombre y alias)
+const findClienteByNombre = (clientes,nombre) => {
+  const id=clienteId(nombre); if(!id) return null;
+  return (clientes||[]).find(c=>clienteMatchIds(c).has(id))||null;
+};
 
 // Formatea valores de dinero en pesos colombianos
 const fmtMoney = v => {
@@ -620,12 +633,15 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
   };
   const upsertCliente=async cli=>{
     if(!cli||!cli.nombre) return;
-    const id=clienteId(cli.nombre);
+    // Si el nombre ya corresponde a un cliente existente (por nombre o alias), enriquece ESE
+    const canonical=findClienteByNombre(clientes,cli.nombre);
+    const id=canonical?canonical.id:clienteId(cli.nombre);
     if(!id) return;
-    const prev=clientes.find(c=>c.id===id)||{};
-    // Enriquece sin borrar datos ya guardados (una orden solo trae el nombre; una venta trae más)
+    const prev=canonical||{};
     const merged={
-      id, nombre:cli.nombre.trim(),
+      id,
+      nombre:(prev.nombre||cli.nombre).trim(),        // no reemplaza el nombre canónico por una variante
+      aliases: prev.aliases||[],
       docTipo: cli.docTipo||prev.docTipo||"NIT",
       docNumero: cli.docNumero||prev.docNumero||"",
       telefono: cli.telefono||prev.telefono||"",
@@ -634,6 +650,26 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       updatedAt: Date.now(),
     };
     try{ await setDoc(doc(db,"clientes",id),merged,{merge:true}); }catch(e){ /* best-effort: no romper la orden/venta si falla */ }
+  };
+  // Fusiona clientes duplicados en uno principal (mantiene alias, embebe sus órdenes y ventas)
+  const fusionarClientes=async(primaryId,dupeIds)=>{
+    const primary=clientes.find(c=>c.id===primaryId);
+    if(!primary) return;
+    const dupes=clientes.filter(c=>dupeIds.includes(c.id)&&c.id!==primaryId);
+    if(dupes.length===0) return;
+    const aliasSet=new Set((primary.aliases||[]).map(String));
+    dupes.forEach(d=>{ if(d.nombre) aliasSet.add(d.nombre); (d.aliases||[]).forEach(a=>aliasSet.add(a)); });
+    const aliases=[...aliasSet].filter(n=>clienteId(n)&&clienteId(n)!==primary.id);
+    const pick=f=>primary[f]||((dupes.find(d=>d[f])||{})[f])||"";
+    await withSave(async()=>{
+      await setDoc(doc(db,"clientes",primary.id),{
+        ...primary,aliases,
+        docTipo:primary.docTipo||pick("docTipo")||"NIT",
+        docNumero:pick("docNumero"),telefono:pick("telefono"),email:pick("email"),direccion:pick("direccion"),
+        updatedAt:Date.now(),
+      },{merge:true});
+      for(const d of dupes){ await deleteDoc(doc(db,"clientes",d.id)); }
+    });
   };
   // Crea/actualiza clientes a partir de TODAS las órdenes y ventas ya registradas
   const sincronizarClientes=async()=>{
@@ -792,6 +828,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
         {tab==="clientes"&&<ClientesTab clientes={clientes} remisiones={remisiones} orders={orders} isG={isG} canProd={canProd}
           onVer={c=>setModal({t:"clienteDetalle",cli:c})}
           onEditar={canProd?(c=>setModal({t:"cliente",cli:c})):null}
+          onFusionar={isG?(()=>setModal({t:"fusionar"})):null}
           onSync={isG?sincronizarClientes:null}/>}
         {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG}
           onDel={canDelete?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
@@ -801,7 +838,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
           onSetEntrega={canDeliver?setEntrega:null}/>}
       </div>
 
-      {modal?.t==="new"         &&<NewOrderModal    user={user} orders={orders} onClose={()=>setModal(null)} onCreate={createOrder}/>}
+      {modal?.t==="new"         &&<NewOrderModal    user={user} orders={orders} clientes={clientes} onClose={()=>setModal(null)} onCreate={createOrder}/>}
       {modal?.t==="edit"        &&<EditOrderModal   order={modal.order} isG={isG} onClose={()=>setModal(null)} onSave={editOrder}/>}
       {modal?.t==="quickEdit"   &&<QuickEditModal   order={modal.order} onClose={()=>setModal(null)} onSave={quickEditOrder}/>}
       {modal?.t==="assignOrder" &&<AssignOrderModal order={modal.order} allOrders={orders} machines={MACHINES} user={user} isG={isG} onClose={()=>setModal(null)} onAssign={assignItem} onAssignMultiple={assignMultipleItems}/>}
@@ -822,6 +859,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       {modal?.t==="verDoc"    &&<VerDocumentoModal doc={modal.doc} onClose={()=>setModal(null)}/>}
       {modal?.t==="pasarInv"  &&<PasarInventarioModal order={modal.order} inventario={inventario} onClose={()=>setModal(null)} onSave={pasarOrdenAInventario}/>}
       {modal?.t==="cliente"   &&<ClienteModal cli={modal.cli} onClose={()=>setModal(null)} onSave={saveCliente}/>}
+      {modal?.t==="fusionar"  &&<FusionarClientesModal clientes={clientes} onClose={()=>setModal(null)} onMerge={fusionarClientes}/>}
       {modal?.t==="clienteDetalle"&&<ClienteDetalleModal cli={modal.cli} orders={orders} remisiones={remisiones} onClose={()=>setModal(null)} onEditar={canProd?(c=>setModal({t:"cliente",cli:c})):null} onVerOrden={o=>setModal({t:"detail",order:o})}/>}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}*{box-sizing:border-box}`}</style>
     </div>
@@ -1689,7 +1727,7 @@ function enrichItem(it){
 const newEmptyItem=()=>({_key:Date.now()+Math.random(),producto:"",calibre:"",calibreInterno:"",color:"",ancho:"",alto:"",abertura:"",grosor:"",largo:"",cantidad:"",precioVenta:"",costo:""});
 
 // ═══ NUEVA ORDEN ═══════════════════════════════════════════
-function NewOrderModal({user,orders,onClose,onCreate}){
+function NewOrderModal({user,orders,clientes=[],onClose,onCreate}){
   const isG=user.role==="gerencia";
   const [orden,setOrden]=useState("");const [cliente,setCliente]=useState("");
   const [remision,setRemision]=useState("");
@@ -1754,7 +1792,8 @@ function NewOrderModal({user,orders,onClose,onCreate}){
         <div><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>No. Orden *</label><input style={inp} value={orden} onChange={e=>setOrden(e.target.value)}/></div>
         <div>
           <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente *</label>
-          <input style={inp} value={cliente} onChange={e=>setCliente(e.target.value)} placeholder="Nombre del cliente"/>
+          <input style={inp} value={cliente} onChange={e=>setCliente(e.target.value)} placeholder="Nombre del cliente" list="new-order-clientes"/>
+          <datalist id="new-order-clientes">{clientes.map(c=><option key={c.id} value={c.nombre}/>)}</datalist>
           <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
             <button type="button" onClick={selectStock} style={{background:cliente==="Inventario (Stock)"?"#7c3aed":"#f5f3ff",border:"1.5px solid #7c3aed",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:cliente==="Inventario (Stock)"?"#fff":"#7c3aed",fontSize:14,fontWeight:700}}>📦 Inventario (Stock)</button>
           </div>
@@ -2316,6 +2355,7 @@ function InventarioTab({inventario,orders=[],lowStock,user,isG,canStock,onNuevo,
   //  - "sin entregar": producido para un cliente pero aún no entregado
   //  - "stock": producido en órdenes de inventario/stock
   const bodega={};
+  PRODUCTOS.forEach(p=>{ bodega[p.id]={unidad:p.id==="postes"?"un":"m²",sinEntregar:0,stock:0,sedes:{}}; });
   (orders||[]).forEach(o=>{
     const isStock=esStockCliente(o.cliente);
     const entregado=o.estadoEntrega==="entregado";
@@ -2323,10 +2363,11 @@ function InventarioTab({inventario,orders=[],lowStock,user,isG,canStock,onNuevo,
     const sede=SEDES.includes(o.sede)?o.sede:"Centro";
     normalizeItems(o).forEach(it=>{
       if(it.status!=="completed") return; // solo lo ya producido
-      const unidad=it.producto==="postes"?"un":"m²";
-      const qty=it.producto==="postes"?(Number(it.cantidad)||0):(Number(it.metros)||0);
+      if(!bodega[it.producto]) bodega[it.producto]={unidad:it.producto==="postes"?"un":"m²",sinEntregar:0,stock:0,sedes:{}};
+      const qty=it.producto==="postes"
+        ? (Number(it.cantidad)||0)
+        : (Number(it.metros)|| (Number(it.ancho)*Number(it.alto)) ||0);
       if(!qty) return;
-      if(!bodega[it.producto]) bodega[it.producto]={unidad,sinEntregar:0,stock:0,sedes:{}};
       const b=isStock?"stock":"sinEntregar";
       bodega[it.producto][b]+=qty;
       if(!bodega[it.producto].sedes[sede]) bodega[it.producto].sedes[sede]={sinEntregar:0,stock:0};
@@ -3019,11 +3060,15 @@ function VerDocumentoModal({doc,onClose}){
 }
 
 // ═══ CLIENTES (mini-CRM) ═══════════════════════════════════
-function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onSync}){
+function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onFusionar,onSync}){
   const [q,setQ]=useState("");
+  // Mapa: cualquier id (nombre o alias) -> id del cliente canónico
+  const idToOwner={};
+  clientes.forEach(c=>clienteMatchIds(c).forEach(id=>{ idToOwner[id]=c.id; }));
+  const owner=nombre=>{ const k=clienteId(nombre); return idToOwner[k]||k; };
   const remStats={},ordStats={};
-  (remisiones||[]).forEach(d=>{ const k=clienteId(d.cliente?.nombre); if(!k) return; (remStats[k]=remStats[k]||{docs:0,total:0}); remStats[k].docs++; remStats[k].total+=Number(d.total)||0; });
-  (orders||[]).forEach(o=>{ if(esStockCliente(o.cliente)) return; const k=clienteId(o.cliente); if(!k) return; ordStats[k]=(ordStats[k]||0)+1; });
+  (remisiones||[]).forEach(d=>{ const k=owner(d.cliente?.nombre); if(!k) return; (remStats[k]=remStats[k]||{docs:0,total:0}); remStats[k].docs++; remStats[k].total+=Number(d.total)||0; });
+  (orders||[]).forEach(o=>{ if(esStockCliente(o.cliente)) return; const k=owner(o.cliente); if(!k) return; ordStats[k]=(ordStats[k]||0)+1; });
   const lista=[...clientes]
     .filter(c=>String(c.nombre||"").toLowerCase().includes(q.toLowerCase())||String(c.docNumero||"").includes(q))
     .sort((a,b)=>String(a.nombre||"").localeCompare(String(b.nombre||"")));
@@ -3031,6 +3076,7 @@ function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onSy
     <div>
       <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
         <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar cliente por nombre o documento..." value={q} onChange={e=>setQ(e.target.value)}/>
+        {onFusionar&&<button onClick={onFusionar} style={{...btnS,fontWeight:700}}>🔗 Fusionar duplicados</button>}
         {onSync&&<button onClick={onSync} style={{...btnS,fontWeight:700}}>🔄 Sincronizar desde órdenes</button>}
       </div>
       <div style={{fontSize:14,color:"#94a3b8",marginBottom:10}}>{lista.length} cliente(s)</div>
@@ -3158,8 +3204,9 @@ function PasarInventarioModal({order,inventario,onClose,onSave}){
 
 // ═══ DETALLE DE CLIENTE (historial de órdenes y ventas) ════
 function ClienteDetalleModal({cli,orders,remisiones,onClose,onEditar,onVerOrden}){
-  const ordenesCli=(orders||[]).filter(o=>!esStockCliente(o.cliente)&&clienteId(o.cliente)===cli.id).sort((a,b)=>b.timestamp-a.timestamp);
-  const ventasCli=(remisiones||[]).filter(d=>clienteId(d.cliente?.nombre)===cli.id).sort((a,b)=>b.timestamp-a.timestamp);
+  const ids=clienteMatchIds(cli);
+  const ordenesCli=(orders||[]).filter(o=>!esStockCliente(o.cliente)&&ids.has(clienteId(o.cliente))).sort((a,b)=>b.timestamp-a.timestamp);
+  const ventasCli=(remisiones||[]).filter(d=>ids.has(clienteId(d.cliente?.nombre))).sort((a,b)=>b.timestamp-a.timestamp);
   const totalComprado=ventasCli.reduce((a,d)=>a+(Number(d.total)||0),0);
   return(
     <Modal title="Ficha del cliente" onClose={onClose} maxWidth={600}>
@@ -3167,6 +3214,7 @@ function ClienteDetalleModal({cli,orders,remisiones,onClose,onEditar,onVerOrden}
         <div>
           <div style={{fontSize:20,fontWeight:900,color:"#1e293b"}}>{cli.nombre}</div>
           <div style={{fontSize:13,color:"#94a3b8"}}>{cli.docTipo||"Doc"}: {cli.docNumero||"—"}</div>
+          {cli.aliases&&cli.aliases.length>0&&<div style={{fontSize:12,color:"#7c3aed",marginTop:2}}>También: {cli.aliases.join(" · ")}</div>}
         </div>
         {onEditar&&<button onClick={()=>onEditar(cli)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#0369a1",fontSize:13,fontWeight:700}}>Editar datos</button>}
       </div>
@@ -3222,6 +3270,63 @@ function ClienteDetalleModal({cli,orders,remisiones,onClose,onEditar,onVerOrden}
       )}
 
       <button onClick={onClose} style={{width:"100%",background:DARK,border:"none",borderRadius:10,padding:"11px",fontSize:14,fontWeight:700,color:"#fff",cursor:"pointer"}}>Cerrar</button>
+    </Modal>
+  );
+}
+
+// ═══ FUSIONAR CLIENTES DUPLICADOS ══════════════════════════
+function FusionarClientesModal({clientes,onClose,onMerge}){
+  const [primaryId,setPrimaryId]=useState("");
+  const [sel,setSel]=useState({});
+  const [q,setQ]=useState("");
+  const [loading,setLoading]=useState(false);const [err,setErr]=useState("");
+  const orden=[...clientes].sort((a,b)=>String(a.nombre||"").localeCompare(String(b.nombre||"")));
+  const primary=clientes.find(c=>c.id===primaryId);
+  const toggle=id=>setSel(s=>({...s,[id]:!s[id]}));
+  const dupeIds=Object.keys(sel).filter(id=>sel[id]&&id!==primaryId);
+  const otros=orden.filter(c=>c.id!==primaryId&&String(c.nombre||"").toLowerCase().includes(q.toLowerCase()));
+  const submit=async()=>{
+    if(!primaryId){setErr("Elige el cliente principal");return;}
+    if(dupeIds.length===0){setErr("Marca al menos un cliente duplicado");return;}
+    setLoading(true);
+    await onMerge(primaryId,dupeIds);
+    setLoading(false);onClose();
+  };
+  return(
+    <Modal title="Fusionar clientes duplicados" onClose={onClose} maxWidth={560}>
+      <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"9px 14px",fontSize:13,color:"#1d4ed8",marginBottom:14}}>
+        Elige el <strong>cliente principal</strong> y marca los que son el mismo con otro nombre. Sus órdenes y ventas quedarán todas bajo el principal, y los duplicados se eliminan.
+      </div>
+      <div style={{marginBottom:12}}>
+        <label style={{fontSize:14,fontWeight:700,color:"#334155",display:"block",marginBottom:5}}>Cliente principal</label>
+        <select style={inp} value={primaryId} onChange={e=>{setPrimaryId(e.target.value);setSel({});setErr("");}}>
+          <option value="">Seleccionar...</option>
+          {orden.map(c=><option key={c.id} value={c.id}>{c.nombre}{c.docNumero?` (${c.docNumero})`:""}</option>)}
+        </select>
+      </div>
+      {primary&&(
+        <>
+          <label style={{fontSize:14,fontWeight:700,color:"#334155",display:"block",marginBottom:6}}>Duplicados de "{primary.nombre}" ({dupeIds.length})</label>
+          <input style={{...inp,fontSize:13,marginBottom:8}} placeholder="Buscar..." value={q} onChange={e=>setQ(e.target.value)}/>
+          <div style={{maxHeight:260,overflowY:"auto",display:"flex",flexDirection:"column",gap:6,marginBottom:14}}>
+            {otros.map(c=>(
+              <div key={c.id} onClick={()=>toggle(c.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,cursor:"pointer",border:`1.5px solid ${sel[c.id]?"#7c3aed":"#e2e8f0"}`,background:sel[c.id]?"#f5f3ff":"#fff"}}>
+                <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${sel[c.id]?"#7c3aed":"#cbd5e1"}`,background:sel[c.id]?"#7c3aed":"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{sel[c.id]&&<span style={{color:"#fff",fontSize:12,fontWeight:900}}>✓</span>}</div>
+                <div style={{minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:600,color:"#334155"}}>{c.nombre}</div>
+                  <div style={{fontSize:12,color:"#94a3b8"}}>{c.docNumero||"sin doc"}{c.telefono?` · ${c.telefono}`:""}</div>
+                </div>
+              </div>
+            ))}
+            {otros.length===0&&<div style={{textAlign:"center",color:"#94a3b8",padding:"16px 0",fontSize:13}}>No hay otros clientes</div>}
+          </div>
+        </>
+      )}
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
+        <button onClick={submit} disabled={loading||!primaryId||dupeIds.length===0} style={{...btnR,flex:2}}>{loading?"Fusionando...":`Fusionar ${dupeIds.length} en el principal`}</button>
+      </div>
     </Modal>
   );
 }
