@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.21";
+const APP_VERSION="v2026.09.21-3";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -85,6 +85,16 @@ const normKey = v => String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"
   .toLowerCase().replace(/["\s]+/g,"");
 // Normaliza para MOSTRAR (½→1/2) manteniendo legibilidad
 const normDisp = v => String(v||"").replace(/½/g,"1/2").replace(/¼/g,"1/4").replace(/¾/g,"3/4").trim();
+// Normaliza números para AGRUPAR: "2"="2.0"="2.00", "10.50"="10.5"
+const numN = v => { const s=String(v==null?"":v).trim().replace(",","."); if(s==="") return ""; const n=Number(s); return isNaN(n)?normKey(s):String(n); };
+// Normaliza medidas en pulgadas/fracciones: '2 1/2"'='2½'='2.5', '1/2'='0.5'
+const fracN = v => {
+  let s=String(v==null?"":v).replace(/½/g,"1/2").replace(/¼/g,"1/4").replace(/¾/g,"3/4").replace(/"/g,"").trim();
+  if(s==="") return "";
+  let m=s.match(/^(\d+)\s+(\d+)\/(\d+)$/); if(m) return String(Number(m[1])+Number(m[2])/Number(m[3]));
+  m=s.match(/^(\d+)\/(\d+)$/); if(m) return String(Number(m[1])/Number(m[2]));
+  const n=Number(s.replace(",",".")); return isNaN(n)?normKey(s):String(n);
+};
 const STORAGE_KEY = "fox_orders_v8";
 
 // ═══ UTILIDADES ════════════════════════════════════════════
@@ -123,6 +133,54 @@ const findClienteByNombre = (clientes,nombre) => {
   const id=clienteId(nombre); if(!id) return null;
   return (clientes||[]).find(c=>clienteMatchIds(c).has(id))||null;
 };
+
+// ── FUENTE ÚNICA DE STOCK (usada por Inventario y por Ventas) ──
+// Combina el catálogo manual (importado) con el stock producido en las órdenes,
+// neto de lo ya vendido por remisiones "desde stock". Todo por sede.
+function computeInventario(orders,remisiones,inventario){
+  const der={};
+  (orders||[]).forEach(o=>{
+    const isStock=esStockCliente(o.cliente);
+    const entregado=o.estadoEntrega==="entregado";
+    if(entregado&&!isStock) return;
+    const sede=SEDES.includes(o.sede)?o.sede:"Centro";
+    normalizeItems(o).forEach(it=>{
+      if(it.status!=="completed") return;
+      const qty=it.producto==="postes"?(Number(it.cantidad)||0):(Number(it.metros)||(Number(it.ancho)*Number(it.alto))||0);
+      if(!qty) return;
+      const categoria=labelProducto(it.producto);
+      const calibre=it.producto==="pvc"?normDisp(`${it.calibre||""}${it.calibreInterno?("/"+it.calibreInterno):""}`):normDisp(it.calibre||"");
+      const medida=it.producto==="postes"
+        ? [it.grosor&&(normDisp(it.grosor)+'"'),it.largo&&(normDisp(it.largo)+"m")].filter(Boolean).join(" · ")
+        : [it.abertura&&("Ab "+normDisp(it.abertura)),(it.ancho&&it.alto)&&(normDisp(it.ancho)+"×"+normDisp(it.alto)+"m")].filter(Boolean).join(" · ");
+      const color=it.producto==="pvc"?normDisp(it.color||""):"";
+      const unidad=it.producto==="postes"?"un":"m²";
+      // Clave normalizada por número y fracción: une "2"/"2.0", "2 1/2"/"2½", etc.
+      const keyCal=it.producto==="pvc"?(numN(it.calibre)+"/"+numN(it.calibreInterno)):numN(it.calibre);
+      const keyMed=it.producto==="postes"
+        ? (fracN(it.grosor)+"|"+numN(it.largo))
+        : (fracN(it.abertura)+"|"+numN(it.ancho)+"x"+numN(it.alto));
+      const key=[it.producto,keyCal,keyMed,normKey(color)].join("|");
+      if(!der[key]) der[key]={id:"der_"+clienteId(key),derivado:true,skuKey:key,categoria,calibre,medida,color,unidad,producido:{},vendido:{},sinEntregar:0,paraStock:0};
+      const d=der[key];
+      d.producido[sede]=(d.producido[sede]||0)+qty;
+      if(isStock) d.paraStock+=qty; else d.sinEntregar+=qty;
+    });
+  });
+  // Restar lo ya vendido por remisiones desde stock (por SKU y sede)
+  (remisiones||[]).forEach(r=>{
+    if(r.tipo!=="remision"||r.origen!=="stock") return;
+    const sede=SEDES.includes(r.sede)?r.sede:"Centro";
+    (r.items||[]).forEach(li=>{ if(li.skuKey&&der[li.skuKey]) der[li.skuKey].vendido[sede]=(der[li.skuKey].vendido[sede]||0)+(Number(li.cantidad)||0); });
+  });
+  const derivados=Object.values(der).map(d=>{
+    const stock={};
+    SEDES.forEach(s=>{ stock[s]=Math.max(0,(d.producido[s]||0)-(d.vendido[s]||0)); });
+    return {...d,stock};
+  });
+  const manual=(inventario||[]).map(p=>({...p,derivado:false}));
+  return {manual,derivados,all:[...manual,...derivados]};
+}
 
 // Formatea valores de dinero en pesos colombianos
 const fmtMoney = v => {
@@ -832,7 +890,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
           onSetEntrega={canDeliver?setEntrega:null}
           onEdit={o=>canProd&&setModal({t:"edit",order:o})}/>}
         {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} canMov={canMov} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onEditar={m=>setModal({t:"editarMov",mov:m})} onResolver={resolverAlerta}/>}
-        {tab==="inventario"&&<InventarioTab inventario={inventario} orders={orders} lowStock={lowStock} user={user} isG={isG} canStock={!isViewer}          onNuevo={()=>isG&&setModal({t:"invNuevo"})}
+        {tab==="inventario"&&<InventarioTab inventario={inventario} orders={orders} remisiones={remisiones} lowStock={lowStock} user={user} isG={isG} canStock={!isViewer}          onNuevo={()=>isG&&setModal({t:"invNuevo"})}
           onEditar={p=>isG&&setModal({t:"invEditar",prod:p})}
           onEliminar={isG?(p=>{if(window.confirm(`¿Eliminar "${p.nombre}" del inventario?`))deleteProducto(p.id);}):null}
           onEntrada={p=>!isViewer&&setModal({t:"invMov",prod:p,tipo:"entrada"})}
@@ -871,7 +929,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       {modal?.t==="invEditar" &&<ProductoModal prod={modal.prod} onClose={()=>setModal(null)} onSave={d=>editProducto(modal.prod.id,d)}/>}
       {modal?.t==="invMov"    &&<MovInventarioModal prod={modal.prod} tipo={modal.tipo} onClose={()=>setModal(null)} onSave={moverInventario}/>}
       {modal?.t==="invKardex" &&<KardexModal prod={modal.prod} onClose={()=>setModal(null)}/>}
-      {modal?.t==="nuevaVenta"&&<NuevaVentaModal tipo={modal.tipo} user={user} inventario={inventario} orders={orders} clientes={clientes} onClose={()=>setModal(null)} onCreate={createDocumento} onDone={doc=>setModal({t:"verDoc",doc})}/>}
+      {modal?.t==="nuevaVenta"&&<NuevaVentaModal tipo={modal.tipo} user={user} inventario={inventario} orders={orders} remisiones={remisiones} clientes={clientes} onClose={()=>setModal(null)} onCreate={createDocumento} onDone={doc=>setModal({t:"verDoc",doc})}/>}
       {modal?.t==="verDoc"    &&<VerDocumentoModal doc={modal.doc} onClose={()=>setModal(null)}/>}
       {modal?.t==="pasarInv"  &&<PasarInventarioModal order={modal.order} inventario={inventario} onClose={()=>setModal(null)} onSave={pasarOrdenAInventario}/>}
       {modal?.t==="cliente"   &&<ClienteModal cli={modal.cli} onClose={()=>setModal(null)} onSave={saveCliente}/>}
@@ -2386,40 +2444,14 @@ const ORIGEN_INFO = {
   importado: { label:"Importado", bg:"#f5f3ff", col:"#7c3aed" },
 };
 
-function InventarioTab({inventario,orders=[],lowStock,user,isG,canStock,onNuevo,onEditar,onEliminar,onEntrada,onSalida,onKardex}){
+function InventarioTab({inventario,orders=[],remisiones=[],lowStock,user,isG,canStock,onNuevo,onEditar,onEliminar,onEntrada,onSalida,onKardex}){
   const [q,setQ]=useState("");
   const [cat,setCat]=useState("Todas");
   const [estado,setEstado]=useState("todos"); // todos | bajo | agotado
   const fq=v=>{ const n=Number(v)||0; return Number.isInteger(n)?n:Math.round(n*10)/10; };
 
-  // ── STOCK REAL derivado de las órdenes (a nivel de calibre/medida) ──
-  const derMap={};
-  (orders||[]).forEach(o=>{
-    const isStock=esStockCliente(o.cliente);
-    const entregado=o.estadoEntrega==="entregado";
-    if(entregado&&!isStock) return;
-    const sede=SEDES.includes(o.sede)?o.sede:"Centro";
-    normalizeItems(o).forEach(it=>{
-      if(it.status!=="completed") return;
-      const qty=it.producto==="postes"?(Number(it.cantidad)||0):(Number(it.metros)||(Number(it.ancho)*Number(it.alto))||0);
-      if(!qty) return;
-      const categoria=labelProducto(it.producto);
-      const calibre=it.producto==="pvc"?normDisp(`${it.calibre||""}${it.calibreInterno?("/"+it.calibreInterno):""}`):normDisp(it.calibre||"");
-      const medida=it.producto==="postes"
-        ? [it.grosor&&(normDisp(it.grosor)+'"'),it.largo&&(normDisp(it.largo)+"m")].filter(Boolean).join(" · ")
-        : [it.abertura&&("Ab "+normDisp(it.abertura)),(it.ancho&&it.alto)&&(normDisp(it.ancho)+"×"+normDisp(it.alto)+"m")].filter(Boolean).join(" · ");
-      const color=it.producto==="pvc"?normDisp(it.color||""):"";
-      const unidad=it.producto==="postes"?"un":"m²";
-      // Clave normalizada: une "2 1/2" y "2½", mayúsculas/minúsculas, comillas y espacios
-      const key=[it.producto,normKey(calibre),normKey(medida),normKey(color)].join("|");
-      if(!derMap[key]) derMap[key]={id:"der_"+clienteId(key),derivado:true,categoria,calibre,medida,color,unidad,stock:{"Centro":0,"Santa Lucia":0,"La Granja":0},sinEntregar:0,paraStock:0};
-      const d=derMap[key];
-      d.stock[sede]=(d.stock[sede]||0)+qty;
-      if(isStock) d.paraStock+=qty; else d.sinEntregar+=qty;
-    });
-  });
-  const derivados=Object.values(derMap);
-  const all=[...inventario.map(p=>({...p,derivado:false})),...derivados];
+  // Fuente única de stock (catálogo importado + producción, neto de ventas)
+  const all=computeInventario(orders,remisiones,inventario).all;
 
   const estadoDe=p=>{ const t=SEDES.reduce((a,s)=>a+(Number(p.stock?.[s])||0),0); if(t<=0) return "agotado"; if((p.minimo||0)>0&&t<=p.minimo) return "bajo"; return "ok"; };
   const ST={ ok:{txt:"En stock",col:"#15803d",bg:"#f0fdf4",bd:"#86efac"}, bajo:{txt:"Bajo",col:"#b45309",bg:"#fffbeb",bd:"#fde68a"}, agotado:{txt:"Agotado",col:"#dc2626",bg:"#fef2f2",bd:"#fecaca"} };
@@ -2894,42 +2926,59 @@ function VentasTab({remisiones,user,canProd,onNueva,onImprimir}){
   );
 }
 
-function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,clientes,onClose,onCreate,onDone}){
+function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],clientes,onClose,onCreate,onDone}){
   const [tipo,setTipo]=useState(tipoInit||"remision");
   const esRem=tipo==="remision";
   const [origen,setOrigen]=useState("stock");
   const [ordenRef,setOrdenRef]=useState(null);
   const [sede,setSede]=useState(user.sede==="Ambas Sedes"||!SEDES.includes(user.sede)?"Centro":user.sede);
   const [cli,setCli]=useState({docTipo:"NIT",docNumero:"",nombre:"",telefono:"",email:"",direccion:""});
-  const [items,setItems]=useState([{productoId:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
+  const [items,setItems]=useState([{productoId:null,skuKey:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
   const [ivaOn,setIvaOn]=useState(false);const [ivaPorc,setIvaPorc]=useState(String(IVA_DEFAULT));
   const [reteOn,setReteOn]=useState(false);const [retePorc,setRetePorc]=useState(String(RETE_DEFAULT));
   const [abono,setAbono]=useState("");
   const [qOrden,setQOrden]=useState("");
   const [loading,setLoading]=useState(false);const [err,setErr]=useState("");
 
+  // Fuente única de stock (catálogo importado + stock producido, neto de ventas)
+  const stockData=computeInventario(orders,remisiones,inventario);
+  const stockList=stockData.all.filter(p=>SEDES.reduce((a,s)=>a+(Number(p.stock?.[s])||0),0)>0);
+  const findStock=it=> it.productoId ? stockData.all.find(p=>p.id===it.productoId)
+                     : it.skuKey ? stockData.all.find(p=>p.skuKey===it.skuKey) : null;
+
   const setItem=(i,k,v)=>setItems(p=>p.map((x,idx)=>idx===i?{...x,[k]:v}:x));
-  const addItem=()=>setItems(p=>[...p,{productoId:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
+  const addItem=()=>setItems(p=>[...p,{productoId:null,skuKey:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
   const rmItem=i=>setItems(p=>p.filter((_,idx)=>idx!==i));
 
+  // Enlaza el cliente por NOMBRE (o alias) y trae toda su data guardada
+  const linkCliente=nombre=>{
+    const found=findClienteByNombre(clientes,nombre);
+    if(found) setCli({docTipo:found.docTipo||"NIT",docNumero:found.docNumero||"",nombre,telefono:found.telefono||"",email:found.email||"",direccion:found.direccion||""});
+    else setCli(c=>({...c,nombre}));
+    setErr("");
+  };
   // Buscar cliente por documento
   const buscarCli=num=>{
     setCli(c=>({...c,docNumero:num}));
     const found=clientes.find(x=>String(x.docNumero||"")===String(num));
     if(found) setCli({docTipo:found.docTipo||"NIT",docNumero:found.docNumero||"",nombre:found.nombre||"",telefono:found.telefono||"",email:found.email||"",direccion:found.direccion||""});
   };
-  // Elegir orden de producción -> prefill
+  // Elegir orden de producción -> prefill (cliente + su data + items)
   const ordersFil=orders.filter(o=>String(o.orden).includes(qOrden)||String(o.cliente||"").toLowerCase().includes(qOrden.toLowerCase())).slice(0,6);
   const pickOrden=o=>{
     setOrdenRef(o.orden);
-    setCli(c=>({...c,nombre:o.cliente||c.nombre}));
-    const its=normalizeItems(o).map(it=>({productoId:null,descripcion:`${labelProducto(it.producto)} — ${resumenItem(it)}`,cantidad:it.metros||it.cantidad||"",unidad:it.producto==="postes"?"unidades":"m²",valorUnit:it.precioVenta||""}));
-    setItems(its.length?its:[{productoId:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
+    const found=findClienteByNombre(clientes,o.cliente);
+    setCli(c=>found?{docTipo:found.docTipo||"NIT",docNumero:found.docNumero||"",nombre:o.cliente||c.nombre,telefono:found.telefono||"",email:found.email||"",direccion:found.direccion||""}:{...c,nombre:o.cliente||c.nombre});
+    const its=normalizeItems(o).map(it=>({productoId:null,skuKey:null,descripcion:`${labelProducto(it.producto)} — ${resumenItem(it)}`,cantidad:it.metros||it.cantidad||"",unidad:it.producto==="postes"?"unidades":"m²",valorUnit:it.precioVenta||""}));
+    setItems(its.length?its:[{productoId:null,skuKey:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
     setQOrden("");
   };
-  const pickProducto=(i,pid)=>{
-    const p=inventario.find(x=>x.id===pid);
-    setItems(prev=>prev.map((x,idx)=>idx===i?{...x,productoId:pid||null,descripcion:p?p.nombre:x.descripcion,unidad:p?p.unidad:x.unidad}:x));
+  // Elegir del stock unificado: "m:<id>" catálogo, "d:<skuKey>" producción
+  const pickStock=(i,val)=>{
+    let productoId=null,skuKey=null,p=null;
+    if(val.startsWith("m:")){ productoId=val.slice(2); p=stockData.all.find(x=>x.id===productoId); }
+    else if(val.startsWith("d:")){ skuKey=val.slice(2); p=stockData.all.find(x=>x.skuKey===skuKey); }
+    setItems(prev=>prev.map((x,idx)=>idx===i?{...x,productoId,skuKey,descripcion:p?invLabel(p):x.descripcion,unidad:p?p.unidad:x.unidad}:x));
   };
 
   const subtotal=items.reduce((a,it)=>a+(Number(it.cantidad)||0)*(Number(it.valorUnit)||0),0);
@@ -2944,17 +2993,17 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,clientes,onClose,
     if(its.length===0){setErr("Agrega al menos un producto con cantidad");return;}
     if(esRem&&origen==="stock"){
       for(const it of its){
-        if(it.productoId){
-          const p=inventario.find(x=>x.id===it.productoId);
-          const disp=Number(p?.stock?.[sede])||0;
-          if(Number(it.cantidad)>disp){setErr(`Stock insuficiente de "${p?.nombre}" en ${sede} (hay ${disp} ${p?.unidad})`);return;}
+        const p=findStock(it);
+        if(p){
+          const disp=Number(p.stock?.[sede])||0;
+          if(Number(it.cantidad)>disp){setErr(`Stock insuficiente de "${invLabel(p)}" en ${sede} (hay ${disp} ${p.unidad})`);return;}
         }
       }
     }
     const data={
       tipo, origen:esRem?origen:null, ordenRef:esRem&&origen==="produccion"?ordenRef:null,
       sede, cliente:{...cli,nombre:cli.nombre.trim()},
-      items:its.map(it=>({productoId:it.productoId||null,descripcion:it.descripcion,cantidad:Number(it.cantidad)||0,unidad:it.unidad||"",valorUnit:Number(it.valorUnit)||0,valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0)})),
+      items:its.map(it=>({productoId:it.productoId||null,skuKey:it.skuKey||null,descripcion:it.descripcion,cantidad:Number(it.cantidad)||0,unidad:it.unidad||"",valorUnit:Number(it.valorUnit)||0,valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0)})),
       subtotal, iva:{aplica:ivaOn,porc:Number(ivaPorc)||0,valor:ivaVal}, retefuente:{aplica:reteOn,porc:Number(retePorc)||0,valor:reteVal},
       total, abono:esRem?Number(abono)||0:0, saldo:esRem?saldo:0,
     };
@@ -3018,7 +3067,7 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,clientes,onClose,
       {/* Datos del cliente (se actualizan al imprimir) */}
       <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"8px 12px",fontSize:12,color:"#1d4ed8",marginBottom:8}}>Al guardar, estos datos del cliente se actualizan/guardan automáticamente (nombre, teléfono, correo, dirección).</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:6}}>
-        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Cliente *</label><input style={inp} value={cli.nombre} onChange={e=>{setCli(c=>({...c,nombre:e.target.value}));setErr("");}} list="cli-list"/><datalist id="cli-list">{clientes.map(c=><option key={c.id} value={c.nombre}/>)}</datalist></div>
+        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Cliente *</label><input style={inp} value={cli.nombre} onChange={e=>linkCliente(e.target.value)} list="cli-list" placeholder="Escribe o elige un cliente"/><datalist id="cli-list">{clientes.map(c=><option key={c.id} value={c.nombre}/>)}</datalist></div>
         <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Teléfono</label><input style={inp} value={cli.telefono} onChange={e=>setCli(c=>({...c,telefono:e.target.value}))}/></div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
@@ -3032,7 +3081,7 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,clientes,onClose,
         <button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"5px 12px",cursor:"pointer",color:GREEN,fontSize:13,fontWeight:700}}>+ Agregar</button>
       </div>
       {items.map((it,i)=>{
-        const prod=it.productoId?inventario.find(x=>x.id===it.productoId):null;
+        const prod=findStock(it);
         const disp=prod?Number(prod.stock?.[sede])||0:null;
         return(
           <div key={i} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:10,marginBottom:8}}>
@@ -3041,9 +3090,10 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,clientes,onClose,
               {items.length>1&&<button onClick={()=>rmItem(i)} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:12}}>✕</button>}
             </div>
             {esRem&&origen==="stock"&&(
-              <select style={{...inp,fontSize:13,marginBottom:6}} value={it.productoId||""} onChange={e=>pickProducto(i,e.target.value)}>
-                <option value="">Elegir producto del inventario...</option>
-                {inventario.map(p=><option key={p.id} value={p.id}>{p.nombre} ({Number(p.stock?.[sede])||0} {p.unidad})</option>)}
+              <select style={{...inp,fontSize:13,marginBottom:6}} value={it.productoId?("m:"+it.productoId):it.skuKey?("d:"+it.skuKey):""} onChange={e=>pickStock(i,e.target.value)}>
+                <option value="">Elegir del stock…</option>
+                {stockList.length===0&&<option value="" disabled>— No hay stock disponible —</option>}
+                {stockList.map(p=><option key={p.id} value={p.derivado?("d:"+p.skuKey):("m:"+p.id)}>{invLabel(p)} — {Number(p.stock?.[sede])||0} {p.unidad} en {sede}{p.derivado?" · producción":""}</option>)}
               </select>
             )}
             <input style={{...inp,fontSize:13,marginBottom:6}} placeholder="Descripción del producto" value={it.descripcion} onChange={e=>setItem(i,"descripcion",e.target.value)}/>
