@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.21-3";
+const APP_VERSION="v2026.09.21-4";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -2964,7 +2964,13 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
     if(found) setCli({docTipo:found.docTipo||"NIT",docNumero:found.docNumero||"",nombre:found.nombre||"",telefono:found.telefono||"",email:found.email||"",direccion:found.direccion||""});
   };
   // Elegir orden de producción -> prefill (cliente + su data + items)
-  const ordersFil=orders.filter(o=>String(o.orden).includes(qOrden)||String(o.cliente||"").toLowerCase().includes(qOrden.toLowerCase())).slice(0,6);
+  // Órdenes para remisionar: por defecto muestra las NO entregadas (recientes); si busca, filtra todas
+  const normQ=qOrden.replace(/#/g,"").trim().toLowerCase();
+  const ordersFil=orders
+    .filter(o=>!esStockCliente(o.cliente))
+    .filter(o=> normQ==="" ? o.estadoEntrega!=="entregado" : (String(o.orden).toLowerCase().includes(normQ)||String(o.cliente||"").toLowerCase().includes(normQ)))
+    .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0))
+    .slice(0,20);
   const pickOrden=o=>{
     setOrdenRef(o.orden);
     const found=findClienteByNombre(clientes,o.cliente);
@@ -3034,15 +3040,31 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
         <div style={{marginBottom:12,background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:10,padding:10}}>
           {ordenRef?(
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span style={{fontSize:14,fontWeight:700,color:"#6d28d9"}}>Orden #{ordenRef} seleccionada</span>
-              <button onClick={()=>{setOrdenRef(null);}} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:13}}>Cambiar</button>
+              <span style={{fontSize:14,fontWeight:700,color:"#6d28d9"}}>✓ Orden #{ordenRef} — {cli.nombre||""}</span>
+              <button onClick={()=>{setOrdenRef(null);setItems([{productoId:null,skuKey:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);}} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:13,fontWeight:600}}>Cambiar</button>
             </div>
           ):(
             <>
-              <input style={{...inp,fontSize:13,marginBottom:6}} placeholder="Buscar orden por N° o cliente..." value={qOrden} onChange={e=>setQOrden(e.target.value)}/>
-              {qOrden&&ordersFil.map(o=>(
-                <div key={o.orden} onClick={()=>pickOrden(o)} style={{padding:"6px 8px",borderRadius:8,cursor:"pointer",fontSize:13,color:"#334155",background:"#fff",border:"1px solid #e2e8f0",marginBottom:4}}>#{o.orden} · {o.cliente}</div>
-              ))}
+              <div style={{fontSize:13,fontWeight:700,color:"#6d28d9",marginBottom:6}}>Elige la orden a remisionar</div>
+              <input style={{...inp,fontSize:13,marginBottom:6}} placeholder="Buscar por N° de orden o cliente..." value={qOrden} onChange={e=>setQOrden(e.target.value)}/>
+              <div style={{maxHeight:220,overflowY:"auto",display:"flex",flexDirection:"column",gap:4}}>
+                {ordersFil.length===0?(
+                  <div style={{fontSize:13,color:"#94a3b8",textAlign:"center",padding:"12px 0"}}>{normQ?"No se encontraron órdenes":"No hay órdenes pendientes por entregar"}</div>
+                ):ordersFil.map(o=>{
+                  const its=normalizeItems(o);
+                  const st=orderStInfo(o);
+                  return(
+                    <div key={o.orden} onClick={()=>pickOrden(o)} style={{padding:"8px 10px",borderRadius:8,cursor:"pointer",background:"#fff",border:"1px solid #e2e8f0"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                        <span style={{fontWeight:800,color:"#1e293b",fontSize:14}}>#{o.orden}</span>
+                        <span style={{fontSize:13,color:"#334155"}}>{o.cliente}</span>
+                        <span style={{background:st.bg,color:st.col,borderRadius:999,padding:"0 8px",fontSize:11,fontWeight:700,marginLeft:"auto"}}>{st.txt}</span>
+                      </div>
+                      <div style={{marginTop:4}}><ProductoBadges items={its}/></div>
+                    </div>
+                  );
+                })}
+              </div>
             </>
           )}
         </div>
