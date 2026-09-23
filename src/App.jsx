@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.22-E2a";
+const APP_VERSION="v2026.09.22-E2";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -533,7 +533,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       logs:[makeLog(user,"Creó la orden",d.remision?`Remisión: ${d.remision}`:"")],
     }));
     // Crea/actualiza el cliente automáticamente (salvo órdenes de stock)
-    if(d.cliente&&!esStockCliente(d.cliente)) await upsertCliente({nombre:d.cliente});
+    if(d.cliente&&!esStockCliente(d.cliente)) await upsertCliente(d.clienteData||{nombre:d.cliente});
     return null;
   };
 
@@ -1836,6 +1836,9 @@ function NewOrderModal({user,orders,clientes=[],remisionOpts=[],onClose,onCreate
   const isG=user.role==="gerencia";
   const [orden,setOrden]=useState("");const [cliente,setCliente]=useState("");
   const [remision,setRemision]=useState("");
+  const [cliData,setCliData]=useState({docTipo:"NIT",docNumero:"",telefono:"",email:"",direccion:""});
+  const setCD=(k,v)=>setCliData(d=>({...d,[k]:v}));
+  const cliExistente=cliente.trim()?findClienteByNombre(clientes,cliente):null;
   const esStock=esStockCliente(cliente);
   const canSelectSede=true; // todas las vendedoras y gerencia pueden elegir sede destino
   const [sedeTarget,setSedeTarget]=useState(canSelectSede?"Centro":user.sede);
@@ -1873,7 +1876,8 @@ function NewOrderModal({user,orders,clientes=[],remisionOpts=[],onClose,onCreate
     for(let it of items){const e=validarItem(it);if(e){setErr(e);return;}}
     setLoading(true);
     const cleanItems=items.map(it=>enrichItem(it));
-    const r=await onCreate({orden:orden.trim(),cliente:cliente.trim(),remision:remision.trim(),sede:sedeTarget,items:cleanItems});
+    const clienteData={nombre:cliente.trim(),docTipo:cliData.docTipo,docNumero:cliData.docNumero.trim(),telefono:cliData.telefono.trim(),email:cliData.email.trim(),direccion:cliData.direccion.trim()};
+    const r=await onCreate({orden:orden.trim(),cliente:cliente.trim(),remision:remision.trim(),sede:sedeTarget,items:cleanItems,clienteData});
     setLoading(false);
     if(r)setErr(r); else onClose();
   };
@@ -1909,6 +1913,31 @@ function NewOrderModal({user,orders,clientes=[],remisionOpts=[],onClose,onCreate
         <input style={inp} value={remision} onChange={e=>setRemision(e.target.value)} placeholder="No. de remisión (opcional)" list="new-order-rem"/>
         <datalist id="new-order-rem">{remisionOpts.map(r=><option key={r} value={r}/>)}</datalist>
       </div>
+
+      {/* Datos del cliente (nuevo o existente) */}
+      {cliente.trim()&&!esStock&&(
+        cliExistente?(
+          <div style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"9px 14px",fontSize:13,color:"#15803d",marginBottom:14}}>
+            ✓ Cliente existente — se vinculará su información guardada ({cliExistente.docNumero||"sin doc"}{cliExistente.telefono?` · ${cliExistente.telefono}`:""}).
+          </div>
+        ):(
+          <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"12px 14px",marginBottom:14}}>
+            <div style={{fontSize:13,fontWeight:800,color:"#1d4ed8",marginBottom:2}}>Cliente nuevo — completa sus datos</div>
+            <div style={{fontSize:12,color:"#64748b",marginBottom:10}}>Aprovecha para capturar toda la información posible del cliente.</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:8,marginBottom:8}}>
+              <select style={{...inp,fontSize:13}} value={cliData.docTipo} onChange={e=>setCD("docTipo",e.target.value)}><option value="NIT">NIT</option><option value="CC">CC</option></select>
+              <input style={{...inp,fontSize:13}} value={cliData.docNumero} onChange={e=>setCD("docNumero",e.target.value)} placeholder="N° de documento"/>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+              <input style={{...inp,fontSize:13}} value={cliData.telefono} onChange={e=>setCD("telefono",e.target.value)} placeholder="Teléfono"/>
+              <input style={{...inp,fontSize:13}} value={cliData.email} onChange={e=>setCD("email",e.target.value)} placeholder="Correo electrónico"/>
+            </div>
+            <input style={{...inp,fontSize:13}} value={cliData.direccion} onChange={e=>setCD("direccion",e.target.value)} placeholder="Dirección"/>
+            <div style={{fontSize:11,color:"#94a3b8",marginTop:8,lineHeight:1.4}}>🔒 Los datos personales se tratan conforme a la Ley 1581 de 2012 de Protección de Datos Personales (Colombia). Al registrarlos, el cliente autoriza su uso para fines comerciales y de facturación de Mallas y Alambres Fox.</div>
+          </div>
+        )
+      )}
+
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
         <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.length})</label>
         <button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"6px 14px",cursor:"pointer",color:GREEN,fontSize:14,fontWeight:700}}>+ Agregar producto</button>
@@ -2745,6 +2774,7 @@ const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
 function buildDocHtml(doc){
   const esRem=doc.tipo==="remision";
   const titulo=esRem?"REMISIÓN":"COTIZACIÓN";
+  const logoSrc=(()=>{try{return new URL(logoUrl,window.location.href).href;}catch(e){return logoUrl;}})();
   const c=doc.cliente||{};
   const rows=(doc.items||[]).map(it=>{
     const vt=it.valorTotal!=null?it.valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0);
@@ -2768,9 +2798,9 @@ function buildDocHtml(doc){
   @page{size:letter;margin:12mm}
   *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
   body{margin:0;color:#111}
-  .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #111;padding-bottom:8px}
-  .brand{font-size:22px;font-weight:900;letter-spacing:.5px}
-  .doc{border:2px solid #111;border-radius:6px;padding:4px 10px;text-align:center}
+  .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #E8262A;padding-bottom:8px}
+  .brand{font-size:22px;font-weight:900;letter-spacing:.5px;color:#E8262A}
+  .doc{border:2px solid #E8262A;border-radius:6px;padding:4px 10px;text-align:center}
   .doc .t{font-size:12px;font-weight:700}.doc .n{font-size:20px;font-weight:900;color:#E8262A}
   table{width:100%;border-collapse:collapse;margin-top:8px}
   .cli td{padding:3px 6px;font-size:12px;border:1px solid #999}
@@ -2787,7 +2817,7 @@ function buildDocHtml(doc){
 </style></head>
 <body onload="setTimeout(function(){window.print()},250)">
   <div class="hd">
-    <div><div class="brand">${EMPRESA.nombre}</div>${sedes}<div style="font-size:10px">${EMPRESA.email}</div></div>
+    <div><img src="${logoSrc}" alt="" style="height:46px;display:block;margin-bottom:6px" onerror="this.style.display='none'"/><div class="brand">${EMPRESA.nombre}</div>${sedes}<div style="font-size:10px">${EMPRESA.email}</div></div>
     <div><div class="doc"><div class="t">- ${titulo} -</div><div class="n">N° ${doc.numero||"—"}</div></div><div style="font-size:11px;text-align:right;margin-top:4px">Fecha: ${docFecha(doc.timestamp)}</div></div>
   </div>
   <table class="cli"><tr>
@@ -2807,6 +2837,7 @@ function buildDocHtml(doc){
 function buildTirillaHtml(doc){
   const esRem=doc.tipo==="remision";
   const titulo=esRem?"REMISIÓN":"COTIZACIÓN";
+  const logoSrc=(()=>{try{return new URL(logoUrl,window.location.href).href;}catch(e){return logoUrl;}})();
   const c=doc.cliente||{};
   const line="--------------------------------";
   const money=n=>cop(n);
@@ -2850,6 +2881,7 @@ function buildTirillaHtml(doc){
   .ty{text-align:center;font-weight:700;margin-top:8px;font-size:12px}
 </style></head>
 <body onload="setTimeout(function(){window.print()},250)">
+  <img src="${logoSrc}" alt="" style="display:block;margin:0 auto 4px;max-height:40px" onerror="this.style.display='none'"/>
   <div class="brand">${EMPRESA.nombre}</div>
   ${sedes}
   <div class="email">${EMPRESA.email}</div>
