@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.21-5";
+const APP_VERSION="v2026.09.22-E1";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -485,10 +485,15 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
   const isVendedora=user.role==="vendedora";
   // ── PERMISOS CENTRALIZADOS (misma regla por rol, sin importar la sede) ──
   const canProd=isG||isVendedora;                 // crear/asignar/completar/editar productos
-  const canEditDatos=isG||isVendedora;            // editar nombre + remisión
+  const canEditDatos=isG;                          // editar nombre + remisión (solo gerencia)
   const canDeliver=isG||isVendedora||isLogistica; // marcar entregado
   const canMov=isG||isVendedora||isLogistica;     // movimientos (todos menos la pantalla TV)
   const canDelete=isG;                            // eliminar órdenes
+  // Números de remisión ya usados (para autocompletar/buscar al crear/editar órdenes)
+  const remisionOpts=[...new Set([
+    ...orders.map(o=>o.remision).filter(Boolean),
+    ...remisiones.map(d=>String(d.numero)).filter(Boolean),
+  ])];
   const [tab,setTab]=useState(isLogistica?"movimientos":"machines");
 
   // Auto-logout por inactividad (30 min). Viewer (TV) nunca cierra sesion.
@@ -665,6 +670,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       notas:nuevosDatos.notas,
     }));
   };
+  const eliminarMovimiento=async(id)=>{ if(!isG)return; await withSave(()=>deleteDoc(doc(db,"movimientos",id))); };
 
   // ── INVENTARIO ─────────────────────────────────────────────
   const createProducto=async d=>{
@@ -889,7 +895,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
           canFullEdit={canProd}
           onSetEntrega={canDeliver?setEntrega:null}
           onEdit={o=>canProd&&setModal({t:"edit",order:o})}/>}
-        {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} canMov={canMov} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onEditar={m=>setModal({t:"editarMov",mov:m})} onResolver={resolverAlerta}/>}
+        {tab==="movimientos"&&<MovimientosTab movimientos={movimientos} user={user} isG={isG} canMov={canMov} onNew={()=>setModal({t:"newMov"})} onRecibir={m=>setModal({t:"recibirMov",mov:m})} onEditar={m=>setModal({t:"editarMov",mov:m})} onEliminar={isG?(m=>{if(window.confirm(`¿Eliminar el movimiento ${m.numero}?`))eliminarMovimiento(m.id);}):null} onResolver={resolverAlerta}/>}
         {tab==="inventario"&&<InventarioTab inventario={inventario} orders={orders} remisiones={remisiones} lowStock={lowStock} user={user} isG={isG} canStock={!isViewer}          onNuevo={()=>isG&&setModal({t:"invNuevo"})}
           onEditar={p=>isG&&setModal({t:"invEditar",prod:p})}
           onEliminar={isG?(p=>{if(window.confirm(`¿Eliminar "${p.nombre}" del inventario?`))deleteProducto(p.id);}):null}
@@ -912,9 +918,9 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
           onSetEntrega={canDeliver?setEntrega:null}/>}
       </div>
 
-      {modal?.t==="new"         &&<NewOrderModal    user={user} orders={orders} clientes={clientes} onClose={()=>setModal(null)} onCreate={createOrder}/>}
-      {modal?.t==="edit"        &&<EditOrderModal   order={modal.order} isG={isG} onClose={()=>setModal(null)} onSave={editOrder}/>}
-      {modal?.t==="quickEdit"   &&<QuickEditModal   order={modal.order} onClose={()=>setModal(null)} onSave={quickEditOrder}/>}
+      {modal?.t==="new"         &&<NewOrderModal    user={user} orders={orders} clientes={clientes} remisionOpts={remisionOpts} onClose={()=>setModal(null)} onCreate={createOrder}/>}
+      {modal?.t==="edit"        &&<EditOrderModal   order={modal.order} isG={isG} clientes={clientes} remisionOpts={remisionOpts} onClose={()=>setModal(null)} onSave={editOrder}/>}
+      {modal?.t==="quickEdit"   &&<QuickEditModal   order={modal.order} clientes={clientes} remisionOpts={remisionOpts} onClose={()=>setModal(null)} onSave={quickEditOrder}/>}
       {modal?.t==="assignOrder" &&<AssignOrderModal order={modal.order} allOrders={orders} machines={MACHINES} user={user} isG={isG} onClose={()=>setModal(null)} onAssign={assignItem} onAssignMultiple={assignMultipleItems}/>}
       {modal?.t==="pickItem"    &&<PickItemModal    machineId={modal.machineId} orders={queueOrders} allOrders={orders} user={user} isG={isG} machines={MACHINES} onClose={()=>setModal(null)} onAssign={assignItem}/>}
       {modal?.t==="complete"    &&<CompleteItemModal order={modal.order} item={modal.item} itemIndex={modal.itemIndex} onClose={()=>setModal(null)} onComplete={completeItem} onReturn={returnItemToQueue}/>}
@@ -1045,10 +1051,16 @@ function MovimientosTab({movimientos,user,isG,canMov=true,onNew,onRecibir,onEdit
                         ✓ Registrar Recibo
                       </button>
                     )}
-                    {m.estado==="enviado"&&(isG||isLogistica)&&(
+                    {((m.estado==="enviado"&&(isG||isLogistica))||isG)&&(
                       <button onClick={()=>onEditar(m)}
                         style={{background:"#eff6ff",border:"1px solid #bfdbfe",color:"#1d4ed8",borderRadius:9,padding:"7px 14px",fontSize:13,fontWeight:700,cursor:"pointer"}}>
                         ✏ Editar
+                      </button>
+                    )}
+                    {onEliminar&&(
+                      <button onClick={()=>onEliminar(m)}
+                        style={{background:"#fef2f2",border:"1px solid #fecaca",color:"#dc2626",borderRadius:9,padding:"7px 14px",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                        Eliminar
                       </button>
                     )}
                     {m.estado==="recibido"&&m.fechaRecibo&&(
@@ -1711,15 +1723,15 @@ function ItemFields({item,onChange}){
     return(
       <div style={{marginTop:8}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-          <div><label style={{fontSize:14,color:"#94a3b8",display:"block",marginBottom:3}}>Ancho / Largo del rollo</label><SelectOpc value={item.ancho} onChange={v=>set("ancho",v)} options={OPC_ANCHO} num unit="m" placeholder="Ancho..."/></div>
-          <div><label style={{fontSize:14,color:"#94a3b8",display:"block",marginBottom:3}}>Alto</label><SelectOpc value={item.alto} onChange={v=>set("alto",v)} options={OPC_ALTO} num unit="m" placeholder="Alto..."/></div>
+          <div><label style={{fontSize:14,color:"#94a3b8",display:"block",marginBottom:3}}>Ancho / Largo del rollo</label><NumInp value={item.ancho} onChange={v=>set("ancho",v)} placeholder="Ej: 10.00" unit="m"/></div>
+          <div><label style={{fontSize:14,color:"#94a3b8",display:"block",marginBottom:3}}>Alto</label><NumInp value={item.alto} onChange={v=>set("alto",v)} placeholder="Ej: 2.00" unit="m"/></div>
         </div>
         <div style={{background:metros?"#f0fdf4":"#f8fafc",border:`1.5px solid ${metros?"#86efac":"#e2e8f0"}`,borderRadius:8,padding:"8px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
           <span style={{fontSize:14,color:"#64748b"}}>Metros cuadrados</span>
           <span style={{fontSize:16,fontWeight:900,color:metros?GREEN:"#94a3b8"}}>{metros?`${metros} m²`:"—"}</span>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          <Field label="Abertura *"><SelectOpc value={item.abertura} onChange={v=>set("abertura",v)} options={OPC_ABERTURA} placeholder="Abertura..."/></Field>
+          <Field label="Abertura *"><select style={{...inp,fontSize:14}} value={item.abertura||""} onChange={e=>set("abertura",e.target.value)}><option value="">Seleccionar...</option>{OPC_ABERTURA.map(a=><option key={a} value={a}>{a}</option>)}</select></Field>
           <Field label="Calibre *"><SelectOpc value={item.calibre} onChange={v=>set("calibre",v)} options={OPC_CALIBRE} num placeholder="Calibre..."/></Field>
         </div>
         {item.producto==="pvc"&&(
@@ -1820,7 +1832,7 @@ function enrichItem(it){
 const newEmptyItem=()=>({_key:Date.now()+Math.random(),producto:"",calibre:"",calibreInterno:"",color:"",ancho:"",alto:"",abertura:"",grosor:"",largo:"",cantidad:"",precioVenta:"",costo:""});
 
 // ═══ NUEVA ORDEN ═══════════════════════════════════════════
-function NewOrderModal({user,orders,clientes=[],onClose,onCreate}){
+function NewOrderModal({user,orders,clientes=[],remisionOpts=[],onClose,onCreate}){
   const isG=user.role==="gerencia";
   const [orden,setOrden]=useState("");const [cliente,setCliente]=useState("");
   const [remision,setRemision]=useState("");
@@ -1894,7 +1906,8 @@ function NewOrderModal({user,orders,clientes=[],onClose,onCreate}){
       </div>
       <div style={{marginBottom:14}}>
         <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Remisión</label>
-        <input style={inp} value={remision} onChange={e=>setRemision(e.target.value)} placeholder="No. de remisión (opcional)"/>
+        <input style={inp} value={remision} onChange={e=>setRemision(e.target.value)} placeholder="No. de remisión (opcional)" list="new-order-rem"/>
+        <datalist id="new-order-rem">{remisionOpts.map(r=><option key={r} value={r}/>)}</datalist>
       </div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
         <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.length})</label>
@@ -1916,7 +1929,7 @@ function NewOrderModal({user,orders,clientes=[],onClose,onCreate}){
 }
 
 // ═══ EDICIÓN RÁPIDA (nombre + remisión) — todos los usuarios ═
-function QuickEditModal({order,onClose,onSave}){
+function QuickEditModal({order,clientes=[],remisionOpts=[],onClose,onSave}){
   const [cliente,setCliente]=useState(order.cliente||"");
   const [remision,setRemision]=useState(order.remision||"");
   const [loading,setLoading]=useState(false);const [err,setErr]=useState("");
@@ -1933,11 +1946,13 @@ function QuickEditModal({order,onClose,onSave}){
       </div>
       <div style={{marginBottom:12}}>
         <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente</label>
-        <input style={inp} value={cliente} onChange={e=>{setCliente(e.target.value);setErr("");}} autoFocus/>
+        <input style={inp} value={cliente} onChange={e=>{setCliente(e.target.value);setErr("");}} autoFocus list="qe-cli"/>
+        <datalist id="qe-cli">{clientes.map(c=><option key={c.id} value={c.nombre}/>)}</datalist>
       </div>
       <div style={{marginBottom:14}}>
         <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Remisión</label>
-        <input style={inp} value={remision} onChange={e=>setRemision(e.target.value)} placeholder="No. de remisión"/>
+        <input style={inp} value={remision} onChange={e=>setRemision(e.target.value)} placeholder="No. de remisión" list="qe-rem"/>
+        <datalist id="qe-rem">{remisionOpts.map(r=><option key={r} value={r}/>)}</datalist>
       </div>
       {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
       <div style={{display:"flex",gap:10}}>
@@ -1949,7 +1964,7 @@ function QuickEditModal({order,onClose,onSave}){
 }
 
 // ═══ EDITAR ORDEN ══════════════════════════════════════════
-function EditOrderModal({order,isG,onClose,onSave}){
+function EditOrderModal({order,isG,clientes=[],remisionOpts=[],onClose,onSave}){
   const [cliente,setCliente]=useState(order.cliente);
   const [remision,setRemision]=useState(order.remision||"");
   const existing=normalizeItems(order).map(it=>({...it,_key:Date.now()+Math.random()}));
@@ -1970,8 +1985,8 @@ function EditOrderModal({order,isG,onClose,onSave}){
   return(
     <Modal title={`Editar Orden #${order.orden}`} onClose={onClose} maxWidth={580}>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-        <div><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente</label><input style={inp} value={cliente} onChange={e=>setCliente(e.target.value)}/></div>
-        <div><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Remisión</label><input style={inp} value={remision} onChange={e=>setRemision(e.target.value)} placeholder="No. de remisión"/></div>
+        <div><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente</label><input style={inp} value={cliente} onChange={e=>setCliente(e.target.value)} list="eo-cli"/><datalist id="eo-cli">{clientes.map(c=><option key={c.id} value={c.nombre}/>)}</datalist></div>
+        <div><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Remisión</label><input style={inp} value={remision} onChange={e=>setRemision(e.target.value)} placeholder="No. de remisión" list="eo-rem"/><datalist id="eo-rem">{remisionOpts.map(r=><option key={r} value={r}/>)}</datalist></div>
       </div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
         <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.length})</label>
