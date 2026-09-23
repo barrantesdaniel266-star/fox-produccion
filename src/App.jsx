@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.22-E1";
+const APP_VERSION="v2026.09.22-E1b";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -975,7 +975,7 @@ const MOV_ESTADOS = {
   discrepancia:{ label:"Discrepancia",color:"#dc2626", bg:"#fef2f2", border:"#fecaca" },
 };
 
-function MovimientosTab({movimientos,user,isG,canMov=true,onNew,onRecibir,onEditar,onResolver}){
+function MovimientosTab({movimientos,user,isG,canMov=true,onNew,onRecibir,onEditar,onEliminar,onResolver}){
   const isLogistica=user.role==="logistica";
   const [filtro,setFiltro]=useState("todos");
   const filtrados=filtro==="todos"?movimientos:movimientos.filter(m=>m.estado===filtro);
@@ -3007,6 +3007,16 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
     else if(val.startsWith("d:")){ skuKey=val.slice(2); p=stockData.all.find(x=>x.skuKey===skuKey); }
     setItems(prev=>prev.map((x,idx)=>idx===i?{...x,productoId,skuKey,descripcion:p?invLabel(p):x.descripcion,unidad:p?p.unidad:x.unidad}:x));
   };
+  // Buscador de stock: escribe calibre/medida y agrega el producto como ítem
+  const [stockQ,setStockQ]=useState("");
+  const stockFiltrado=stockList.filter(p=>(invLabel(p)+" "+(p.nombre||"")).toLowerCase().includes(stockQ.toLowerCase())).slice(0,25);
+  const addStockItem=p=>{
+    setItems(prev=>{
+      const base=prev.filter(x=>x.descripcion||x.productoId||x.skuKey||Number(x.cantidad)>0);
+      return [...base,{productoId:p.derivado?null:p.id,skuKey:p.derivado?p.skuKey:null,descripcion:invLabel(p),unidad:p.unidad,cantidad:"",valorUnit:""}];
+    });
+    setStockQ("");
+  };
 
   const subtotal=items.reduce((a,it)=>a+(Number(it.cantidad)||0)*(Number(it.valorUnit)||0),0);
   const ivaVal=ivaOn?Math.round(subtotal*(Number(ivaPorc)||0)/100):0;
@@ -3041,7 +3051,8 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
   };
 
   return(
-    <Modal title={esRem?"Nueva Remisión (venta)":"Nueva Cotización"} onClose={onClose} maxWidth={680}>
+    <Modal title={`${esRem?"Nueva Remisión (venta)":"Nueva Cotización"} · N° ${(()=>{const base=esRem?REMISION_INICIAL:COTIZACION_INICIAL;const nums=(remisiones||[]).filter(d=>d.tipo===tipo).map(d=>Number(d.numero)||0);return Math.max(base-1,...(nums.length?nums:[base-1]))+1;})()}`} onClose={onClose} maxWidth={680}>
+      <div style={{fontSize:12,color:"#94a3b8",marginTop:-6,marginBottom:8}}>El número se asigna automáticamente al guardar.</div>
       {/* Tipo + origen */}
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
         {[["remision","Remisión (venta)"],["cotizacion","Cotización"]].map(([v,l])=>(
@@ -3120,35 +3131,59 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
 
       {/* Items */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.length})</label>
-        <button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"5px 12px",cursor:"pointer",color:GREEN,fontSize:13,fontWeight:700}}>+ Agregar</button>
+        <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.filter(it=>it.descripcion||it.productoId||it.skuKey).length})</label>
+        {!(esRem&&origen==="stock")&&<button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"5px 12px",cursor:"pointer",color:GREEN,fontSize:13,fontWeight:700}}>+ Agregar</button>}
       </div>
-      {items.map((it,i)=>{
+
+      {/* Buscador de stock (solo remisión desde stock) */}
+      {esRem&&origen==="stock"&&(
+        <div style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:10,padding:10,marginBottom:10}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#6d28d9",marginBottom:6}}>Buscar y agregar del stock ({sede})</div>
+          <input style={{...inp,fontSize:13,marginBottom:6}} placeholder="Escribe calibre, medida o nombre..." value={stockQ} onChange={e=>setStockQ(e.target.value)}/>
+          {stockList.length===0?(
+            <div style={{fontSize:13,color:"#94a3b8",textAlign:"center",padding:"8px 0"}}>No hay stock disponible</div>
+          ):(
+            <div style={{maxHeight:200,overflowY:"auto",display:"flex",flexDirection:"column",gap:4}}>
+              {stockFiltrado.map(p=>(
+                <div key={p.id} onClick={()=>addStockItem(p)} style={{padding:"7px 10px",borderRadius:8,cursor:"pointer",background:"#fff",border:"1px solid #e2e8f0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:13,color:"#334155"}}>{invLabel(p)}{p.derivado?"":" · importado"}</span>
+                  <span style={{fontSize:12,fontWeight:700,color:"#15803d",whiteSpace:"nowrap"}}>{Number(p.stock?.[sede])||0} {p.unidad}</span>
+                </div>
+              ))}
+              {stockFiltrado.length===0&&<div style={{fontSize:13,color:"#94a3b8",textAlign:"center",padding:"8px 0"}}>Sin coincidencias</div>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {items.filter(it=>!(esRem&&origen==="stock")|| it.productoId||it.skuKey).map((it,realIdx)=>{
+        const i=items.indexOf(it);
         const prod=findStock(it);
         const disp=prod?Number(prod.stock?.[sede])||0:null;
+        const esItemStock=esRem&&origen==="stock";
         return(
           <div key={i} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:10,marginBottom:8}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-              <span style={{fontSize:12,fontWeight:700,color:"#64748b"}}>Item {i+1}{disp!=null?` · disponible: ${disp} ${prod.unidad}`:""}</span>
-              {items.length>1&&<button onClick={()=>rmItem(i)} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:12}}>✕</button>}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,gap:8}}>
+              {esItemStock
+                ? <span style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>{it.descripcion}{disp!=null?<span style={{fontSize:12,fontWeight:600,color:"#15803d",marginLeft:6}}>· disp: {disp} {prod.unidad}</span>:null}</span>
+                : <span style={{fontSize:12,fontWeight:700,color:"#64748b"}}>Item {realIdx+1}</span>}
+              <button onClick={()=>rmItem(i)} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:12}}>✕</button>
             </div>
-            {esRem&&origen==="stock"&&(
-              <select style={{...inp,fontSize:13,marginBottom:6}} value={it.productoId?("m:"+it.productoId):it.skuKey?("d:"+it.skuKey):""} onChange={e=>pickStock(i,e.target.value)}>
-                <option value="">Elegir del stock…</option>
-                {stockList.length===0&&<option value="" disabled>— No hay stock disponible —</option>}
-                {stockList.map(p=><option key={p.id} value={p.derivado?("d:"+p.skuKey):("m:"+p.id)}>{invLabel(p)} — {Number(p.stock?.[sede])||0} {p.unidad} en {sede}{p.derivado?" · producción":""}</option>)}
-              </select>
+            {!esItemStock&&(
+              <input style={{...inp,fontSize:13,marginBottom:6}} placeholder="Descripción del producto" value={it.descripcion} onChange={e=>setItem(i,"descripcion",e.target.value)}/>
             )}
-            <input style={{...inp,fontSize:13,marginBottom:6}} placeholder="Descripción del producto" value={it.descripcion} onChange={e=>setItem(i,"descripcion",e.target.value)}/>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,alignItems:"end"}}>
-              <div><label style={{fontSize:11,color:"#94a3b8"}}>Cantidad</label><input style={{...inp,fontSize:13}} type="number" value={it.cantidad} onChange={e=>{setItem(i,"cantidad",e.target.value);setErr("");}}/></div>
-              <div><label style={{fontSize:11,color:"#94a3b8"}}>Unidad</label><input style={{...inp,fontSize:13}} value={it.unidad} onChange={e=>setItem(i,"unidad",e.target.value)} placeholder="m² / rollos"/></div>
+            <div style={{display:"grid",gridTemplateColumns:esItemStock?"1fr 1fr 1fr":"1fr 1fr 1fr 1fr",gap:6,alignItems:"end"}}>
+              <div><label style={{fontSize:11,color:"#94a3b8"}}>Cantidad{esItemStock?` (${it.unidad})`:""}</label><input style={{...inp,fontSize:13}} type="number" value={it.cantidad} onChange={e=>{setItem(i,"cantidad",e.target.value);setErr("");}}/></div>
+              {!esItemStock&&<div><label style={{fontSize:11,color:"#94a3b8"}}>Unidad</label><input style={{...inp,fontSize:13}} value={it.unidad} onChange={e=>setItem(i,"unidad",e.target.value)} placeholder="m² / rollos"/></div>}
               <div><label style={{fontSize:11,color:"#94a3b8"}}>Valor unit.</label><input style={{...inp,fontSize:13}} type="number" value={it.valorUnit} onChange={e=>setItem(i,"valorUnit",e.target.value)}/></div>
               <div style={{textAlign:"right",fontSize:13,fontWeight:700,color:"#1e293b",paddingBottom:8}}>{cop((Number(it.cantidad)||0)*(Number(it.valorUnit)||0))}</div>
             </div>
           </div>
         );
       })}
+      {esRem&&origen==="stock"&&items.filter(it=>it.productoId||it.skuKey).length===0&&(
+        <div style={{fontSize:13,color:"#94a3b8",textAlign:"center",padding:"8px 0",marginBottom:8}}>Busca arriba y agrega productos del stock.</div>
+      )}
 
       {/* Impuestos */}
       <div style={{display:"flex",gap:16,flexWrap:"wrap",marginBottom:10,marginTop:4}}>
