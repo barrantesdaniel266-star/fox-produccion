@@ -7,7 +7,7 @@ import {
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
-const APP_VERSION="v2026.09.22-E1b";
+const APP_VERSION="v2026.09.22-E2a";
 
 // ═══ USUARIOS ══════════════════════════════════════════════
 const USERS = {
@@ -2447,6 +2447,7 @@ function DetailModal({order,isG,onClose,onQuickEdit,onSetEntrega}){
 
 // ═══ INVENTARIO ════════════════════════════════════════════
 const UNIDADES = ["rollos","m²","unidades","kg","metros","cajas"];
+const CATALOGO=[{n:"ALAMBRE CAL 11",u:"kg"},{n:"ALAMBRE CAL 12,5 OSCURO",u:"kg"},{n:"ALAMBRE CAL 12,5",u:"kg"},{n:"ALAMBRE CAL 12,5 ORIGINAL",u:"kg"},{n:"ALAMBRE CAL 14",u:"kg"},{n:"ALAMBRE CAL 11 PVC AZUL",u:"kg"},{n:"ALAMBRE CAL 11 PVC AMARILLO",u:"kg"},{n:"ALAMBRE CAL 11 PVC NARANJA",u:"kg"},{n:"ALAMBRE CAL 11 PVC ROJO",u:"kg"},{n:"ALAMBRE CAL 11 PVC AGUA MARINA",u:"kg"},{n:"ALAMBRE CAL 11 PVC NEGRO",u:"kg"},{n:"ALAMBRE CAL 11 PVC VERDE IMPORTADO MILITAR",u:"kg"},{n:"ALAMBRE CAL 11 PVC VERDE IMPORTADO CLARO",u:"kg"},{n:"ALAMBRE CAL 11 PVC NEGRO IMPORTADO",u:"kg"},{n:"ALAMBRE CAL 8 PVC VERDE MILITAR",u:"kg"},{n:"ALAMBRE CAL 8 PVC VERDE IMPORTADO CLARO",u:"kg"},{n:"ALAMBRE CAL 8 PVC VERDE IMPORTADO MILITAR",u:"kg"},{n:"ALAMBRE CAL 8 PVC ROJO",u:"kg"},{n:"ALAMBRE CAL 8 PVC AMARILLO",u:"kg"},{n:"ALAMBRE CAL 8 PVC VERDE OSCURO",u:"kg"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *1",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *1.20",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *1.50",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *1.80",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *1.95",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *1.98",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *2",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 * 2.45",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 * 2.50",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/4 * 2",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\" * 1.20",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\" * 1.50",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\" * 1.80",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\" * 2",u:"m²"},{n:"MALLA ESLABONADA CAL 10,5 H 2\" * 2.50",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 1",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 1.20",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 1.50",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 1.80",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 1.80 OSCURO",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 2",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 2 OSCURO",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 2.60",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/4 * 1",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/4 * 1.80",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/4 * 2",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\" * 1.50",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\" * 1.80",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\" * 1.80 OSCURO",u:"m²"},{n:"MALLA ESLABONADA CAL 12,5 H 2\" * 2",u:"m²"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/2 * 1",u:"m²"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/2 * 1.20",u:"m²"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/2 * 1.30",u:"m²"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/2 * 1.50",u:"m²"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/2 * 1.80",u:"m²"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/2 * 2",u:"m²"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/4 * 1.50",u:"m²"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/4 * 1.80",u:"m²"},{n:"MALLA ESLABONADA CAL 14 H 2\" * 1.80",u:"m²"},{n:"MALLA IMPORTADA CAL 10,5 H 2\"1/2 * 1.80",u:"m²"},{n:"MALLA IMPORTADA CAL 10,5 H 2\"1/2 * 2",u:"m²"},{n:"MALLA IMPORTADA CAL 10,5 H 2\"1/2 * 1.50",u:"m²"},{n:"MALLA IMPORTADA CAL 12,5 H 2\"1/2 * 1.50",u:"m²"},{n:"MALLA IMPORTADA CAL 12,5 H 2\"1/2 * 1.80",u:"m²"},{n:"MALLA IMPORTADA CAL 12,5 H 2\"1/2 * 2",u:"m²"},{n:"MALLA MAQUINADA CAL 10,5 H 2\"1/2 * 1.50",u:"m²"},{n:"MALLA MAQUINADA CAL 10,5 H 2\"1/2 * 2",u:"m²"},{n:"MALLA CESPED CAL 16 H 1\"1/2",u:"m²"},{n:"GUAYA 1/8",u:"m²"},{n:"VARILLA 1/2 * 60cm",u:"UNIDAD"},{n:"PERRO 1/8",u:"UNIDAD"},{n:"TENSOR 3/16",u:"UNIDAD"},{n:"CONCERTINA ACERO INOXIDABLE *6MTS",u:"UNIDAD"},{n:"CONCERTINA GALVANIZADA *6MTS",u:"UNIDAD"},{n:"ALAMBRE DE PUAS CAL 12,5 * 200 MTS",u:"UNIDAD"},{n:"ALAMBRE DE PUAS CAL 12,5 * 400 MTS",u:"UNIDAD"},{n:"ALAMBRE DE PUAS CAL 14,5 * 500 MTS",u:"UNIDAD"},{n:"ALAMBRE DE PUAS CAL 14,5 * 200 MTS",u:"UNIDAD"},{n:"ALAMBRE DE PUAS CAL 14,5 * 100 MTS",u:"UNIDAD"},{n:"ALAMBRE DE PUAS CAL 16,5 * 400 MTS",u:"UNIDAD"},{n:"ALAMBRE DE PUAS CAL 16,5 * 200 MTS",u:"UNIDAD"},{n:"MALLA GALLINERO *36MTS H 1\"1/4 * 0.90",u:"UNIDAD"},{n:"MALLA GALLINERO *36MTS H 1\"1/4 * 1.20",u:"UNIDAD"},{n:"MALLA GALLINERO *36MTS H 1\"1/4 * 1.50",u:"UNIDAD"},{n:"MALLA GALLINERO *36MTS H 1\"1/4 * 1.80",u:"UNIDAD"},{n:"MALLA GALLINERO *30 MTS H 2\" * 1,65",u:"UNIDAD"},{n:"MALLA PAJARITO *30MTS H 3/4\" * 0.90",u:"UNIDAD"},{n:"MALLA PAJARITO *30MTS H 3/4\" * 1",u:"UNIDAD"},{n:"MALLA PAJARITO *30MTS H 3/4\" * 1.50",u:"UNIDAD"},{n:"MALLA PAJARITO *30MTS H 3/4\" * 1.80",u:"UNIDAD"},{n:"MALLA PAJARITO *30 MTS H 1/2\" * 0.90",u:"UNIDAD"},{n:"MALLA PAJARITO *30 MTS H 1/2\" * 1",u:"UNIDAD"},{n:"GAVION MANUAL CAL 12.5 H 10*10",u:"UNIDAD"},{n:"GAVION MANUAL CAL 12.5 H 12*12",u:"UNIDAD"},{n:"GAVION MAQUINADO CAL 13 H 10*10",u:"UNIDAD"},{n:"GAVION MAQUINADO CAL 12.5 H 10*10",u:"UNIDAD"},{n:"GAVIONES MAQUINADO CAL 12.5 H 12*12",u:"UNIDAD"},{n:"GAVIONES MAQUINADO CAL 11 H 10*10",u:"UNIDAD"},{n:"GAVION MAQUINADO CON CAL 12.5 H 10*10",u:"UNIDAD"},{n:"GAVION MAQUINADO CON CAL 12.5 H 12*12",u:"UNIDAD"},{n:"POSTE TERMINADO CAL 18 EN 2\"",u:"UNIDAD"},{n:"POSTE TERMINADO CAL 18 EN 1\"1/2",u:"UNIDAD"},{n:"POSTE TERMINADO CAL 16 EN 2\"",u:"UNIDAD"},{n:"POSTE TERMINADO CAL 16 EN 1\"1/2",u:"UNIDAD"},{n:"POSTE TERMINADO CAL 14 EN 2\"",u:"UNIDAD"},{n:"TUBO GALVANIZADO CAL 14 EN 2\" * 6 MTS",u:"UNIDAD"},{n:"TUBO GALVANIZADO CAL 14 EN 1\"1/2 * 6 MTS",u:"UNIDAD"},{n:"TUBO GALVANIZADO IMPORTADO CAL 18 EN 2\" * 6 MTS",u:"UNIDAD"},{n:"TUBO GALVANIZADO IMPORTADO CAL 18 EN 1\"1/2 * 6 MTS",u:"UNIDAD"},{n:"TUBO GALVANIZADO IMPORTADO CAL 16 EN 2\" * 6 MTS",u:"UNIDAD"},{n:"TUBO GALVANIZADO IMPORTADO CAL 16 EN 1\"1/2 * 6 MTS",u:"UNIDAD"},{n:"TUBO GALVANIZADO IMPORTADO CAL 14 EN 2\" * 6 MTS",u:"UNIDAD"},{n:"TUBO GALVANIZADO IMPORTADO CAL 14 EN 1\"1/2 * 6 MTS",u:"UNIDAD"},{n:"TUBO GALVANIZADO IMPORTADO CAL 18 EN 2\" * 3 MTS",u:"UNIDAD"},{n:"TUBO GALVANIZADO IMPORTADO CAL 18 EN 1\"1/2 * 3 MTS",u:"UNIDAD"},{n:"TAPON 2\"",u:"UNIDAD"},{n:"TAPON 1\"1/2",u:"UNIDAD"},{n:"GRAPA",u:"UNIDAD"},{n:"PLATINA 1/2*1/8 * 6 MTS",u:"UNIDAD"},{n:"ANGULO 1*1/8 * 6 MTS",u:"UNIDAD"}];
 const INV_CATEGORIAS = ["Malla Eslabonada","Malla PVC","Postes","Alambre de Púas","Gaviones","Concertina","Tubos","Otro"];
 const CAT_UNIDAD = {"Malla Eslabonada":"m²","Malla PVC":"m²","Postes":"unidades","Alambre de Púas":"metros","Gaviones":"unidades","Concertina":"rollos","Tubos":"unidades","Otro":"unidades"};
 // Etiqueta rica del producto (categoría + calibre + medida + color); usa nombre como respaldo
@@ -3018,7 +3019,27 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
     setStockQ("");
   };
 
-  const subtotal=items.reduce((a,it)=>a+(Number(it.cantidad)||0)*(Number(it.valorUnit)||0),0);
+  // Cotización: buscar en el catálogo del Excel y armar malla a medida (como en una orden)
+  const [catQ,setCatQ]=useState("");
+  const catFiltrado=catQ.trim()?CATALOGO.filter(p=>p.n.toLowerCase().includes(catQ.toLowerCase())).slice(0,25):[];
+  const addCatalog=p=>{
+    setItems(prev=>[...prev,{productoId:null,skuKey:null,descripcion:p.n,unidad:p.u,cantidad:"",valorUnit:""}]);
+    setCatQ("");
+  };
+  const addMalla=()=>setItems(prev=>[...prev,{productoId:null,skuKey:null,producto:"eslabonada",calibre:"",abertura:"",calibreInterno:"",color:"",ancho:"",alto:"",cantidad:"",valorUnit:""}]);
+  // Cantidad efectiva: para malla eslabonada/pvc usa los m² calculados si no hay cantidad manual
+  const effCant=it=> (it.producto&&it.producto!=="postes") ? (Number(it.cantidad)||Number(calcM2(it.ancho,it.alto))||0) : (Number(it.cantidad)||0);
+  const descMalla=it=>`${labelProducto(it.producto)}${it.calibre?` Cal ${it.calibre}`:""}${it.calibreInterno?`/${it.calibreInterno}`:""}${it.abertura?` ${it.abertura}`:""}${(it.ancho&&it.alto)?` ${it.ancho}×${it.alto}m`:""}${it.color?` ${it.color}`:""}`.trim();
+  const lineFromItem=it=>{
+    if(it.producto){
+      const uni=it.producto==="postes"?"un":"m²";
+      const cant=effCant(it);
+      return {productoId:null,skuKey:null,descripcion:descMalla(it),cantidad:cant,unidad:uni,valorUnit:Number(it.valorUnit)||0,valorTotal:cant*(Number(it.valorUnit)||0)};
+    }
+    return {productoId:it.productoId||null,skuKey:it.skuKey||null,descripcion:it.descripcion,cantidad:Number(it.cantidad)||0,unidad:it.unidad||"",valorUnit:Number(it.valorUnit)||0,valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0)};
+  };
+
+  const subtotal=items.reduce((a,it)=>a+effCant(it)*(Number(it.valorUnit)||0),0);
   const ivaVal=ivaOn?Math.round(subtotal*(Number(ivaPorc)||0)/100):0;
   const reteVal=reteOn?Math.round(subtotal*(Number(retePorc)||0)/100):0;
   const total=subtotal+ivaVal-reteVal;
@@ -3026,7 +3047,7 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
 
   const submit=async()=>{
     if(!cli.nombre.trim()){setErr("Ingresa el nombre del cliente");return;}
-    const its=items.filter(it=>it.descripcion&&Number(it.cantidad)>0);
+    const its=items.filter(it=> it.producto ? effCant(it)>0 : (it.descripcion&&Number(it.cantidad)>0));
     if(its.length===0){setErr("Agrega al menos un producto con cantidad");return;}
     if(esRem&&origen==="stock"){
       for(const it of its){
@@ -3040,7 +3061,7 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
     const data={
       tipo, origen:esRem?origen:null, ordenRef:esRem&&origen==="produccion"?ordenRef:null,
       sede, cliente:{...cli,nombre:cli.nombre.trim()},
-      items:its.map(it=>({productoId:it.productoId||null,skuKey:it.skuKey||null,descripcion:it.descripcion,cantidad:Number(it.cantidad)||0,unidad:it.unidad||"",valorUnit:Number(it.valorUnit)||0,valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0)})),
+      items:its.map(lineFromItem),
       subtotal, iva:{aplica:ivaOn,porc:Number(ivaPorc)||0,valor:ivaVal}, retefuente:{aplica:reteOn,porc:Number(retePorc)||0,valor:reteVal},
       total, abono:esRem?Number(abono)||0:0, saldo:esRem?saldo:0,
     };
@@ -3131,9 +3152,31 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
 
       {/* Items */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.filter(it=>it.descripcion||it.productoId||it.skuKey).length})</label>
-        {!(esRem&&origen==="stock")&&<button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"5px 12px",cursor:"pointer",color:GREEN,fontSize:13,fontWeight:700}}>+ Agregar</button>}
+        <label style={{fontSize:14,fontWeight:700,color:"#334155"}}>Productos ({items.filter(it=>it.descripcion||it.productoId||it.skuKey||it.producto).length})</label>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {tipo==="cotizacion"&&<button onClick={addMalla} style={{background:"#eff6ff",border:"1.5px solid #bfdbfe",borderRadius:10,padding:"5px 12px",cursor:"pointer",color:"#1d4ed8",fontSize:13,fontWeight:700}}>+ Malla a medida</button>}
+          {!(esRem&&origen==="stock")&&<button onClick={addItem} style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"5px 12px",cursor:"pointer",color:GREEN,fontSize:13,fontWeight:700}}>{tipo==="cotizacion"?"+ Línea libre":"+ Agregar"}</button>}
+        </div>
       </div>
+
+      {/* Buscador de catálogo (cotización) */}
+      {tipo==="cotizacion"&&(
+        <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:10,marginBottom:10}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#334155",marginBottom:6}}>Buscar en el catálogo</div>
+          <input style={{...inp,fontSize:13}} placeholder="Escribe calibre, medida o nombre del producto..." value={catQ} onChange={e=>setCatQ(e.target.value)}/>
+          {catQ.trim()&&(
+            <div style={{maxHeight:200,overflowY:"auto",display:"flex",flexDirection:"column",gap:4,marginTop:6}}>
+              {catFiltrado.map((p,ix)=>(
+                <div key={ix} onClick={()=>addCatalog(p)} style={{padding:"7px 10px",borderRadius:8,cursor:"pointer",background:"#fff",border:"1px solid #e2e8f0",display:"flex",justifyContent:"space-between",gap:8}}>
+                  <span style={{fontSize:13,color:"#334155"}}>{p.n}</span>
+                  <span style={{fontSize:12,color:"#94a3b8"}}>{p.u}</span>
+                </div>
+              ))}
+              {catFiltrado.length===0&&<div style={{fontSize:13,color:"#94a3b8",textAlign:"center",padding:"8px 0"}}>Sin coincidencias</div>}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Buscador de stock (solo remisión desde stock) */}
       {esRem&&origen==="stock"&&(
@@ -3161,23 +3204,49 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
         const prod=findStock(it);
         const disp=prod?Number(prod.stock?.[sede])||0:null;
         const esItemStock=esRem&&origen==="stock";
+        const esMalla=!!it.producto;
+        const m2=calcM2(it.ancho,it.alto);
         return(
           <div key={i} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:10,marginBottom:8}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,gap:8}}>
               {esItemStock
                 ? <span style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>{it.descripcion}{disp!=null?<span style={{fontSize:12,fontWeight:600,color:"#15803d",marginLeft:6}}>· disp: {disp} {prod.unidad}</span>:null}</span>
-                : <span style={{fontSize:12,fontWeight:700,color:"#64748b"}}>Item {realIdx+1}</span>}
+                : <span style={{fontSize:12,fontWeight:700,color:"#64748b"}}>{esMalla?"Malla a medida":`Item ${realIdx+1}`}</span>}
               <button onClick={()=>rmItem(i)} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:12}}>✕</button>
             </div>
-            {!esItemStock&&(
-              <input style={{...inp,fontSize:13,marginBottom:6}} placeholder="Descripción del producto" value={it.descripcion} onChange={e=>setItem(i,"descripcion",e.target.value)}/>
+
+            {esMalla?(
+              <>
+                {/* Selector de tipo (como en una orden) */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:4}}>
+                  {PRODUCTOS.map(pr=>(
+                    <div key={pr.id} onClick={()=>setItems(prev=>prev.map((x,idx)=>idx===i?{...x,producto:pr.id,calibre:"",abertura:"",calibreInterno:"",color:"",ancho:"",alto:"",cantidad:""}:x))}
+                      style={{border:`2px solid ${it.producto===pr.id?pr.color:"#e2e8f0"}`,background:it.producto===pr.id?pr.bg:"#fff",borderRadius:8,padding:"6px 4px",textAlign:"center",cursor:"pointer"}}>
+                      <div style={{fontWeight:700,color:it.producto===pr.id?pr.color:"#64748b",fontSize:12}}>{pr.label}</div>
+                    </div>
+                  ))}
+                </div>
+                <ItemFields item={it} onChange={v=>setItems(prev=>prev.map((x,idx)=>idx===i?v:x))}/>
+                <div style={{fontSize:12,color:"#6d28d9",margin:"6px 0",fontWeight:600}}>{descMalla(it)}</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,alignItems:"end"}}>
+                  <div><label style={{fontSize:11,color:"#94a3b8"}}>Cantidad ({it.producto==="postes"?"un":"m²"})</label><input style={{...inp,fontSize:13}} type="number" value={it.cantidad} onChange={e=>{setItem(i,"cantidad",e.target.value);setErr("");}} placeholder={it.producto!=="postes"&&m2?m2:""}/></div>
+                  <div><label style={{fontSize:11,color:"#94a3b8"}}>Valor unit.</label><input style={{...inp,fontSize:13}} type="number" value={it.valorUnit} onChange={e=>setItem(i,"valorUnit",e.target.value)}/></div>
+                  <div style={{textAlign:"right",fontSize:13,fontWeight:700,color:"#1e293b",paddingBottom:8}}>{cop(effCant(it)*(Number(it.valorUnit)||0))}</div>
+                </div>
+              </>
+            ):(
+              <>
+                {!esItemStock&&(
+                  <input style={{...inp,fontSize:13,marginBottom:6}} placeholder="Descripción del producto" value={it.descripcion} onChange={e=>setItem(i,"descripcion",e.target.value)}/>
+                )}
+                <div style={{display:"grid",gridTemplateColumns:esItemStock?"1fr 1fr 1fr":"1fr 1fr 1fr 1fr",gap:6,alignItems:"end"}}>
+                  <div><label style={{fontSize:11,color:"#94a3b8"}}>Cantidad{esItemStock?` (${it.unidad})`:""}</label><input style={{...inp,fontSize:13}} type="number" value={it.cantidad} onChange={e=>{setItem(i,"cantidad",e.target.value);setErr("");}}/></div>
+                  {!esItemStock&&<div><label style={{fontSize:11,color:"#94a3b8"}}>Unidad</label><input style={{...inp,fontSize:13}} value={it.unidad} onChange={e=>setItem(i,"unidad",e.target.value)} placeholder="m² / rollos"/></div>}
+                  <div><label style={{fontSize:11,color:"#94a3b8"}}>Valor unit.</label><input style={{...inp,fontSize:13}} type="number" value={it.valorUnit} onChange={e=>setItem(i,"valorUnit",e.target.value)}/></div>
+                  <div style={{textAlign:"right",fontSize:13,fontWeight:700,color:"#1e293b",paddingBottom:8}}>{cop((Number(it.cantidad)||0)*(Number(it.valorUnit)||0))}</div>
+                </div>
+              </>
             )}
-            <div style={{display:"grid",gridTemplateColumns:esItemStock?"1fr 1fr 1fr":"1fr 1fr 1fr 1fr",gap:6,alignItems:"end"}}>
-              <div><label style={{fontSize:11,color:"#94a3b8"}}>Cantidad{esItemStock?` (${it.unidad})`:""}</label><input style={{...inp,fontSize:13}} type="number" value={it.cantidad} onChange={e=>{setItem(i,"cantidad",e.target.value);setErr("");}}/></div>
-              {!esItemStock&&<div><label style={{fontSize:11,color:"#94a3b8"}}>Unidad</label><input style={{...inp,fontSize:13}} value={it.unidad} onChange={e=>setItem(i,"unidad",e.target.value)} placeholder="m² / rollos"/></div>}
-              <div><label style={{fontSize:11,color:"#94a3b8"}}>Valor unit.</label><input style={{...inp,fontSize:13}} type="number" value={it.valorUnit} onChange={e=>setItem(i,"valorUnit",e.target.value)}/></div>
-              <div style={{textAlign:"right",fontSize:13,fontWeight:700,color:"#1e293b",paddingBottom:8}}>{cop((Number(it.cantidad)||0)*(Number(it.valorUnit)||0))}</div>
-            </div>
           </div>
         );
       })}
