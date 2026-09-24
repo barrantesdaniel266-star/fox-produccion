@@ -1,0 +1,33 @@
+Reglas de Firestore para "Fase 2" — SOLO copiar a firestore.rules y
+publicar cuando TODO el equipo ya esté entrando con el botón de Google
+(sección 3 de GUIA_DOMINIO_SSO_SEGURIDAD.md). Si las publicas antes,
+cualquiera que siga usando el login de usuario/contraseña viejo (que no
+pasa por Firebase Auth) se queda sin poder leer ni escribir nada.
+
+Este archivo no hace nada por sí solo — es solo texto de referencia hasta
+que decidas usarlo.
+
+Qué cambia respecto a lo actual: exige haber iniciado sesión (con
+cualquier método de Firebase Auth) para leer o escribir. No distingue
+todavía por rol (gerencia/vendedora/etc.) — eso requeriría guardar el rol
+del lado del servidor (custom claims o una colección "usuarios/{uid}"),
+que es un paso más grande y no lo armé todavía. Aun así, ya es una mejora
+enorme: hoy cualquiera con la URL de Firestore puede leer/escribir todo
+sin haber iniciado sesión en nada.
+
+--- contenido a copiar en firestore.rules ---
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+
+--- fin ---
+
+Después de publicar esto, prueba de inmediato con una cuenta de Google
+autorizada (sección 3) que todo siga funcionando (crear orden, mover
+inventario, registrar venta) antes de avisarle al equipo.

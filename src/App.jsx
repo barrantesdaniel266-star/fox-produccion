@@ -1475,7 +1475,7 @@ function MachCard({machine,entries,busy,itemsEnCola,puedeAsignar,canRename,editi
   return(
     <div onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}
       style={{border:`2px solid ${busy?RED:"#4ade80"}`,borderRadius:16,overflow:"hidden",background:"#fff",
-        boxShadow:busy&&hover?`0 8px 24px rgba(232,38,42,.2)`:"none",transition:"box-shadow .15s"}}>
+        boxShadow:busy&&hover?`0 8px 24px rgba(232,38,42,.28)`:"0 1px 3px rgba(15,23,42,.08), 0 8px 20px -6px rgba(15,23,42,.18)",transition:"box-shadow .15s"}}>
       {/* Cabecera */}
       <div style={{background:busy?RED:GREEN,padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
@@ -1688,7 +1688,7 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail,onQuickEdit,onSetEntreg
       </div>
       <div style={{fontSize:14,color:"#94a3b8",marginBottom:10}}>{fil.length} registro(s)</div>
       {fil.length===0?(
-        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"48px 0",color:"#94a3b8"}}><div style={{fontSize:32,marginBottom:8,color:"#e2e8f0"}}>[ ]</div><div>Sin registros</div></div>
+        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"48px 0",color:"#94a3b8",boxShadow:"0 1px 3px rgba(15,23,42,.08), 0 8px 20px -6px rgba(15,23,42,.22)"}}><div style={{fontSize:32,marginBottom:8,color:"#e2e8f0"}}>[ ]</div><div>Sin registros</div></div>
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {fil.map(o=>{
@@ -2609,7 +2609,7 @@ function InventarioTab({inventario,orders=[],remisiones=[],lowStock,user,isG,can
       </div>
 
       {fil.length===0?(
-        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"56px 0",color:"#94a3b8"}}>
+        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"56px 0",color:"#94a3b8",boxShadow:"0 1px 3px rgba(15,23,42,.08), 0 8px 20px -6px rgba(15,23,42,.22)"}}>
           <div style={{fontSize:34,marginBottom:10}}>📦</div>
           <div style={{fontWeight:600,marginBottom:6}}>{all.length===0?"Aún no hay stock. Se llena solo con la producción de las órdenes.":"Sin resultados con estos filtros"}</div>
         </div>
@@ -3034,7 +3034,7 @@ function VentasTab({remisiones,user,canProd,onNueva,onImprimir}){
       </div>
       <div style={{fontSize:14,color:"#94a3b8",marginBottom:10}}>{lista.length} documento(s)</div>
       {lista.length===0?(
-        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"56px 0",color:"#94a3b8"}}>
+        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"56px 0",color:"#94a3b8",boxShadow:"0 1px 3px rgba(15,23,42,.08), 0 8px 20px -6px rgba(15,23,42,.22)"}}>
           <div style={{fontSize:34,marginBottom:10}}>🧾</div>
           <div style={{fontWeight:600}}>Aún no hay remisiones ni cotizaciones</div>
         </div>
@@ -3471,7 +3471,7 @@ function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onFu
       </div>
       <div style={{fontSize:14,color:"#94a3b8",marginBottom:10}}>{lista.length} cliente(s)</div>
       {lista.length===0?(
-        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"56px 0",color:"#94a3b8"}}>
+        <div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",textAlign:"center",padding:"56px 0",color:"#94a3b8",boxShadow:"0 1px 3px rgba(15,23,42,.08), 0 8px 20px -6px rgba(15,23,42,.22)"}}>
           <div style={{fontSize:34,marginBottom:10}}>👤</div>
           <div style={{fontWeight:600}}>Aún no hay clientes</div>
           <div style={{fontSize:13,marginTop:4}}>Se crean solos con cada orden y venta. Usa "Sincronizar desde órdenes" para traer los existentes.</div>
