@@ -1034,7 +1034,7 @@ function MovimientosTab({movimientos,user,isG,canMov=true,onNew,onRecibir,onEdit
             const est=MOV_ESTADOS[m.estado]||MOV_ESTADOS.enviado;
             const puedoRecibir=(isG||m.destino===user.sede)&&m.estado==="enviado";
             return(
-              <div key={m.id} style={{background:"#fff",borderRadius:14,border:`1.5px solid ${m.alertaDiscrepancia&&!m.alertaResuelta?"#fca5a5":est.border}`,padding:"16px 20px",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
+              <div key={m.id} style={{background:"#fff",borderRadius:14,border:`1.5px solid ${m.alertaDiscrepancia&&!m.alertaResuelta?"#fca5a5":est.border}`,padding:"16px 20px",boxShadow:"0 1px 3px rgba(15,23,42,.08), 0 8px 20px -6px rgba(15,23,42,.22)"}}>
                 <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",flexWrap:"wrap",gap:8,marginBottom:12}}>
                   <div>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
@@ -1563,46 +1563,50 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
             const activos=items.filter(it=>it.status==="active").length;
             const listos=items.filter(it=>it.status==="completed").length;
             return(
-              <div key={o.orden} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
+              <div key={o.orden} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"16px 18px",boxShadow:"0 1px 3px rgba(15,23,42,.08), 0 8px 20px -6px rgba(15,23,42,.22)"}}>
                 {/* Cabecera de la orden */}
                 <div style={{display:"flex",alignItems:"flex-start",gap:14}}>
                   <div style={{width:44,height:44,background:"#fef2f2",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:900,color:RED,fontSize:14}}>#</div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
-                      <span style={{fontWeight:900,color:"#1e293b",fontSize:17}}>#{o.orden}</span>
-                      {activos>0&&<span style={{background:"#fef2f2",color:RED,borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{activos} en máquina</span>}
-                      {enCola>0&&<span style={{background:"#eff6ff",color:"#1d4ed8",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{enCola} en cola</span>}
-                      {listos>0&&<span style={{background:"#f0fdf4",color:"#15803d",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>{listos} listos</span>}
-                      <span style={{color:"#94a3b8",fontSize:14}}>{o.sede}</span>
-                      {o.estadoEntrega==="entregado"&&<span style={{background:"#f0fdf4",color:"#15803d",border:"1px solid #86efac",borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700}}>✓ Entregado</span>}
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:2,flexWrap:"wrap"}}>
+                      <span style={{fontWeight:900,color:"#1e293b",fontSize:18,letterSpacing:"-.2px"}}>#{o.orden}</span>
+                      <span style={{fontWeight:700,color:"#334155",fontSize:15}}>{o.cliente}</span>
+                      {o.remision&&<span style={{color:"#94a3b8",fontSize:13,fontWeight:600}}>Rem {o.remision}</span>}
+                      {o.estadoEntrega==="entregado"&&<span style={{background:"#f0fdf4",color:"#15803d",border:"1px solid #86efac",borderRadius:999,padding:"1px 9px",fontSize:12,fontWeight:800,marginLeft:"auto"}}>✓ Entregado</span>}
                     </div>
-                    <div style={{fontWeight:600,color:"#475569",fontSize:14,marginBottom:6}}>{o.cliente}{o.remision?<span style={{color:"#94a3b8",fontWeight:500}}> · Rem: {o.remision}</span>:null}</div>
+                    {/* Franja de estado: puntos de color, no cápsulas — lectura rápida sin ruido */}
+                    <div style={{display:"flex",alignItems:"center",gap:14,margin:"6px 0 10px",flexWrap:"wrap"}}>
+                      {activos>0&&<span style={{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:700,color:"#475569"}}><i style={{width:7,height:7,borderRadius:999,background:RED,display:"inline-block"}}/>{activos} en máquina</span>}
+                      {enCola>0&&<span style={{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:700,color:"#475569"}}><i style={{width:7,height:7,borderRadius:999,background:"#2563eb",display:"inline-block"}}/>{enCola} en cola</span>}
+                      {listos>0&&<span style={{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:700,color:"#475569"}}><i style={{width:7,height:7,borderRadius:999,background:"#16a34a",display:"inline-block"}}/>{listos} listos</span>}
+                      <span style={{fontSize:13,color:"#94a3b8",fontWeight:600}}>{o.sede}</span>
+                    </div>
                     {/* Items de la orden con su estado individual */}
-                    <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:4}}>
+                    <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:10}}>
                       {items.map((it,i)=>{
                         const info=infoProducto(it.producto);
                         return(
-                          <div key={i} style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                            <span style={{background:info.bg,color:info.color,borderRadius:999,padding:"1px 8px",fontSize:14,fontWeight:700,whiteSpace:"nowrap"}}>{labelProducto(it.producto)}</span>
-                            <span style={{fontSize:14,color:"#64748b"}}>{resumenItem(it)}</span>
+                          <div key={i} style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                            <span style={{background:info.bg,color:info.color,borderRadius:999,padding:"1px 8px",fontSize:13,fontWeight:700,whiteSpace:"nowrap"}}>{labelProducto(it.producto)}</span>
+                            <span style={{fontSize:13.5,color:"#64748b"}}>{resumenItem(it)}</span>
                             <ItemStatusBadge item={it}/>
                           </div>
                         );
                       })}
                     </div>
-                    <div style={{fontSize:14,color:"#94a3b8"}}>{o.vendedoraName} · {fmtDate(o.timestamp)}</div>
+                    <div style={{fontSize:12.5,color:"#94a3b8",fontWeight:600}}>{o.vendedoraName} · {fmtDate(o.timestamp)}</div>
                   </div>
-                  {/* Acciones */}
-                  <div style={{display:"flex",gap:6,flexShrink:0,flexDirection:"column",alignItems:"stretch"}}>
-                    {enCola>0&&onAssignOrder&&<button onClick={()=>onAssignOrder(o)} style={{...btnR,padding:"7px 14px",fontSize:14,whiteSpace:"nowrap"}}>Asignar productos</button>}
-                    <button onClick={()=>onDetail(o)} style={{...btnS,padding:"7px 10px",fontSize:14}}>Ver detalle</button>
-                    {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#4338ca",fontSize:14,fontWeight:600}}>Editar datos</button>}
-                    {canFullEdit&&onEdit&&<button onClick={()=>onEdit(o)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#0369a1",fontSize:14,fontWeight:600}}>Editar productos</button>}
-                    {onSetEntrega&&(o.estadoEntrega==="entregado"
-                      ?<button onClick={()=>onSetEntrega(o.orden,"pendiente")} style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#b45309",fontSize:14,fontWeight:600}}>Revertir entrega</button>
-                      :<button onClick={()=>onSetEntrega(o.orden,"entregado")} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#15803d",fontSize:14,fontWeight:700}}>Marcar entregado</button>)}
-                    {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"7px 10px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
-                  </div>
+                </div>
+                {/* Acciones: barra inferior, no columna lateral */}
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginTop:14,paddingTop:12,borderTop:"1px solid #f1f5f9"}}>
+                  {enCola>0&&onAssignOrder&&<button onClick={()=>onAssignOrder(o)} style={{...btnR,padding:"8px 16px",fontSize:13.5}}>Asignar productos</button>}
+                  <button onClick={()=>onDetail(o)} style={{...btnS,padding:"8px 14px",fontSize:13.5}}>Ver detalle</button>
+                  {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:10,padding:"8px 14px",cursor:"pointer",color:"#4338ca",fontSize:13.5,fontWeight:600}}>Editar datos</button>}
+                  {canFullEdit&&onEdit&&<button onClick={()=>onEdit(o)} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:"8px 14px",cursor:"pointer",color:"#0369a1",fontSize:13.5,fontWeight:600}}>Editar productos</button>}
+                  {onSetEntrega&&(o.estadoEntrega==="entregado"
+                    ?<button onClick={()=>onSetEntrega(o.orden,"pendiente")} style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"8px 14px",cursor:"pointer",color:"#b45309",fontSize:13.5,fontWeight:600}}>Revertir entrega</button>
+                    :<button onClick={()=>onSetEntrega(o.orden,"entregado")} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"8px 14px",cursor:"pointer",color:"#15803d",fontSize:13.5,fontWeight:700}}>Marcar entregado</button>)}
+                  {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"none",border:"none",padding:"8px 6px",cursor:"pointer",color:"#cbd5e1",fontSize:13.5,fontWeight:600,marginLeft:"auto"}} onMouseEnter={e=>e.currentTarget.style.color="#dc2626"} onMouseLeave={e=>e.currentTarget.style.color="#cbd5e1"}>Eliminar</button>}
                 </div>
               </div>
             );
@@ -1643,29 +1647,29 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail,onQuickEdit,onSetEntreg
             const st=orderStInfo(o);
             const compAt=o.completedAt?fmtDate(o.completedAt):fmtDate(items.map(it=>it.completedAt).filter(Boolean).sort((a,b)=>b-a)[0])||"—";
             return(
-              <div key={o.orden} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"10px 14px",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
-                {/* Línea 1: número + cliente + sede + estado (todo junto) */}
-                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
-                  <span style={{fontWeight:900,color:"#1e293b",fontSize:16}}>#{o.orden}</span>
-                  <span style={{fontWeight:600,color:"#334155",fontSize:15}}>{o.cliente}</span>
-                  <span style={{color:"#94a3b8",fontSize:13}}>· {o.sede}</span>
-                  <span style={{background:st.bg,color:st.col,borderRadius:999,padding:"1px 9px",fontSize:12,fontWeight:700,whiteSpace:"nowrap"}}>{st.txt}</span>
+              <div key={o.orden} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"10px 14px",boxShadow:"0 1px 3px rgba(15,23,42,.08), 0 8px 20px -6px rgba(15,23,42,.22)"}}>
+                {/* Línea 1: número + cliente + sede + estado */}
+                <div style={{display:"flex",alignItems:"center",gap:9,flexWrap:"wrap",marginBottom:6}}>
+                  <span style={{fontWeight:900,color:"#1e293b",fontSize:17,letterSpacing:"-.2px"}}>#{o.orden}</span>
+                  <span style={{fontWeight:700,color:"#334155",fontSize:15}}>{o.cliente}</span>
+                  <span style={{color:"#94a3b8",fontSize:13,fontWeight:600}}>{o.sede}</span>
+                  <span style={{background:st.bg,color:st.col,borderRadius:999,padding:"2px 10px",fontSize:12,fontWeight:800,whiteSpace:"nowrap",marginLeft:"auto"}}>{st.txt}</span>
                 </div>
                 {/* Línea 2: productos + meta */}
-                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:12}}>
                   <ProductoBadges items={items}/>
-                  <span style={{fontSize:12,color:"#94a3b8"}}>{o.vendedoraName} · {compAt}{o.fechaEntrega?` · Entregado ${fmtDate(o.fechaEntrega)}`:""}{o.remision?` · Rem: ${o.remision}`:""}</span>
+                  <span style={{fontSize:12.5,color:"#94a3b8",fontWeight:600}}>{o.vendedoraName} · {compAt}{o.fechaEntrega?` · Entregado ${fmtDate(o.fechaEntrega)}`:""}{o.remision?` · Rem: ${o.remision}`:""}</span>
                 </div>
-                {/* Línea 3: acciones */}
-                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                  <button onClick={()=>onDetail(o)} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#64748b",fontSize:14}}>Ver detalle</button>
+                {/* Línea 3: acciones — barra inferior separada */}
+                <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",paddingTop:10,borderTop:"1px solid #f1f5f9"}}>
+                  <button onClick={()=>onDetail(o)} style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#64748b",fontSize:13.5,fontWeight:600}}>Ver detalle</button>
                   {onSetEntrega&&(o.estadoEntrega==="entregado"
-                    ?<button onClick={()=>onSetEntrega(o.orden,"pendiente")} style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#b45309",fontSize:14,fontWeight:600}}>Revertir entrega</button>
-                    :<button onClick={()=>onSetEntrega(o.orden,"entregado")} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#15803d",fontSize:14,fontWeight:700}}>Marcar entregado</button>)}
-                  {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#4338ca",fontSize:14,fontWeight:600}}>Editar datos</button>}
-                  {onPasarInv&&orderDisplayStatus(o)==="terminada"&&!o.pasadaAInventario&&<button onClick={()=>onPasarInv(o)} style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#7c3aed",fontSize:14,fontWeight:700}}>📦 Pasar a inventario</button>}
-                  {o.pasadaAInventario&&<span style={{background:"#f5f3ff",color:"#7c3aed",border:"1px solid #ddd6fe",borderRadius:999,padding:"5px 10px",fontSize:13,fontWeight:700}}>En inventario</span>}
-                  {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"5px 10px",cursor:"pointer",color:"#dc2626",fontSize:14}}>Eliminar</button>}
+                    ?<button onClick={()=>onSetEntrega(o.orden,"pendiente")} style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#b45309",fontSize:13.5,fontWeight:600}}>Revertir entrega</button>
+                    :<button onClick={()=>onSetEntrega(o.orden,"entregado")} style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#15803d",fontSize:13.5,fontWeight:700}}>Marcar entregado</button>)}
+                  {onQuickEdit&&<button onClick={()=>onQuickEdit(o)} style={{background:"#eef2ff",border:"1px solid #c7d2fe",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#4338ca",fontSize:13.5,fontWeight:600}}>Editar datos</button>}
+                  {onPasarInv&&orderDisplayStatus(o)==="terminada"&&!o.pasadaAInventario&&<button onClick={()=>onPasarInv(o)} style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:8,padding:"6px 12px",cursor:"pointer",color:"#7c3aed",fontSize:13.5,fontWeight:700}}>📦 Pasar a inventario</button>}
+                  {o.pasadaAInventario&&<span style={{background:"#f5f3ff",color:"#7c3aed",border:"1px solid #ddd6fe",borderRadius:999,padding:"6px 12px",fontSize:13,fontWeight:700}}>En inventario</span>}
+                  {isG&&onDel&&<button onClick={()=>onDel(o.orden)} style={{background:"none",border:"none",padding:"6px 6px",cursor:"pointer",color:"#cbd5e1",fontSize:13.5,fontWeight:600,marginLeft:"auto"}} onMouseEnter={e=>e.currentTarget.style.color="#dc2626"} onMouseLeave={e=>e.currentTarget.style.color="#cbd5e1"}>Eliminar</button>}
                 </div>
               </div>
             );
@@ -2473,7 +2477,7 @@ function DetailModal({order,isG,onClose,onQuickEdit,onSetEntrega}){
       ):(
         <div style={{maxHeight:220,overflowY:"auto",display:"flex",flexDirection:"column",gap:8,marginBottom:16,padding:"2px"}}>
           {logs.map((l,i)=>(
-            <div key={i} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 12px",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
+            <div key={i} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 12px",boxShadow:"0 1px 3px rgba(15,23,42,.08), 0 8px 20px -6px rgba(15,23,42,.22)"}}>
               <div style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
                 <span style={{fontSize:13,fontWeight:700,color:"#334155"}}>{l.accion}</span>
                 <span style={{fontSize:12,color:"#94a3b8",whiteSpace:"nowrap"}}>{fmtDate(l.ts)}</span>
@@ -2572,7 +2576,7 @@ function InventarioTab({inventario,orders=[],remisiones=[],lowStock,user,isG,can
               {rows.map(({p,total,est})=>{
                 const s=ST[est];const der=p.derivado;const oi=ORIGEN_INFO[p.origen]||ORIGEN_INFO.producido;
                 return(
-                  <div key={p.id} style={{background:"#fff",border:`1.5px solid ${est==="ok"?"#e2e8f0":s.bd}`,borderRadius:14,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
+                  <div key={p.id} style={{background:"#fff",border:`1.5px solid ${est==="ok"?"#e2e8f0":s.bd}`,borderRadius:14,overflow:"hidden",boxShadow:"0 1px 3px rgba(15,23,42,.08), 0 8px 20px -6px rgba(15,23,42,.22)"}}>
                     <div style={{padding:"12px 14px",borderBottom:"1px solid #f1f5f9"}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
                         <div style={{minWidth:0}}>
@@ -2990,7 +2994,7 @@ function VentasTab({remisiones,user,canProd,onNueva,onImprimir}){
           {lista.map(d=>{
             const esRem=d.tipo==="remision";
             return(
-              <div key={d.id} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"12px 14px",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
+              <div key={d.id} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"12px 14px",boxShadow:"0 1px 3px rgba(15,23,42,.08), 0 8px 20px -6px rgba(15,23,42,.22)"}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
                   <span style={{background:esRem?"#fef2f2":"#eff6ff",color:esRem?RED:"#1d4ed8",borderRadius:999,padding:"1px 10px",fontSize:12,fontWeight:800}}>{esRem?"REMISIÓN":"COTIZACIÓN"}</span>
                   <span style={{fontWeight:900,color:"#1e293b",fontSize:16}}>N° {d.numero}</span>
@@ -3428,7 +3432,7 @@ function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onFu
             const rs=remStats[c.id]||{docs:0,total:0};
             const oc=ordStats[c.id]||0;
             return(
-              <div key={c.id} onClick={()=>onVer&&onVer(c)} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px",cursor:onVer?"pointer":"default",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
+              <div key={c.id} onClick={()=>onVer&&onVer(c)} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px",cursor:onVer?"pointer":"default",boxShadow:"0 1px 3px rgba(15,23,42,.08), 0 8px 20px -6px rgba(15,23,42,.22)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
                   <div style={{minWidth:0}}>
                     <div style={{fontWeight:800,color:"#1e293b",fontSize:16}}>{c.nombre||"—"}</div>
