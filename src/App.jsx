@@ -693,28 +693,6 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
     await withSave(()=>updateDoc(doc(db,"inventario",id),clean));
   };
   const deleteProducto=async id=>{ await withSave(()=>deleteDoc(doc(db,"inventario",id))); };
-  // #13 — Importar el catálogo del Excel al inventario (solo los que falten), con stock y categoría
-  const importarCatalogo=async()=>{
-    if(!isG) return;
-    const existentes=new Set(inventario.map(p=>String(p.nombre||"").trim().toLowerCase()));
-    const nuevos=CATALOGO.filter(p=>!existentes.has(p.n.trim().toLowerCase()));
-    if(nuevos.length===0){ alert("El catálogo ya está cargado (no hay productos nuevos)."); return; }
-    if(!window.confirm(`Se cargarán ${nuevos.length} producto(s) del Excel al inventario, con su stock actual. Después podrás asignarles el precio mínimo. ¿Continuar?`)) return;
-    await withSave(async()=>{
-      let i=0;
-      for(const p of nuevos){
-        const id="inv_"+Date.now()+"_"+(i++);
-        await setDoc(doc(db,"inventario",id),{
-          id, nombre:p.n, categoria:p.c||"Otro", calibre:"", medida:"", color:"",
-          unidad:p.u||"unid", origen:"importado", importadoExcel:true, minimo:0, precioMin:"",
-          stock:{ "Centro":Number(p.ce)||0, "Santa Lucia":Number(p.sl)||0, "La Granja":0 },
-          mov:[{ts:Date.now(),tipo:"alta",sede:"—",cant:0,motivo:"Importado del Excel",usuario:user.name}],
-          creadoPor:user.name, timestamp:Date.now(),
-        });
-      }
-    });
-    alert(`Se cargaron ${nuevos.length} producto(s) del catálogo.`);
-  };
   const moverInventario=async(id,{sede,cant,tipo,motivo})=>{
     const p=inventario.find(x=>x.id===id);
     if(!p) return;
@@ -927,8 +905,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
           onEliminar={isG?(p=>{if(window.confirm(`¿Eliminar "${p.nombre}" del inventario?`))deleteProducto(p.id);}):null}
           onEntrada={p=>!isViewer&&setModal({t:"invMov",prod:p,tipo:"entrada"})}
           onSalida={p=>!isViewer&&setModal({t:"invMov",prod:p,tipo:"salida"})}
-          onKardex={p=>setModal({t:"invKardex",prod:p})}
-          onImportar={isG?importarCatalogo:null}/>}
+          onKardex={p=>setModal({t:"invKardex",prod:p})}/>}
         {tab==="ventas"&&<VentasTab remisiones={remisiones} user={user} canProd={canProd}
           onNueva={tipo=>canProd&&setModal({t:"nuevaVenta",tipo})}
           onImprimir={doc=>setModal({t:"verDoc",doc})}/>}
@@ -2515,9 +2492,8 @@ function DetailModal({order,isG,onClose,onQuickEdit,onSetEntrega}){
 
 // ═══ INVENTARIO ════════════════════════════════════════════
 const UNIDADES = ["rollos","m²","unidades","kg","metros","cajas"];
-const CATALOGO=[{n:"ALAMBRE CAL 11",u:"kg",sl:62,ce:0,c:"Alambre"},{n:"ALAMBRE CAL 12,5 OSCURO",u:"kg",sl:18,ce:0,c:"Alambre"},{n:"ALAMBRE CAL 12,5",u:"kg",sl:5,ce:0,c:"Alambre"},{n:"ALAMBRE CAL 12,5 ORIGINAL",u:"kg",sl:11,ce:150,c:"Alambre"},{n:"ALAMBRE CAL 14",u:"kg",sl:20,ce:47,c:"Alambre"},{n:"ALAMBRE CAL 11 PVC AZUL",u:"kg",sl:4,ce:3,c:"Alambre"},{n:"ALAMBRE CAL 11 PVC AMARILLO",u:"kg",sl:1,ce:2,c:"Alambre"},{n:"ALAMBRE CAL 11 PVC NARANJA",u:"kg",sl:4,ce:2,c:"Alambre"},{n:"ALAMBRE CAL 11 PVC ROJO",u:"kg",sl:4,ce:2,c:"Alambre"},{n:"ALAMBRE CAL 11 PVC AGUA MARINA",u:"kg",sl:1,ce:0,c:"Alambre"},{n:"ALAMBRE CAL 11 PVC NEGRO",u:"kg",sl:0,ce:3,c:"Alambre"},{n:"ALAMBRE CAL 11 PVC VERDE IMPORTADO MILITAR",u:"kg",sl:156,ce:4,c:"Alambre"},{n:"ALAMBRE CAL 11 PVC VERDE IMPORTADO CLARO",u:"kg",sl:0,ce:2,c:"Alambre"},{n:"ALAMBRE CAL 11 PVC NEGRO IMPORTADO",u:"kg",sl:6,ce:1,c:"Alambre"},{n:"ALAMBRE CAL 8 PVC VERDE MILITAR",u:"kg",sl:5,ce:0,c:"Alambre"},{n:"ALAMBRE CAL 8 PVC VERDE IMPORTADO CLARO",u:"kg",sl:6,ce:0,c:"Alambre"},{n:"ALAMBRE CAL 8 PVC VERDE IMPORTADO MILITAR",u:"kg",sl:99,ce:0,c:"Alambre"},{n:"ALAMBRE CAL 8 PVC ROJO",u:"kg",sl:2,ce:1,c:"Alambre"},{n:"ALAMBRE CAL 8 PVC AMARILLO",u:"kg",sl:2,ce:0,c:"Alambre"},{n:"ALAMBRE CAL 8 PVC VERDE OSCURO",u:"kg",sl:8,ce:0,c:"Alambre"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *1",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *1.20",u:"m²",sl:4,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *1.50",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *1.80",u:"m²",sl:5,ce:5,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *1.95",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *1.98",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 *2",u:"m²",sl:10,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 * 2.45",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/2 * 2.50",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\"1/4 * 2",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\" * 1.20",u:"m²",sl:0,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\" * 1.50",u:"m²",sl:0,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\" * 1.80",u:"m²",sl:0,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\" * 2",u:"m²",sl:2,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 10,5 H 2\" * 2.50",u:"m²",sl:3,ce:2,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 1",u:"m²",sl:1,ce:4,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 1.20",u:"m²",sl:2,ce:6,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 1.50",u:"m²",sl:11,ce:2,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 1.80",u:"m²",sl:1,ce:-2,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 1.80 OSCURO",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 2",u:"m²",sl:0,ce:1,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 2 OSCURO",u:"m²",sl:4,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/2 * 2.60",u:"m²",sl:4,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/4 * 1",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/4 * 1.80",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\"1/4 * 2",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\" * 1.50",u:"m²",sl:0,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\" * 1.80",u:"m²",sl:7,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\" * 1.80 OSCURO",u:"m²",sl:0,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 12,5 H 2\" * 2",u:"m²",sl:5,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/2 * 1",u:"m²",sl:3,ce:5,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/2 * 1.20",u:"m²",sl:10,ce:7,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/2 * 1.30",u:"m²",sl:0,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/2 * 1.50",u:"m²",sl:6,ce:4,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/2 * 1.80",u:"m²",sl:11,ce:6,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/2 * 2",u:"m²",sl:1,ce:5,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/4 * 1.50",u:"m²",sl:-3,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 14 H 2\"1/4 * 1.80",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA ESLABONADA CAL 14 H 2\" * 1.80",u:"m²",sl:0,ce:0,c:"Malla Eslabonada"},{n:"MALLA IMPORTADA CAL 10,5 H 2\"1/2 * 1.80",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA IMPORTADA CAL 10,5 H 2\"1/2 * 2",u:"m²",sl:484,ce:21,c:"Malla Eslabonada"},{n:"MALLA IMPORTADA CAL 10,5 H 2\"1/2 * 1.50",u:"m²",sl:389,ce:18,c:"Malla Eslabonada"},{n:"MALLA IMPORTADA CAL 12,5 H 2\"1/2 * 1.50",u:"m²",sl:1,ce:0,c:"Malla Eslabonada"},{n:"MALLA IMPORTADA CAL 12,5 H 2\"1/2 * 1.80",u:"m²",sl:60,ce:18,c:"Malla Eslabonada"},{n:"MALLA IMPORTADA CAL 12,5 H 2\"1/2 * 2",u:"m²",sl:697,ce:11,c:"Malla Eslabonada"},{n:"MALLA MAQUINADA CAL 10,5 H 2\"1/2 * 1.50",u:"m²",sl:0,ce:0,c:"Malla Eslabonada"},{n:"MALLA MAQUINADA CAL 10,5 H 2\"1/2 * 2",u:"m²",sl:-36,ce:0,c:"Malla Eslabonada"},{n:"MALLA CESPED CAL 16 H 1\"1/2",u:"m²",sl:45,ce:1,c:"Malla"},{n:"GUAYA 1/8",u:"m²",sl:19,ce:0,c:"Accesorios"},{n:"VARILLA 1/2 * 60cm",u:"unid",sl:61,ce:15,c:"Accesorios"},{n:"PERRO 1/8",u:"unid",sl:684,ce:59,c:"Accesorios"},{n:"TENSOR 3/16",u:"unid",sl:170,ce:78,c:"Accesorios"},{n:"CONCERTINA ACERO INOXIDABLE *6MTS",u:"unid",sl:247,ce:48,c:"Concertina"},{n:"CONCERTINA GALVANIZADA *6MTS",u:"unid",sl:0,ce:0,c:"Concertina"},{n:"ALAMBRE DE PUAS CAL 12,5 * 200 MTS",u:"unid",sl:26,ce:10,c:"Alambre de Púas"},{n:"ALAMBRE DE PUAS CAL 12,5 * 400 MTS",u:"unid",sl:31,ce:20,c:"Alambre de Púas"},{n:"ALAMBRE DE PUAS CAL 14,5 * 500 MTS",u:"unid",sl:39,ce:9,c:"Alambre de Púas"},{n:"ALAMBRE DE PUAS CAL 14,5 * 200 MTS",u:"unid",sl:39,ce:14,c:"Alambre de Púas"},{n:"ALAMBRE DE PUAS CAL 14,5 * 100 MTS",u:"unid",sl:27,ce:0,c:"Alambre de Púas"},{n:"ALAMBRE DE PUAS CAL 16,5 * 400 MTS",u:"unid",sl:22,ce:14,c:"Alambre de Púas"},{n:"ALAMBRE DE PUAS CAL 16,5 * 200 MTS",u:"unid",sl:22,ce:9,c:"Alambre de Púas"},{n:"MALLA GALLINERO *36MTS H 1\"1/4 * 0.90",u:"unid",sl:20,ce:12,c:"Malla"},{n:"MALLA GALLINERO *36MTS H 1\"1/4 * 1.20",u:"unid",sl:24,ce:14,c:"Malla"},{n:"MALLA GALLINERO *36MTS H 1\"1/4 * 1.50",u:"unid",sl:38,ce:10,c:"Malla"},{n:"MALLA GALLINERO *36MTS H 1\"1/4 * 1.80",u:"unid",sl:31,ce:10,c:"Malla"},{n:"MALLA GALLINERO *30 MTS H 2\" * 1,65",u:"unid",sl:38,ce:6,c:"Malla"},{n:"MALLA PAJARITO *30MTS H 3/4\" * 0.90",u:"unid",sl:9,ce:2,c:"Malla"},{n:"MALLA PAJARITO *30MTS H 3/4\" * 1",u:"unid",sl:14,ce:0,c:"Malla"},{n:"MALLA PAJARITO *30MTS H 3/4\" * 1.50",u:"unid",sl:8,ce:7,c:"Malla"},{n:"MALLA PAJARITO *30MTS H 3/4\" * 1.80",u:"unid",sl:8,ce:0,c:"Malla"},{n:"MALLA PAJARITO *30 MTS H 1/2\" * 0.90",u:"unid",sl:19,ce:5,c:"Malla"},{n:"MALLA PAJARITO *30 MTS H 1/2\" * 1",u:"unid",sl:9,ce:0,c:"Malla"},{n:"GAVION MANUAL CAL 12.5 H 10*10",u:"unid",sl:0,ce:190,c:"Gaviones"},{n:"GAVION MANUAL CAL 12.5 H 12*12",u:"unid",sl:62,ce:16,c:"Gaviones"},{n:"GAVION MAQUINADO CAL 13 H 10*10",u:"unid",sl:149,ce:50,c:"Gaviones"},{n:"GAVION MAQUINADO CAL 12.5 H 10*10",u:"unid",sl:0,ce:0,c:"Gaviones"},{n:"GAVIONES MAQUINADO CAL 12.5 H 12*12",u:"unid",sl:0,ce:0,c:"Gaviones"},{n:"GAVIONES MAQUINADO CAL 11 H 10*10",u:"unid",sl:444,ce:0,c:"Gaviones"},{n:"GAVION MAQUINADO CON CAL 12.5 H 10*10",u:"unid",sl:7,ce:0,c:"Gaviones"},{n:"GAVION MAQUINADO CON CAL 12.5 H 12*12",u:"unid",sl:562,ce:0,c:"Gaviones"},{n:"POSTE TERMINADO CAL 18 EN 2\"",u:"unid",sl:55,ce:39,c:"Postes"},{n:"POSTE TERMINADO CAL 18 EN 1\"1/2",u:"unid",sl:35,ce:61,c:"Postes"},{n:"POSTE TERMINADO CAL 16 EN 2\"",u:"unid",sl:17,ce:0,c:"Postes"},{n:"POSTE TERMINADO CAL 16 EN 1\"1/2",u:"unid",sl:207,ce:-10,c:"Postes"},{n:"POSTE TERMINADO CAL 14 EN 2\"",u:"unid",sl:38,ce:0,c:"Postes"},{n:"TUBO GALVANIZADO CAL 14 EN 2\" * 6 MTS",u:"unid",sl:0,ce:10,c:"Tubos"},{n:"TUBO GALVANIZADO CAL 14 EN 1\"1/2 * 6 MTS",u:"unid",sl:31,ce:10,c:"Tubos"},{n:"TUBO GALVANIZADO IMPORTADO CAL 18 EN 2\" * 6 MTS",u:"unid",sl:1580,ce:53,c:"Tubos"},{n:"TUBO GALVANIZADO IMPORTADO CAL 18 EN 1\"1/2 * 6 MTS",u:"unid",sl:379,ce:128,c:"Tubos"},{n:"TUBO GALVANIZADO IMPORTADO CAL 16 EN 2\" * 6 MTS",u:"unid",sl:126,ce:-3,c:"Tubos"},{n:"TUBO GALVANIZADO IMPORTADO CAL 16 EN 1\"1/2 * 6 MTS",u:"unid",sl:360,ce:35,c:"Tubos"},{n:"TUBO GALVANIZADO IMPORTADO CAL 14 EN 2\" * 6 MTS",u:"unid",sl:287,ce:20,c:"Tubos"},{n:"TUBO GALVANIZADO IMPORTADO CAL 14 EN 1\"1/2 * 6 MTS",u:"unid",sl:300,ce:0,c:"Tubos"},{n:"TUBO GALVANIZADO IMPORTADO CAL 18 EN 2\" * 3 MTS",u:"unid",sl:44,ce:0,c:"Tubos"},{n:"TUBO GALVANIZADO IMPORTADO CAL 18 EN 1\"1/2 * 3 MTS",u:"unid",sl:98,ce:0,c:"Tubos"},{n:"TAPON 2\"",u:"unid",sl:495,ce:266,c:"Accesorios"},{n:"TAPON 1\"1/2",u:"unid",sl:214,ce:231,c:"Accesorios"},{n:"GRAPA",u:"unid",sl:198,ce:10,c:"Accesorios"},{n:"PLATINA 1/2*1/8 * 6 MTS",u:"unid",sl:325,ce:122,c:"Accesorios"},{n:"ANGULO 1*1/8 * 6 MTS",u:"unid",sl:311,ce:74,c:"Accesorios"}];
-const INV_CATEGORIAS = ["Malla Eslabonada","Malla PVC","Malla","Postes","Alambre","Alambre de Púas","Gaviones","Concertina","Tubos","Accesorios","Otro"];
-const CAT_UNIDAD = {"Malla Eslabonada":"m²","Malla PVC":"m²","Postes":"unidades","Alambre de Púas":"metros","Gaviones":"unidades","Concertina":"rollos","Tubos":"unidades","Otro":"unidades"};
+const INV_CATEGORIAS = ["Malla Eslabonada","Malla PVC","Malla","Postes","Alambre","Alambre de Púas","Gaviones","Concertina","Cable","Tubos","Accesorios","Otro"];
+const CAT_UNIDAD = {"Malla Eslabonada":"m²","Malla PVC":"m²","Postes":"unidades","Alambre de Púas":"metros","Gaviones":"unidades","Concertina":"rollos","Cable":"metros","Tubos":"unidades","Otro":"unidades"};
 // Etiqueta rica del producto (categoría + calibre + medida + color); usa nombre como respaldo
 const invLabel = p => {
   if(p.importadoExcel&&p.nombre) return p.nombre;
@@ -2529,7 +2505,7 @@ const ORIGEN_INFO = {
   importado: { label:"Importado", bg:"#f5f3ff", col:"#7c3aed" },
 };
 
-function InventarioTab({inventario,orders=[],remisiones=[],lowStock,user,isG,canStock,onNuevo,onEditar,onEliminar,onEntrada,onSalida,onKardex,onImportar}){
+function InventarioTab({inventario,orders=[],remisiones=[],lowStock,user,isG,canStock,onNuevo,onEditar,onEliminar,onEntrada,onSalida,onKardex}){
   const [q,setQ]=useState("");
   const [cat,setCat]=useState("Todas");
   const [estado,setEstado]=useState("todos"); // todos | bajo | agotado
@@ -2571,7 +2547,6 @@ function InventarioTab({inventario,orders=[],remisiones=[],lowStock,user,isG,can
 
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
         <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar por nombre, calibre o medida..." value={q} onChange={e=>setQ(e.target.value)}/>
-        {isG&&onImportar&&<button onClick={onImportar} style={{...btnS,fontWeight:700}}>⬆ Importar catálogo</button>}
         {isG&&<button onClick={onNuevo} style={btnR}>+ Producto importado</button>}
       </div>
       <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
@@ -3104,10 +3079,8 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
 
   // Cotización: buscar en el catálogo del Excel y armar malla a medida (como en una orden)
   const [catQ,setCatQ]=useState("");
-  // Fuente del catálogo: el inventario real (con precio mínimo) o, si está vacío, la lista base del Excel
-  const catSource=inventario.length
-    ? inventario.map(p=>({n:invLabel(p),u:p.unidad,pm:(p.precioMin===""||p.precioMin==null)?null:Number(p.precioMin)}))
-    : CATALOGO.map(p=>({n:p.n,u:p.u,pm:null}));
+  // Fuente del catálogo: el inventario real (con precio mínimo)
+  const catSource=inventario.map(p=>({n:invLabel(p),u:p.unidad,pm:(p.precioMin===""||p.precioMin==null)?null:Number(p.precioMin)}));
   const catFiltrado=catQ.trim()?catSource.filter(p=>p.n.toLowerCase().includes(catQ.toLowerCase())).slice(0,25):[];
   const addCatalog=p=>{
     setItems(prev=>[...prev,{productoId:null,skuKey:null,descripcion:p.n,unidad:p.u,cantidad:"",valorUnit:p.pm||""}]);
