@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { db } from "./firebase.js";
+import { db, auth, googleProvider } from "./firebase.js";
 import {
   collection, doc, setDoc, updateDoc, deleteDoc,
-  onSnapshot, query, orderBy,
+  onSnapshot, query, orderBy, runTransaction,
 } from "firebase/firestore";
+import { signInWithPopup, signOut } from "firebase/auth";
 import logoUrl from "./assets/logo.png";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
@@ -21,6 +22,20 @@ const USERS = {
   "tv.planta":       { password:"FoxTV2026",        name:"Pantalla Planta", role:"viewer",      sede:"Ambas Sedes" },
   "alejandra":       { password:"FoxAle2026*",      name:"Alejandra",      role:"logistica",   sede:"Ambas Sedes" },
   "granja":          { password:"FoxGranja2026",    name:"La Granja",      role:"vendedora",   sede:"La Granja"   },
+};
+
+// ═══ SSO (Google) ═══════════════════════════════════════════
+// Mapea el correo de Google autorizado a su perfil. Un correo que no esté
+// aquí no puede entrar por SSO (aunque tenga cuenta de Google válida).
+// ⚠ EDITA esto con los correos reales del equipo antes de anunciar el botón
+// de Google a nadie — mientras esté vacío, el botón rechaza a todos.
+const EMAIL_USERS = {
+  // "mireya@tudominio.com":   { name:"Mireya",         role:"vendedora", sede:"Centro"      },
+  // "jhoana@tudominio.com":   { name:"Jhoana",         role:"vendedora", sede:"Centro"      },
+  // "tatiana@tudominio.com":  { name:"Tatiana",        role:"vendedora", sede:"Santa Lucia" },
+  // "carolina@tudominio.com": { name:"Carolina",       role:"vendedora", sede:"Santa Lucia" },
+  // "rafael@tudominio.com":   { name:"Rafael",         role:"gerencia",  sede:"Ambas Sedes" },
+  // "natalia@tudominio.com":  { name:"Natalia",        role:"gerencia",  sede:"Ambas Sedes" },
 };
 
 const MACHINES = [
@@ -412,7 +427,7 @@ export default function App(){
   },[orders]);
 
   const login=u=>{ setUser(u); localStorage.setItem("fox_session",JSON.stringify(u)); };
-  const logout=()=>{ setUser(null); localStorage.removeItem("fox_session"); };
+  const logout=()=>{ setUser(null); localStorage.removeItem("fox_session"); signOut(auth).catch(()=>{}); };
 
   if(!ready)return <Splash error={dbErr}/>;
   if(!user)return <Login onLogin={login}/>;
@@ -443,7 +458,26 @@ function Splash({error}){
 // ═══ LOGIN ═════════════════════════════════════════════════
 function Login({onLogin}){
   const [u,setU]=useState("");const [p,setP]=useState("");const [err,setErr]=useState("");const [show,setShow]=useState(false);
+  const [ssoLoading,setSsoLoading]=useState(false);
   const attempt=()=>{const d=USERS[u.trim().toLowerCase()];if(d&&d.password===p)onLogin({username:u.trim().toLowerCase(),...d});else setErr("Usuario o contraseña incorrectos");};
+  const attemptGoogle=async()=>{
+    setErr("");setSsoLoading(true);
+    try{
+      const cred=await signInWithPopup(auth,googleProvider);
+      const email=(cred.user.email||"").toLowerCase();
+      const perfil=EMAIL_USERS[email];
+      if(!perfil){
+        await signOut(auth);
+        setErr(`El correo ${email} no está autorizado. Pide al administrador que lo agregue.`);
+        return;
+      }
+      onLogin({username:email,email,authMethod:"google",...perfil});
+    }catch(e){
+      if(e?.code!=="auth/popup-closed-by-user") setErr("No se pudo iniciar sesión con Google: "+(e.message||e));
+    }finally{
+      setSsoLoading(false);
+    }
+  };
   return(
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:`linear-gradient(160deg,${DARK} 0%,#2d1010 100%)`,padding:16}}>
       <div style={{textAlign:"center",marginBottom:28,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
@@ -468,6 +502,15 @@ function Login({onLogin}){
         </div>
         {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"9px 13px",color:"#dc2626",fontSize:14,marginBottom:14}}>⚠ {err}</div>}
         <button onClick={attempt} style={{...btnR,width:"100%",padding:"12px"}}>Ingresar al sistema</button>
+        <div style={{display:"flex",alignItems:"center",gap:10,margin:"18px 0"}}>
+          <div style={{flex:1,height:1,background:"#e2e8f0"}}/>
+          <span style={{fontSize:12,color:"#94a3b8",fontWeight:600}}>o</span>
+          <div style={{flex:1,height:1,background:"#e2e8f0"}}/>
+        </div>
+        <button onClick={attemptGoogle} disabled={ssoLoading} style={{...btnS,width:"100%",padding:"12px",display:"flex",alignItems:"center",justifyContent:"center",gap:10,opacity:ssoLoading?.6:1}}>
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9C16.64 14.2 17.64 11.9 17.64 9.2z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97L3.95 7.3C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+          {ssoLoading?"Conectando...":"Iniciar sesión con Google"}
+        </button>
       </div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}*{box-sizing:border-box}`}</style>
     </div>
@@ -693,17 +736,23 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
     await withSave(()=>updateDoc(doc(db,"inventario",id),clean));
   };
   const deleteProducto=async id=>{ await withSave(()=>deleteDoc(doc(db,"inventario",id))); };
+  // Transacción (no lectura de estado local) para que dos movimientos simultáneos
+  // del mismo producto no se pisen entre sí (ej. dos sedes despachando a la vez).
   const moverInventario=async(id,{sede,cant,tipo,motivo})=>{
-    const p=inventario.find(x=>x.id===id);
-    if(!p) return;
     const q=Math.abs(Number(cant)||0);
     if(q<=0) return;
     const delta = tipo==="salida" ? -q : q;
-    const actual=Number(p.stock?.[sede])||0;
-    const nuevoStock={ ...(p.stock||{}), [sede]: Math.max(0, actual+delta) };
     const entry={ ts:Date.now(), tipo, sede, cant:q, motivo:motivo||"", usuario:user.name };
-    const mov=[...(Array.isArray(p.mov)?p.mov:[]), entry].slice(-120);
-    await withSave(()=>updateDoc(doc(db,"inventario",id),{stock:nuevoStock, mov}));
+    await withSave(()=>runTransaction(db, async tx=>{
+      const ref=doc(db,"inventario",id);
+      const snap=await tx.get(ref);
+      if(!snap.exists()) return;
+      const data=snap.data();
+      const actual=Number(data.stock?.[sede])||0;
+      const nuevoStock={ ...(data.stock||{}), [sede]: Math.max(0, actual+delta) };
+      const mov=[...(Array.isArray(data.mov)?data.mov:[]), entry].slice(-120);
+      tx.update(ref, {stock:nuevoStock, mov});
+    }));
   };
   // Productos con stock en o por debajo del mínimo (para alertas)
   const lowStock=[];
@@ -3120,7 +3169,8 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
   const ivaVal=ivaOn?Math.round(subtotal*(Number(ivaPorc)||0)/100):0;
   const reteVal=reteOn?Math.round(subtotal*(Number(retePorc)||0)/100):0;
   const total=subtotal+ivaVal-reteVal;
-  const saldo=Math.max(0,total-(Number(abono)||0));
+  const abonoVal=Math.max(0,Number(abono)||0);
+  const saldo=Math.max(0,total-abonoVal);
 
   const submit=async()=>{
     if(!cli.nombre.trim()){setErr("Ingresa el nombre del cliente");return;}
@@ -3140,7 +3190,7 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
       sede, cliente:{...cli,nombre:cli.nombre.trim()},
       items:its.map(lineFromItem),
       subtotal, iva:{aplica:ivaOn,porc:Number(ivaPorc)||0,valor:ivaVal}, retefuente:{aplica:reteOn,porc:Number(retePorc)||0,valor:reteVal},
-      total, abono:esRem?Number(abono)||0:0, saldo:esRem?saldo:0,
+      total, abono:esRem?abonoVal:0, saldo:esRem?saldo:0,
     };
     setLoading(true);
     const r=await onCreate(data);
@@ -3352,7 +3402,7 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
         {esRem&&(
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8,gap:8}}>
             <span style={{fontSize:14,color:"#64748b"}}>Abono</span>
-            <input style={{...inp,width:140,fontSize:13,textAlign:"right"}} type="number" value={abono} onChange={e=>setAbono(e.target.value)} placeholder="0"/>
+            <input style={{...inp,width:140,fontSize:13,textAlign:"right"}} type="number" min="0" value={abono} onChange={e=>setAbono(e.target.value)} placeholder="0"/>
             <span style={{fontSize:14,color:"#64748b"}}>Saldo</span>
             <span style={{fontSize:15,fontWeight:800,color:saldo>0?RED:GREEN}}>{cop(saldo)}</span>
           </div>
