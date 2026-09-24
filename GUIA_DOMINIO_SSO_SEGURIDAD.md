@@ -153,21 +153,25 @@ un cambio de una tarde, pero el orden importa.
 
 ## 6. Hallazgos que encontré pero no toqué (para que decidas)
 
-Un análisis de fondo del código encontró estos dos, de menor prioridad —
-no los cambié porque necesitan una decisión tuya sobre el comportamiento,
-no son bugs obvios de "una sola forma correcta de arreglar":
-
-- **Fusión de clientes**: cuando fusionas dos clientes duplicados, las
-  órdenes/remisiones viejas guardan el nombre del cliente tal como estaba
-  en ese momento (no una referencia en vivo). Si la pantalla de detalle de
-  un cliente no cruza también por los alias fusionados, el historial viejo
-  podría no aparecer ahí. Vale la pena que lo pruebes: fusiona dos
-  clientes de prueba y mira si el historial completo aparece en el
-  cliente resultante.
-- **Sincronización de clientes por nombre**: crea el ID del cliente a
-  partir del texto del nombre. Dos clientes distintos con nombres muy
-  parecidos (genéricos, tipo "Cliente Ferretería") podrían mezclarse en un
-  solo registro. Bajo riesgo salvo que lo veas pasar en la práctica.
+- **Fusión de clientes — revisado, está bien.** Al principio pensé que el
+  historial de un cliente fusionado podía "perderse" de la vista, pero
+  revisé el código: `ClientesTab` arma un mapa de "cualquier nombre o
+  alias → cliente dueño" (`clienteMatchIds`/`idToOwner`, `App.jsx` cerca
+  de la línea 3455) y con eso SÍ cruza correctamente las órdenes y
+  remisiones viejas al cliente fusionado. No hace falta tocar nada aquí.
+- **Sincronización de clientes por nombre — confirmado, sí es un riesgo
+  real.** `clienteId(nombre)` (línea 135) arma el ID del cliente
+  normalizando el texto del nombre (minúsculas, sin tildes, símbolos →
+  guion bajo) — no usa teléfono ni número de documento como respaldo. Dos
+  clientes reales distintos con el mismo nombre o uno muy parecido (común
+  con nombres genéricos tipo "Cliente Ferretería" o "Juan Pérez") se
+  mezclan en un solo registro de Firestore, sin ninguna pantalla de fusión
+  de por medio — simplemente comparten el mismo documento desde que se
+  crean. No lo cambié porque la solución (¿usar el documento/teléfono como
+  ID en vez del nombre? ¿pedir confirmación cuando el nombre ya existe?)
+  es una decisión de producto tuya, no un bug con una sola forma obvia de
+  arreglarse. Si lo has visto pasar en la práctica, avísame y lo
+  diseñamos juntos.
 
 ---
 
