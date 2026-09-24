@@ -1563,7 +1563,7 @@ function QueueTab({orders,allOrders,isG,onNew,onAssignOrder,onDel,onDetail,onEdi
             const activos=items.filter(it=>it.status==="active").length;
             const listos=items.filter(it=>it.status==="completed").length;
             return(
-              <div key={o.orden} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px"}}>
+              <div key={o.orden} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
                 {/* Cabecera de la orden */}
                 <div style={{display:"flex",alignItems:"flex-start",gap:14}}>
                   <div style={{width:44,height:44,background:"#fef2f2",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:900,color:RED,fontSize:14}}>#</div>
@@ -1643,7 +1643,7 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail,onQuickEdit,onSetEntreg
             const st=orderStInfo(o);
             const compAt=o.completedAt?fmtDate(o.completedAt):fmtDate(items.map(it=>it.completedAt).filter(Boolean).sort((a,b)=>b-a)[0])||"—";
             return(
-              <div key={o.orden} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"10px 14px"}}>
+              <div key={o.orden} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"10px 14px",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
                 {/* Línea 1: número + cliente + sede + estado (todo junto) */}
                 <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
                   <span style={{fontWeight:900,color:"#1e293b",fontSize:16}}>#{o.orden}</span>
@@ -2471,9 +2471,9 @@ function DetailModal({order,isG,onClose,onQuickEdit,onSetEntrega}){
       {logs.length===0?(
         <div style={{fontSize:13,color:"#94a3b8",marginBottom:16}}>Sin cambios registrados.</div>
       ):(
-        <div style={{maxHeight:180,overflowY:"auto",background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 12px",marginBottom:16}}>
+        <div style={{maxHeight:220,overflowY:"auto",display:"flex",flexDirection:"column",gap:8,marginBottom:16,padding:"2px"}}>
           {logs.map((l,i)=>(
-            <div key={i} style={{padding:"6px 0",borderBottom:i<logs.length-1?"1px solid #e2e8f0":"none"}}>
+            <div key={i} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:"8px 12px",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
               <div style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
                 <span style={{fontSize:13,fontWeight:700,color:"#334155"}}>{l.accion}</span>
                 <span style={{fontSize:12,color:"#94a3b8",whiteSpace:"nowrap"}}>{fmtDate(l.ts)}</span>
@@ -2572,7 +2572,7 @@ function InventarioTab({inventario,orders=[],remisiones=[],lowStock,user,isG,can
               {rows.map(({p,total,est})=>{
                 const s=ST[est];const der=p.derivado;const oi=ORIGEN_INFO[p.origen]||ORIGEN_INFO.producido;
                 return(
-                  <div key={p.id} style={{background:"#fff",border:`1.5px solid ${est==="ok"?"#e2e8f0":s.bd}`,borderRadius:14,overflow:"hidden"}}>
+                  <div key={p.id} style={{background:"#fff",border:`1.5px solid ${est==="ok"?"#e2e8f0":s.bd}`,borderRadius:14,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
                     <div style={{padding:"12px 14px",borderBottom:"1px solid #f1f5f9"}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
                         <div style={{minWidth:0}}>
@@ -2932,14 +2932,27 @@ function imprimirDocumento(doc,formato){
   const html=formato==="carta"?buildDocHtml(doc):buildTirillaHtml(doc);
   w.document.open(); w.document.write(html); w.document.close();
 }
+// Normaliza un teléfono colombiano a formato E.164 sin "+" (57 + 10 dígitos).
+// Devuelve null si no se puede determinar un número válido (evita links rotos de WhatsApp).
+function normalizePhoneCO(raw){
+  let d=String(raw||"").replace(/\D/g,"").replace(/^0+/,"");
+  if(d.length===12&&d.startsWith("57")) return d;
+  if(d.length===10) return "57"+d;
+  return null;
+}
 function waDocLink(doc){
   const c=doc.cliente||{};
-  const digits=(c.telefono||"").replace(/\D/g,"");
-  const phone=digits?(digits.startsWith("57")?digits:"57"+digits):"";
+  const phone=normalizePhoneCO(c.telefono);
+  if(!phone) return null;
   const lineas=(doc.items||[]).map(it=>`• ${it.cantidad||""} ${it.unidad||""} ${it.descripcion||""} — ${cop((Number(it.cantidad)||0)*(Number(it.valorUnit)||0))}`).join("\n");
   const titulo=doc.tipo==="remision"?"REMISIÓN":"COTIZACIÓN";
   const txt=`*${EMPRESA.nombre}*\n${titulo} N° ${doc.numero||""}\n\n${lineas}\n\n*Total: ${cop(doc.total)}*\n\n${doc.tipo==="cotizacion"?"Cotización válida por 15 días. ":""}${EMPRESA.email}`;
   return `https://wa.me/${phone}?text=${encodeURIComponent(txt)}`;
+}
+function compartirWhatsApp(doc){
+  const link=waDocLink(doc);
+  if(!link){ alert("Este cliente no tiene un celular colombiano válido guardado (10 dígitos, ej: 3001234567). Edítalo para poder enviar por WhatsApp."); return; }
+  window.open(link,"_blank","noopener,noreferrer");
 }
 function mailtoDoc(doc){
   const c=doc.cliente||{};
@@ -2977,7 +2990,7 @@ function VentasTab({remisiones,user,canProd,onNueva,onImprimir}){
           {lista.map(d=>{
             const esRem=d.tipo==="remision";
             return(
-              <div key={d.id} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"12px 14px"}}>
+              <div key={d.id} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:"12px 14px",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
                   <span style={{background:esRem?"#fef2f2":"#eff6ff",color:esRem?RED:"#1d4ed8",borderRadius:999,padding:"1px 10px",fontSize:12,fontWeight:800}}>{esRem?"REMISIÓN":"COTIZACIÓN"}</span>
                   <span style={{fontWeight:900,color:"#1e293b",fontSize:16}}>N° {d.numero}</span>
@@ -2988,7 +3001,7 @@ function VentasTab({remisiones,user,canProd,onNueva,onImprimir}){
                 <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>{d.creadoPorNombre} · {fmtDate(d.timestamp)}{esRem&&d.saldo>0?` · Saldo ${cop(d.saldo)}`:""}</div>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                   <button onClick={()=>onImprimir(d)} style={{...btnS,padding:"5px 12px",fontSize:14,fontWeight:700}}>Ver / Imprimir</button>
-                  <a href={waDocLink(d)} target="_blank" rel="noreferrer" style={{textDecoration:"none",background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"5px 12px",color:"#15803d",fontSize:14,fontWeight:700}}>WhatsApp</a>
+                  <button onClick={()=>compartirWhatsApp(d)} style={{cursor:"pointer",background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"5px 12px",color:"#15803d",fontSize:14,fontWeight:700}}>WhatsApp</button>
                   {d.cliente?.email&&<a href={mailtoDoc(d)} style={{textDecoration:"none",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"5px 12px",color:"#1d4ed8",fontSize:14,fontWeight:700}}>Email</a>}
                 </div>
               </div>
@@ -3373,7 +3386,7 @@ function VerDocumentoModal({doc,onClose}){
         <button onClick={()=>imprimirDocumento(doc,"tirilla")} style={{...btnR,width:"100%"}}>🖨 Imprimir tiquete (Epson TM-T20)</button>
         <button onClick={()=>imprimirDocumento(doc,"carta")} style={{...btnS,width:"100%",fontWeight:700}}>📄 PDF tamaño carta (para email)</button>
         <div style={{display:"flex",gap:8}}>
-          <a href={waDocLink(doc)} target="_blank" rel="noreferrer" style={{flex:1,textAlign:"center",textDecoration:"none",...btnG,padding:"11px"}}>Enviar por WhatsApp</a>
+          <button onClick={()=>compartirWhatsApp(doc)} style={{flex:1,cursor:"pointer",...btnG,padding:"11px"}}>Enviar por WhatsApp</button>
           <a href={mailtoDoc(doc)} style={{flex:1,textAlign:"center",textDecoration:"none",...btnS,padding:"11px",fontWeight:700}}>Enviar por Email</a>
         </div>
         <button onClick={onClose} style={{...btnS,width:"100%"}}>Cerrar</button>
@@ -3415,7 +3428,7 @@ function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onFu
             const rs=remStats[c.id]||{docs:0,total:0};
             const oc=ordStats[c.id]||0;
             return(
-              <div key={c.id} onClick={()=>onVer&&onVer(c)} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px",cursor:onVer?"pointer":"default"}}>
+              <div key={c.id} onClick={()=>onVer&&onVer(c)} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px",cursor:onVer?"pointer":"default",boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
                   <div style={{minWidth:0}}>
                     <div style={{fontWeight:800,color:"#1e293b",fontSize:16}}>{c.nombre||"—"}</div>
