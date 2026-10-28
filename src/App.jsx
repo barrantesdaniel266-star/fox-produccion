@@ -27,10 +27,6 @@ const USERS = {
   "carolina.santal": { password:"Foxsantac2026",  name:"Carolina",       role:"vendedora", sede:"Santa Lucia" },
   "rafael":          { password:"Fox2026*",        name:"Rafael",         role:"gerencia",  sede:"Ambas Sedes" },
   "natalia":         { password:"Fox2026*",        name:"Natalia",        role:"gerencia",  sede:"Ambas Sedes" },
-  "jefe.planta":     { password:"Fox2026*",        name:"Jefe de Planta", role:"gerencia",  sede:"Ambas Sedes" },
-  "tv.planta":       { password:"FoxTV2026",        name:"Pantalla Planta", role:"viewer",      sede:"Ambas Sedes" },
-  "alejandra":       { password:"FoxAle2026*",      name:"Alejandra",      role:"logistica",   sede:"Ambas Sedes" },
-  "granja":          { password:"FoxGranja2026",    name:"La Granja",      role:"vendedora",   sede:"La Granja"   },
 };
 
 // ═══ SSO (Google) ═══════════════════════════════════════════
