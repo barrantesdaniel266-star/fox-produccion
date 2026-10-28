@@ -61,14 +61,36 @@ const EMPRESA = {
   nombre:"MALLAS & ALAMBRES FOX",
   email:"mallasyalambresfox@gmail.com",
   sedes:[
-    { nombre:"Sede Centro",       dir:"Calle 12 # 15-87",        tels:"321 424 0407 · 322 914 7720" },
-    { nombre:"Sede Santa Lucía",  dir:"Carrera 21 # 44 Sur - 62", tels:"320 315 9731 · 320 320 2481 · 312 384 4768" },
+    { id:"Centro",      nombre:"Sede Centro",       dir:"Calle 12 # 15-87",        tels:"321 424 0407 · 322 914 7720" },
+    { id:"Santa Lucia", nombre:"Sede Santa Lucía",  dir:"Cra 22 # 44 Sur - 62", tels:"310 754 1094 · 320 315 3731" },
   ],
   ciudad:"Bogotá",
   nota:"Transcurridos treinta (30) días calendario desde la fecha de compra, no nos hacemos responsables por la conservación, custodia o devolución del mismo.",
 };
-const IVA_DEFAULT = 19;      // %
+const IVA_DEFAULT = 19;      // % (los precios ya lo incluyen)
 const RETE_DEFAULT = 2.5;    // %
+const RETEICA_DEFAULT = 0.69; // % (6,9 por mil)
+// Sede de un documento -> datos de esa sede (La Granja es solo bodega: usa Centro)
+const sedeEmpresa = sede => EMPRESA.sedes.find(s=>s.id===sede) || EMPRESA.sedes[0];
+// Los precios YA incluyen IVA: base = subtotal ÷ 1,19; IVA = subtotal − base.
+// Retefuente y ReteICA se calculan sobre la base y se restan del total a pagar.
+function calcImpuestos(subtotal,rete,reteica,abono,esRem){
+  const sub=Number(subtotal)||0;
+  const base=Math.round(sub/(1+IVA_DEFAULT/100));
+  const ivaVal=sub-base;
+  const rf=rete?.aplica?Math.round(base*(Number(rete.porc)||0)/100):0;
+  const ri=reteica?.aplica?Math.round(base*(Number(reteica.porc)||0)/100):0;
+  const total=sub-rf-ri;
+  const ab=esRem?Math.max(0,Number(abono)||0):0;
+  return {
+    base, iva:{aplica:true,porc:IVA_DEFAULT,valor:ivaVal},
+    retefuente:{aplica:!!rete?.aplica,porc:Number(rete?.porc)||0,valor:rf},
+    reteica:{aplica:!!reteica?.aplica,porc:Number(reteica?.porc)||0,valor:ri},
+    total, saldo:esRem?Math.max(0,total-ab):0,
+  };
+}
+// Aplica la regla vigente también a documentos viejos (solo al leer; no reescribe Firestore)
+const normalizarDoc = d => (d&&d.subtotal!=null) ? {...d,...calcImpuestos(d.subtotal,d.retefuente,d.reteica,d.abono,d.tipo==="remision")} : d;
 // Números iniciales — cámbialos al próximo número real de tu talonario para no duplicar
 const REMISION_INICIAL = 3463;
 const COTIZACION_INICIAL = 1;
@@ -88,6 +110,7 @@ const MOV_PRODUCTOS = [
 const ABERTURA_SIZES = ['1"','1 1/4"','1 1/2"','2"','2 1/4"','2 1/2"','3"'];
 // ── Formatos estándar para captura de productos (edítalos si falta alguno) ──
 const OPC_CALIBRE  = ["8","9","10","10.5","11","12","12.5","13","14","16"];
+const OPC_CALIBRE_POSTE = [...OPC_CALIBRE,"18"];                            // postes (incluye 18)
 const OPC_ABERTURA = ['1"','1 1/4"','1 1/2"','2"','2 1/4"','2 1/2"','3"'];
 const OPC_ALTO     = ["1.0","1.2","1.5","1.8","2.0","2.2","2.5","3.0"];   // metros (alto)
 const OPC_ANCHO    = ["5","10","15","20","25"];                             // metros (largo del rollo)
@@ -395,7 +418,7 @@ export default function App(){
 
   const [remisiones,setRemisiones]=useState([]);
   useEffect(()=>{
-    return onSnapshot(collection(db,"remisiones"),snap=>setRemisiones(snap.docs.map(d=>d.data())),()=>{});
+    return onSnapshot(collection(db,"remisiones"),snap=>setRemisiones(snap.docs.map(d=>normalizarDoc(d.data()))),()=>{});
   },[]);
   const [clientes,setClientes]=useState([]);
   useEffect(()=>{
@@ -841,12 +864,14 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
         }
       }
       await setDoc(doc(db,"remisiones",id),{
-        id,tipo:d.tipo,numero,origen:d.origen||null,ordenRef:d.ordenRef||null,
+        id,tipo:d.tipo,numero,origen:d.origen||null,ordenRef:d.ordenRef||null,cotizacionRef:d.cotizacionRef||null,
         cliente:d.cliente||{},sede:d.sede||user.sede,items:d.items||[],
-        subtotal:d.subtotal||0,iva:d.iva||{aplica:false,porc:0,valor:0},retefuente:d.retefuente||{aplica:false,porc:0,valor:0},
+        subtotal:d.subtotal||0,iva:d.iva||{aplica:false,porc:0,valor:0},retefuente:d.retefuente||{aplica:false,porc:0,valor:0},reteica:d.reteica||{aplica:false,porc:0,valor:0},
         total:d.total||0,abono:d.abono||0,saldo:d.saldo||0,
         creadoPor:user.username,creadoPorNombre:user.name,timestamp:Date.now(),
       });
+      // Marca la cotización como convertida (evita convertirla dos veces)
+      if(d.cotizacionRef) await updateDoc(doc(db,"remisiones",d.cotizacionRef.id),{convertidaA:{id,numero,ts:Date.now()}});
     });
     return {numero,id};
   };
@@ -957,6 +982,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
           onKardex={p=>setModal({t:"invKardex",prod:p})}/>}
         {tab==="ventas"&&<VentasTab remisiones={remisiones} user={user} canProd={canProd}
           onNueva={tipo=>canProd&&setModal({t:"nuevaVenta",tipo})}
+          onConvertir={d=>canProd&&setModal({t:"nuevaVenta",tipo:"remision",desde:d})}
           onImprimir={doc=>setModal({t:"verDoc",doc})}/>}
         {tab==="clientes"&&<ClientesTab clientes={clientes} remisiones={remisiones} orders={orders} isG={isG} canProd={canProd}
           onVer={c=>setModal({t:"clienteDetalle",cli:c})}
@@ -988,7 +1014,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       {modal?.t==="invEditar" &&<ProductoModal prod={modal.prod} isG={isG} onClose={()=>setModal(null)} onSave={d=>editProducto(modal.prod.id,d)}/>}
       {modal?.t==="invMov"    &&<MovInventarioModal prod={modal.prod} tipo={modal.tipo} onClose={()=>setModal(null)} onSave={moverInventario}/>}
       {modal?.t==="invKardex" &&<KardexModal prod={modal.prod} onClose={()=>setModal(null)}/>}
-      {modal?.t==="nuevaVenta"&&<NuevaVentaModal tipo={modal.tipo} user={user} inventario={inventario} orders={orders} remisiones={remisiones} clientes={clientes} onClose={()=>setModal(null)} onCreate={createDocumento} onDone={doc=>setModal({t:"verDoc",doc})}/>}
+      {modal?.t==="nuevaVenta"&&<NuevaVentaModal tipo={modal.tipo} desde={modal.desde} user={user} inventario={inventario} orders={orders} remisiones={remisiones} clientes={clientes} onClose={()=>setModal(null)} onCreate={createDocumento} onDone={doc=>setModal({t:"verDoc",doc})}/>}
       {modal?.t==="verDoc"    &&<VerDocumentoModal doc={modal.doc} onClose={()=>setModal(null)}/>}
       {modal?.t==="pasarInv"  &&<PasarInventarioModal order={modal.order} inventario={inventario} onClose={()=>setModal(null)} onSave={pasarOrdenAInventario}/>}
       {modal?.t==="cliente"   &&<ClienteModal cli={modal.cli} onClose={()=>setModal(null)} onSave={saveCliente}/>}
@@ -1803,7 +1829,7 @@ function ItemFields({item,onChange}){
   if(item.producto==="postes"){
     return(
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginTop:8}}>
-        <Field label="Calibre *"><SelectOpc value={item.calibre} onChange={v=>set("calibre",v)} options={OPC_CALIBRE} num placeholder="Calibre..."/></Field>
+        <Field label="Calibre *"><SelectOpc value={item.calibre} onChange={v=>set("calibre",v)} options={OPC_CALIBRE_POSTE} num placeholder="Calibre..."/></Field>
         <Field label="Grosor *"><SelectOpc value={item.grosor} onChange={v=>set("grosor",v)} options={OPC_GROSOR} placeholder="Grosor..."/></Field>
         <Field label="Largo (m) *"><SelectOpc value={item.largo} onChange={v=>set("largo",v)} options={OPC_LARGO} num unit="m" placeholder="Largo..."/></Field>
         <Field label="Cantidad *"><NumInp value={item.cantidad||""} onChange={v=>set("cantidad",v)} placeholder="10" unit="un"/></Field>
@@ -2545,8 +2571,8 @@ function DetailModal({order,isG,onClose,onQuickEdit,onSetEntrega}){
 
 // ═══ INVENTARIO ════════════════════════════════════════════
 const UNIDADES = ["rollos","m²","unidades","kg","metros","cajas"];
-const INV_CATEGORIAS = ["Malla Eslabonada","Malla PVC","Malla","Postes","Alambre","Alambre de Púas","Gaviones","Concertina","Cable","Tubos","Accesorios","Otro"];
-const CAT_UNIDAD = {"Malla Eslabonada":"m²","Malla PVC":"m²","Postes":"unidades","Alambre de Púas":"metros","Gaviones":"unidades","Concertina":"rollos","Cable":"metros","Tubos":"unidades","Otro":"unidades"};
+const INV_CATEGORIAS = ["Malla Eslabonada","Malla PVC","Malla Ondulada","Malla","Postes","Alambre","Alambre de Púas","Gaviones","Concertina","Cable","Tubos","Accesorios","Otro"];
+const CAT_UNIDAD = {"Malla Eslabonada":"m²","Malla PVC":"m²","Malla Ondulada":"m²","Postes":"unidades","Alambre de Púas":"metros","Gaviones":"unidades","Concertina":"rollos","Cable":"metros","Tubos":"unidades","Otro":"unidades"};
 // Etiqueta rica del producto (categoría + calibre + medida + color); usa nombre como respaldo
 const invLabel = p => {
   if(p.importadoExcel&&p.nombre) return p.nombre;
@@ -2567,6 +2593,9 @@ function InventarioTab({inventario,orders=[],remisiones=[],lowStock,user,isG,can
   // Fuente única de stock (catálogo importado + producción, neto de ventas)
   const all=computeInventario(orders,remisiones,inventario).all;
 
+  const [soloSinPrecio,setSoloSinPrecio]=useState(false);
+  const sinPrecio=p=>!p.derivado&&(p.precioMin===""||p.precioMin==null||Number(p.precioMin)<=0);
+  const nSinPrecio=all.filter(sinPrecio).length;
   const estadoDe=p=>{ const t=SEDES.reduce((a,s)=>a+(Number(p.stock?.[s])||0),0); if(t<=0) return "agotado"; if((p.minimo||0)>0&&t<=p.minimo) return "bajo"; return "ok"; };
   const ST={ ok:{txt:"En stock",col:"#15803d",bg:"#f0fdf4",bd:"#86efac"}, bajo:{txt:"Bajo",col:"#b45309",bg:"#fffbeb",bd:"#fde68a"}, agotado:{txt:"Agotado",col:"#dc2626",bg:"#fef2f2",bd:"#fecaca"} };
 
@@ -2577,6 +2606,7 @@ function InventarioTab({inventario,orders=[],remisiones=[],lowStock,user,isG,can
   const fil=withTotal
     .filter(x=>cat==="Todas"||(x.p.categoria||"Otro")===cat)
     .filter(x=>estado==="todos"||x.est===estado)
+    .filter(x=>!soloSinPrecio||sinPrecio(x.p))
     .filter(x=>{ const s=(invLabel(x.p)+" "+(x.p.nombre||"")).toLowerCase(); return s.includes(q.toLowerCase()); })
     .sort((a,b)=>invLabel(a.p).localeCompare(invLabel(b.p)));
   const grupos={};
@@ -2598,6 +2628,12 @@ function InventarioTab({inventario,orders=[],remisiones=[],lowStock,user,isG,can
         <Kpi label="Agotados" value={kpi.agotado} color="#dc2626" bg="#fef2f2" onClick={()=>setEstado(estado==="agotado"?"todos":"agotado")} active={estado==="agotado"}/>
       </div>
 
+      {isG&&nSinPrecio>0&&(
+        <div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:12,padding:"10px 14px",marginBottom:12,display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <span style={{fontSize:14,color:"#92400e",flex:1,minWidth:220}}>⚠ <b>{nSinPrecio}</b> producto(s) sin precio mínimo. Usa el botón ✏ de cada tarjeta para asignarlo (también puedes editar nombre, calibre, medida y demás datos, o agregar productos nuevos).</span>
+          <button onClick={()=>setSoloSinPrecio(v=>!v)} style={{...btnS,padding:"6px 12px",fontSize:13,fontWeight:700}}>{soloSinPrecio?"Ver todos":"Ver solo sin precio"}</button>
+        </div>
+      )}
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
         <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar por nombre, calibre o medida..." value={q} onChange={e=>setQ(e.target.value)}/>
         {isG&&<button onClick={onNuevo} style={btnR}>+ Producto importado</button>}
@@ -2649,7 +2685,7 @@ function InventarioTab({inventario,orders=[],remisiones=[],lowStock,user,isG,can
                           ? <span style={{fontSize:11,color:"#94a3b8"}}>{fq(p.sinEntregar)} sin entregar · {fq(p.paraStock)} stock</span>
                           : ((p.minimo||0)>0&&<span style={{fontSize:12,color:"#94a3b8"}}>mínimo {p.minimo}</span>)}
                       </div>
-                      {isG&&!der&&<div style={{fontSize:12,color:(p.precioMin===""||p.precioMin==null)?"#dc2626":"#b45309",fontWeight:600,marginTop:4}}>Precio mín: {(p.precioMin===""||p.precioMin==null)?"sin asignar":cop(p.precioMin)+"/"+p.unidad}</div>}
+                      {!der&&<div style={{fontSize:12,color:sinPrecio(p)?(isG?"#dc2626":"#94a3b8"):"#b45309",fontWeight:600,marginTop:4}}>Precio mín: {sinPrecio(p)?(isG?"sin asignar — edítalo ✏":"sin asignar"):cop(p.precioMin)+"/"+p.unidad}</div>}
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,padding:"10px 14px"}}>
                       {SEDES.map(se=>{
@@ -2696,7 +2732,8 @@ function ProductoModal({prod,isG,onClose,onSave}){
   const [minimo,setMinimo]=useState(prod?.minimo!=null?String(prod.minimo):"");
   const [precioMin,setPrecioMin]=useState(prod?.precioMin!=null&&prod?.precioMin!==""?String(prod.precioMin):"");
   // Nombre/referencia opcional: si el producto viejo solo tenía nombre, lo conservamos
-  const legacyNombre = editing && !prod?.categoria ? (prod?.nombre||"") : "";
+  // Al editar se conserva el nombre actual (si no, los productos importados se renombrarían a su categoría)
+  const legacyNombre = editing ? (prod?.nombre||"") : "";
   const [ref,setRef]=useState(legacyNombre);
   const [err,setErr]=useState("");const [loading,setLoading]=useState(false);
 
@@ -2743,7 +2780,7 @@ function ProductoModal({prod,isG,onClose,onSave}){
           <div style={{fontSize:11,color:"#92400e"}}>Este es el precio mínimo al que se debe vender. La vendedora lo verá como guía al crear la orden, sin saber que lo define gerencia.</div>
         </div>
       )}
-      <Field label="Nombre / referencia (opcional — si lo dejas vacío se arma solo)">
+      <Field label="Nombre / referencia (puedes cambiarlo; si lo dejas vacío se arma solo con categoría, calibre y medida)">
         <input style={inp} value={ref} onChange={e=>{setRef(e.target.value);setErr("");}} placeholder={auto||"Nombre del producto"}/>
       </Field>
       <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"10px 12px",marginBottom:12}}>
@@ -2848,7 +2885,9 @@ function KardexModal({prod,onClose}){
 // ═══ VENTAS / REMISIONES / COTIZACIONES ════════════════════
 const docFecha = ts => { const d=new Date(ts||Date.now()); const p=n=>String(n).padStart(2,"0"); return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`; };
 const cop = n => "$ "+(Number(n)||0).toLocaleString("es-CO");
-const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+// En el impreso se omite la unidad de metros (m / m²) para no confundir
+const unidadPrint = u => /^m[²2]?$/i.test(String(u||"").trim()) ? "" : (u||"");
+const esc = s =>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
 function buildDocHtml(doc){
   const esRem=doc.tipo==="remision";
@@ -2857,18 +2896,20 @@ function buildDocHtml(doc){
   const c=doc.cliente||{};
   const rows=(doc.items||[]).map(it=>{
     const vt=it.valorTotal!=null?it.valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0);
-    return `<tr><td class="c">${esc(it.cantidad)} ${esc(it.unidad)}</td><td>${esc(it.descripcion)}</td><td class="r">${cop(it.valorUnit)}</td><td class="r">${cop(vt)}</td></tr>`;
+    return `<tr><td class="c">${esc(it.cantidad)} ${esc(unidadPrint(it.unidad))}</td><td>${esc(it.descripcion)}</td><td class="r">${cop(it.valorUnit)}</td><td class="r">${cop(vt)}</td></tr>`;
   }).join("");
-  const iva=doc.iva||{}, rete=doc.retefuente||{};
+  const iva=doc.iva||{}, rete=doc.retefuente||{}, ica=doc.reteica||{};
   const totLines=[
+    `<tr><td class="tl">Base (sin IVA)</td><td class="r">${cop(doc.base)}</td></tr>`,
+    `<tr><td class="tl">IVA (${iva.porc}%)</td><td class="r">${cop(iva.valor)}</td></tr>`,
     `<tr><td class="tl">Subtotal</td><td class="r">${cop(doc.subtotal)}</td></tr>`,
-    iva.aplica?`<tr><td class="tl">IVA (${iva.porc}%)</td><td class="r">${cop(iva.valor)}</td></tr>`:"",
     rete.aplica?`<tr><td class="tl">Retefuente (${rete.porc}%)</td><td class="r">- ${cop(rete.valor)}</td></tr>`:"",
+    ica.aplica?`<tr><td class="tl">ReteICA (${ica.porc}%)</td><td class="r">- ${cop(ica.valor)}</td></tr>`:"",
     `<tr class="big"><td class="tl">TOTAL</td><td class="r">${cop(doc.total)}</td></tr>`,
     esRem?`<tr><td class="tl">Abono</td><td class="r">${cop(doc.abono)}</td></tr>`:"",
     esRem?`<tr><td class="tl">Saldo</td><td class="r">${cop(doc.saldo)}</td></tr>`:"",
   ].join("");
-  const sedes=EMPRESA.sedes.map(s=>`<div style="font-size:10px"><b>${s.nombre}</b> · ${s.dir}<br>${s.tels}</div>`).join("");
+  const sedes=[sedeEmpresa(doc.sede)].map(s=>`<div style="font-size:10px"><b>${s.nombre}</b> · ${s.dir}<br>${s.tels}</div>`).join("");
   const footer=esRem
     ? `<div class="firmas"><div>Recibí conforme<br>_______________________<br>FIRMA C.C. / NIT</div><div>Entregado<br>_______________________<br>FIRMA C.C. / NIT</div></div>`
     : `<div class="blurb"><b>Somos ${EMPRESA.nombre}.</b> Fabricamos e importamos malla eslabonada, malla PVC, postes y más, con despacho a todo el país desde ${EMPRESA.ciudad}. Cotización válida por 15 días. ¡Contáctanos!<br>${EMPRESA.email}</div>`;
@@ -2922,18 +2963,20 @@ function buildTirillaHtml(doc){
   const money=n=>cop(n);
   const items=(doc.items||[]).map(it=>{
     const vt=it.valorTotal!=null?it.valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0);
-    return `<div class="it"><div class="d">${esc(it.descripcion)}</div><div class="q">${esc(it.cantidad)} ${esc(it.unidad)} x ${money(it.valorUnit)}<span class="v">${money(vt)}</span></div></div>`;
+    return `<div class="it"><div class="d">${esc(it.descripcion)}</div><div class="q">${esc(it.cantidad)} ${esc(unidadPrint(it.unidad))} x ${money(it.valorUnit)}<span class="v">${money(vt)}</span></div></div>`;
   }).join("");
-  const iva=doc.iva||{}, rete=doc.retefuente||{};
+  const iva=doc.iva||{}, rete=doc.retefuente||{}, ica=doc.reteica||{};
   const tot=[
+    `<div class="row"><span>Base (sin IVA)</span><span>${money(doc.base)}</span></div>`,
+    `<div class="row"><span>IVA ${iva.porc}%</span><span>${money(iva.valor)}</span></div>`,
     `<div class="row"><span>Subtotal</span><span>${money(doc.subtotal)}</span></div>`,
-    iva.aplica?`<div class="row"><span>IVA ${iva.porc}%</span><span>${money(iva.valor)}</span></div>`:"",
     rete.aplica?`<div class="row"><span>Retefuente ${rete.porc}%</span><span>-${money(rete.valor)}</span></div>`:"",
+    ica.aplica?`<div class="row"><span>ReteICA ${ica.porc}%</span><span>-${money(ica.valor)}</span></div>`:"",
     `<div class="row big"><span>TOTAL</span><span>${money(doc.total)}</span></div>`,
     esRem?`<div class="row"><span>Abono</span><span>${money(doc.abono)}</span></div>`:"",
     esRem?`<div class="row"><span>Saldo</span><span>${money(doc.saldo)}</span></div>`:"",
   ].join("");
-  const sedes=EMPRESA.sedes.map(s=>`<div class="sede">${s.nombre}<br>${s.dir}<br>${s.tels}</div>`).join("");
+  const sedes=[sedeEmpresa(doc.sede)].map(s=>`<div class="sede">${s.nombre}<br>${s.dir}<br>${s.tels}</div>`).join("");
   const pie=esRem
     ? `<div class="nota">${esc(EMPRESA.nota)}</div><div class="firma">Recibido conforme:<br><br>____________________</div><div class="ty">¡Gracias por su compra!</div>`
     : `<div class="nota">Cotización válida por 15 días. Somos ${EMPRESA.nombre}: fabricamos e importamos malla, postes y más.</div><div class="ty">¡Gracias por preferirnos!</div>`;
@@ -3014,7 +3057,7 @@ function mailtoDoc(doc){
   return `mailto:${c.email||""}?subject=${encodeURIComponent(titulo+" N° "+(doc.numero||"")+" - "+EMPRESA.nombre)}&body=${encodeURIComponent(body)}`;
 }
 
-function VentasTab({remisiones,user,canProd,onNueva,onImprimir}){
+function VentasTab({remisiones,user,canProd,onNueva,onConvertir,onImprimir}){
   const [q,setQ]=useState("");const [filtro,setFiltro]=useState("todas");
   const lista=[...remisiones]
     .filter(d=>filtro==="todas"||d.tipo===(filtro==="remisiones"?"remision":"cotizacion"))
@@ -3049,11 +3092,14 @@ function VentasTab({remisiones,user,canProd,onNueva,onImprimir}){
                   <span style={{fontWeight:900,color:"#1e293b",fontSize:16}}>N° {d.numero}</span>
                   <span style={{fontWeight:600,color:"#334155",fontSize:15}}>{d.cliente?.nombre||"—"}</span>
                   {esRem&&d.origen&&<span style={{fontSize:12,color:"#94a3b8"}}>· {d.origen==="stock"?"desde stock":"desde producción"}</span>}
+                  {esRem&&d.cotizacionRef&&<span style={{fontSize:12,color:"#1d4ed8"}}>· de Cotización N° {d.cotizacionRef.numero}</span>}
+                  {!esRem&&d.convertidaA&&<span style={{background:"#f0fdf4",color:"#15803d",border:"1px solid #86efac",borderRadius:999,padding:"1px 8px",fontSize:11,fontWeight:700}}>Convertida → Remisión N° {d.convertidaA.numero}</span>}
                   <span style={{marginLeft:"auto",fontWeight:800,color:"#1e293b"}}>{cop(d.total)}</span>
                 </div>
                 <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>{d.creadoPorNombre} · {fmtDate(d.timestamp)}{esRem&&d.saldo>0?` · Saldo ${cop(d.saldo)}`:""}</div>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                   <button onClick={()=>onImprimir(d)} style={{...btnS,padding:"5px 12px",fontSize:14,fontWeight:700}}>Ver / Imprimir</button>
+                  {!esRem&&canProd&&!d.convertidaA&&<button onClick={()=>onConvertir(d)} style={{cursor:"pointer",background:"#fef2f2",border:`1px solid ${RED}`,borderRadius:8,padding:"5px 12px",color:RED,fontSize:14,fontWeight:700}}>Convertir en remisión</button>}
                   <button onClick={()=>compartirWhatsApp(d)} style={{cursor:"pointer",background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:"5px 12px",color:"#15803d",fontSize:14,fontWeight:700}}>WhatsApp</button>
                   {d.cliente?.email&&<a href={mailtoDoc(d)} style={{textDecoration:"none",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"5px 12px",color:"#1d4ed8",fontSize:14,fontWeight:700}}>Email</a>}
                 </div>
@@ -3066,16 +3112,23 @@ function VentasTab({remisiones,user,canProd,onNueva,onImprimir}){
   );
 }
 
-function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],clientes,onClose,onCreate,onDone}){
-  const [tipo,setTipo]=useState(tipoInit||"remision");
+function NuevaVentaModal({tipo:tipoInit,desde=null,user,inventario,orders,remisiones=[],clientes,onClose,onCreate,onDone}){
+  // desde = cotización que se convierte en remisión (trae cliente, ítems, valores e impuestos)
+  const [tipo,setTipo]=useState(desde?"remision":(tipoInit||"remision"));
   const esRem=tipo==="remision";
   const [origen,setOrigen]=useState("stock");
   const [ordenRef,setOrdenRef]=useState(null);
-  const [sede,setSede]=useState(user.sede==="Ambas Sedes"||!SEDES.includes(user.sede)?"Centro":user.sede);
-  const [cli,setCli]=useState({docTipo:"NIT",docNumero:"",nombre:"",telefono:"",email:"",direccion:""});
-  const [items,setItems]=useState([{productoId:null,skuKey:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
-  const [ivaOn,setIvaOn]=useState(false);const [ivaPorc,setIvaPorc]=useState(String(IVA_DEFAULT));
-  const [reteOn,setReteOn]=useState(false);const [retePorc,setRetePorc]=useState(String(RETE_DEFAULT));
+  const [sede,setSede]=useState(desde?.sede||(user.sede==="Ambas Sedes"||!SEDES.includes(user.sede)?"Centro":user.sede));
+  const [cli,setCli]=useState(desde?{docTipo:"NIT",docNumero:"",nombre:"",telefono:"",email:"",direccion:"",...(desde.cliente||{})}:{docTipo:"NIT",docNumero:"",nombre:"",telefono:"",email:"",direccion:""});
+  // Cada ítem se enlaza al producto del inventario (por id o por nombre) para poder descontar stock
+  const [items,setItems]=useState(()=>desde&&(desde.items||[]).length
+    ? desde.items.map(it=>{
+        const p=it.productoId?inventario.find(x=>x.id===it.productoId):inventario.find(x=>invLabel(x)===it.descripcion);
+        return {productoId:p?p.id:null,skuKey:it.skuKey||null,descripcion:it.descripcion,cantidad:it.cantidad,unidad:it.unidad||(p?p.unidad:""),valorUnit:it.valorUnit};
+      })
+    : [{productoId:null,skuKey:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
+  const [reteOn,setReteOn]=useState(!!desde?.retefuente?.aplica);const [retePorc,setRetePorc]=useState(String(desde?.retefuente?.aplica?desde.retefuente.porc:RETE_DEFAULT));
+  const [icaOn,setIcaOn]=useState(!!desde?.reteica?.aplica);const [icaPorc,setIcaPorc]=useState(String(desde?.reteica?.aplica?desde.reteica.porc:RETEICA_DEFAULT));
   const [abono,setAbono]=useState("");
   const [qOrden,setQOrden]=useState("");
   const [loading,setLoading]=useState(false);const [err,setErr]=useState("");
@@ -3155,7 +3208,9 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
   const addMalla=()=>setItems(prev=>[...prev,{productoId:null,skuKey:null,producto:"eslabonada",calibre:"",abertura:"",calibreInterno:"",color:"",ancho:"",alto:"",cantidad:"",valorUnit:""}]);
   // Cantidad efectiva: para malla eslabonada/pvc usa los m² calculados si no hay cantidad manual
   const effCant=it=> (it.producto&&it.producto!=="postes") ? (Number(it.cantidad)||Number(calcM2(it.ancho,it.alto))||0) : (Number(it.cantidad)||0);
-  const descMalla=it=>`${labelProducto(it.producto)}${it.calibre?` Cal ${it.calibre}`:""}${it.calibreInterno?`/${it.calibreInterno}`:""}${it.abertura?` ${it.abertura}`:""}${(it.ancho&&it.alto)?` ${it.ancho}×${it.alto}m`:""}${it.color?` ${it.color}`:""}`.trim();
+  const descMalla=it=> it.producto==="postes"
+    ? `Poste${it.calibre?` Cal ${it.calibre}`:""}${it.grosor?` ${it.grosor}"`:""}${it.largo?` × ${it.largo} m`:""}`.trim()
+    : `${labelProducto(it.producto)}${it.calibre?` Cal ${it.calibre}`:""}${it.calibreInterno?`/${it.calibreInterno}`:""}${it.abertura?` ${it.abertura}`:""}${(it.ancho&&it.alto)?` ${it.ancho}×${it.alto}m`:""}${it.color?` ${it.color}`:""}`.trim();
   const lineFromItem=it=>{
     if(it.producto){
       const uni=it.producto==="postes"?"un":"m²";
@@ -3166,14 +3221,16 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
   };
 
   const subtotal=items.reduce((a,it)=>a+effCant(it)*(Number(it.valorUnit)||0),0);
-  const ivaVal=ivaOn?Math.round(subtotal*(Number(ivaPorc)||0)/100):0;
-  const reteVal=reteOn?Math.round(subtotal*(Number(retePorc)||0)/100):0;
-  const total=subtotal+ivaVal-reteVal;
   const abonoVal=Math.max(0,Number(abono)||0);
-  const saldo=Math.max(0,total-abonoVal);
+  const imp=calcImpuestos(subtotal,{aplica:reteOn,porc:retePorc},{aplica:icaOn,porc:icaPorc},abonoVal,esRem);
+  const {total,saldo}=imp;
 
   const submit=async()=>{
     if(!cli.nombre.trim()){setErr("Ingresa el nombre del cliente");return;}
+    if(desde){
+      const act=remisiones.find(x=>x.id===desde.id);
+      if(act?.convertidaA){setErr(`Esta cotización ya fue convertida en la remisión N° ${act.convertidaA.numero}`);return;}
+    }
     const its=items.filter(it=> it.producto ? effCant(it)>0 : (it.descripcion&&Number(it.cantidad)>0));
     if(its.length===0){setErr("Agrega al menos un producto con cantidad");return;}
     if(esRem&&origen==="stock"){
@@ -3187,9 +3244,10 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
     }
     const data={
       tipo, origen:esRem?origen:null, ordenRef:esRem&&origen==="produccion"?ordenRef:null,
+      cotizacionRef:desde?{id:desde.id,numero:desde.numero}:null,
       sede, cliente:{...cli,nombre:cli.nombre.trim()},
       items:its.map(lineFromItem),
-      subtotal, iva:{aplica:ivaOn,porc:Number(ivaPorc)||0,valor:ivaVal}, retefuente:{aplica:reteOn,porc:Number(retePorc)||0,valor:reteVal},
+      subtotal, iva:imp.iva, retefuente:imp.retefuente, reteica:imp.reteica, base:imp.base,
       total, abono:esRem?abonoVal:0, saldo:esRem?saldo:0,
     };
     setLoading(true);
@@ -3201,8 +3259,13 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
   return(
     <Modal title={`${esRem?"Nueva Remisión (venta)":"Nueva Cotización"} · N° ${(()=>{const base=esRem?REMISION_INICIAL:COTIZACION_INICIAL;const nums=(remisiones||[]).filter(d=>d.tipo===tipo).map(d=>Number(d.numero)||0);return Math.max(base-1,...(nums.length?nums:[base-1]))+1;})()}`} onClose={onClose} maxWidth={680}>
       <div style={{fontSize:12,color:"#94a3b8",marginTop:-6,marginBottom:8}}>El número se asigna automáticamente al guardar.</div>
+      {desde&&(
+        <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"9px 12px",fontSize:13,color:"#1d4ed8",marginBottom:12}}>
+          Convirtiendo la <b>Cotización N° {desde.numero}</b>: se trajeron cliente, productos y valores. Revisa cantidades y sede antes de guardar. Los productos del inventario descuentan stock de <b>{sede}</b>; los ítems libres solo se cobran.
+        </div>
+      )}
       {/* Tipo + origen */}
-      <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+      <div style={{display:desde?"none":"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
         {[["remision","Remisión (venta)"],["cotizacion","Cotización"]].map(([v,l])=>(
           <button key={v} onClick={()=>setTipo(v)} style={{flex:1,minWidth:130,border:`2px solid ${tipo===v?RED:"#e2e8f0"}`,background:tipo===v?"#fef2f2":"#fff",borderRadius:10,padding:"8px",cursor:"pointer",fontWeight:700,color:tipo===v?RED:"#334155"}}>{l}</button>
         ))}
@@ -3326,7 +3389,7 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
         </div>
       )}
 
-      {items.filter(it=>!(esRem&&origen==="stock")|| it.productoId||it.skuKey).map((it,realIdx)=>{
+      {items.filter(it=>!(esRem&&origen==="stock")|| it.productoId||it.skuKey||desde).map((it,realIdx)=>{
         const i=items.indexOf(it);
         const prod=findStock(it);
         const disp=prod?Number(prod.stock?.[sede])||0:null;
@@ -3347,7 +3410,7 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
                 {/* Selector de tipo (como en una orden) */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:4}}>
                   {PRODUCTOS.map(pr=>(
-                    <div key={pr.id} onClick={()=>setItems(prev=>prev.map((x,idx)=>idx===i?{...x,producto:pr.id,calibre:"",abertura:"",calibreInterno:"",color:"",ancho:"",alto:"",cantidad:""}:x))}
+                    <div key={pr.id} onClick={()=>setItems(prev=>prev.map((x,idx)=>idx===i?{...x,producto:pr.id,calibre:"",abertura:"",calibreInterno:"",color:"",ancho:"",alto:"",grosor:"",largo:"",cantidad:""}:x))}
                       style={{border:`2px solid ${it.producto===pr.id?pr.color:"#e2e8f0"}`,background:it.producto===pr.id?pr.bg:"#fff",borderRadius:8,padding:"6px 4px",textAlign:"center",cursor:"pointer"}}>
                       <div style={{fontWeight:700,color:it.producto===pr.id?pr.color:"#64748b",fontSize:12}}>{pr.label}</div>
                     </div>
@@ -3377,27 +3440,29 @@ function NuevaVentaModal({tipo:tipoInit,user,inventario,orders,remisiones=[],cli
           </div>
         );
       })}
-      {esRem&&origen==="stock"&&items.filter(it=>it.productoId||it.skuKey).length===0&&(
+      {esRem&&origen==="stock"&&!desde&&items.filter(it=>it.productoId||it.skuKey).length===0&&(
         <div style={{fontSize:13,color:"#94a3b8",textAlign:"center",padding:"8px 0",marginBottom:8}}>Busca arriba y agrega productos del stock.</div>
       )}
 
       {/* Impuestos */}
       <div style={{display:"flex",gap:16,flexWrap:"wrap",marginBottom:10,marginTop:4}}>
         <label style={{display:"flex",alignItems:"center",gap:6,fontSize:14,color:"#334155",cursor:"pointer"}}>
-          <input type="checkbox" checked={ivaOn} onChange={e=>setIvaOn(e.target.checked)}/> IVA
-          {ivaOn&&<input style={{...inp,width:60,padding:"4px 8px",fontSize:13}} type="number" value={ivaPorc} onChange={e=>setIvaPorc(e.target.value)}/>}{ivaOn&&"%"}
+          <input type="checkbox" checked={reteOn} onChange={e=>setReteOn(e.target.checked)}/> Retefuente
+          {reteOn&&<input style={{...inp,width:60,padding:"4px 8px",fontSize:13}} type="number" step="0.01" value={retePorc} onChange={e=>setRetePorc(e.target.value)}/>}{reteOn&&"%"}
         </label>
         <label style={{display:"flex",alignItems:"center",gap:6,fontSize:14,color:"#334155",cursor:"pointer"}}>
-          <input type="checkbox" checked={reteOn} onChange={e=>setReteOn(e.target.checked)}/> Retefuente
-          {reteOn&&<input style={{...inp,width:60,padding:"4px 8px",fontSize:13}} type="number" value={retePorc} onChange={e=>setRetePorc(e.target.value)}/>}{reteOn&&"%"}
+          <input type="checkbox" checked={icaOn} onChange={e=>setIcaOn(e.target.checked)}/> ReteICA
+          {icaOn&&<input style={{...inp,width:60,padding:"4px 8px",fontSize:13}} type="number" step="0.01" value={icaPorc} onChange={e=>setIcaPorc(e.target.value)}/>}{icaOn&&"%"}
         </label>
       </div>
 
       {/* Totales */}
       <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"10px 14px",marginBottom:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#64748b"}}><span>Base (sin IVA)</span><span>{cop(imp.base)}</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#64748b"}}><span>IVA ({IVA_DEFAULT}%) incluido</span><span>{cop(imp.iva.valor)}</span></div>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#64748b"}}><span>Subtotal</span><span>{cop(subtotal)}</span></div>
-        {ivaOn&&<div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#64748b"}}><span>IVA ({ivaPorc}%)</span><span>{cop(ivaVal)}</span></div>}
-        {reteOn&&<div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#64748b"}}><span>Retefuente ({retePorc}%)</span><span>- {cop(reteVal)}</span></div>}
+        {reteOn&&<div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#64748b"}}><span>Retefuente ({retePorc}%)</span><span>- {cop(imp.retefuente.valor)}</span></div>}
+        {icaOn&&<div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#64748b"}}><span>ReteICA ({icaPorc}%)</span><span>- {cop(imp.reteica.valor)}</span></div>}
         <div style={{display:"flex",justifyContent:"space-between",fontSize:17,fontWeight:900,color:"#1e293b",marginTop:4}}><span>TOTAL</span><span>{cop(total)}</span></div>
         {esRem&&(
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8,gap:8}}>
