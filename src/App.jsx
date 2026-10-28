@@ -828,6 +828,11 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
     });
   };
   // Crea/actualiza clientes a partir de TODAS las órdenes y ventas ya registradas
+  // Solo gerencia. Borra únicamente la ficha del cliente; sus órdenes y ventas se conservan.
+  const eliminarCliente=async c=>{
+    if(!isG||!c?.id) return;
+    await withSave(()=>deleteDoc(doc(db,"clientes",c.id)));
+  };
   const sincronizarClientes=async()=>{
     const nombres=new Map();
     orders.forEach(o=>{ if(o.cliente&&!esStockCliente(o.cliente)) nombres.set(clienteId(o.cliente),o.cliente); });
@@ -988,7 +993,8 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
           onVer={c=>setModal({t:"clienteDetalle",cli:c})}
           onEditar={canProd?(c=>setModal({t:"cliente",cli:c})):null}
           onFusionar={isG?(()=>setModal({t:"fusionar"})):null}
-          onSync={isG?sincronizarClientes:null}/>}
+          onSync={isG?sincronizarClientes:null}
+          onEliminar={isG?(c=>{if(window.confirm(`¿Eliminar al cliente "${c.nombre}"?\n\nSolo se borra su ficha. Sus órdenes, remisiones y cotizaciones NO se borran. Si vuelve a comprar, se creará de nuevo.`))eliminarCliente(c);}):null}/>}
         {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG}
           onDel={canDelete?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
@@ -2938,7 +2944,7 @@ function buildDocHtml(doc){
 <body onload="setTimeout(function(){window.print()},250)">
   <div class="hd">
     <div><img src="${logoSrc}" alt="" style="height:46px;display:block;margin-bottom:6px" onerror="this.style.display='none'"/><div class="brand">${EMPRESA.nombre}</div>${sedes}<div style="font-size:10px">${EMPRESA.email}</div></div>
-    <div><div class="doc"><div class="t">- ${titulo} -</div><div class="n">N° ${doc.numero||"—"}</div></div><div style="font-size:11px;text-align:right;margin-top:4px">Fecha: ${docFecha(doc.timestamp)}</div></div>
+    <div><div class="doc"><div class="t">- ${titulo} -</div><div class="n">N° ${doc.numero||"—"}</div></div><div style="font-size:11px;text-align:right;margin-top:4px">Fecha: ${docFecha(doc.timestamp)}${doc.creadoPorNombre?`<br>Atendió: <b>${esc(doc.creadoPorNombre)}</b>`:""}</div></div>
   </div>
   <table class="cli"><tr>
     <td style="width:60%"><b>Cliente:</b> ${esc(c.nombre)}</td>
@@ -3010,6 +3016,7 @@ function buildTirillaHtml(doc){
   <div class="sep"></div>
   <div class="doc"><span>${titulo}</span><span>N° ${doc.numero||"—"}</span></div>
   <div class="cli">Fecha: ${docFecha(doc.timestamp)}</div>
+  ${doc.creadoPorNombre?`<div class="cli">Atendió: ${esc(doc.creadoPorNombre)}</div>`:""}
   <div class="cli">Cliente: ${esc(c.nombre)}</div>
   <div class="cli">${c.docTipo||"Doc"}: ${esc(c.docNumero)}${c.telefono?` · Tel: ${esc(c.telefono)}`:""}</div>
   ${c.direccion?`<div class="cli">Dir: ${esc(c.direccion)}</div>`:""}
@@ -3492,7 +3499,7 @@ function VerDocumentoModal({doc,onClose}){
       </div>
       <div style={{border:"1px solid #e2e8f0",borderRadius:10,padding:14,marginBottom:14}}>
         <div style={{fontWeight:800,fontSize:16,color:"#1e293b"}}>{doc.cliente?.nombre||"—"}</div>
-        <div style={{fontSize:13,color:"#94a3b8",marginBottom:8}}>{doc.cliente?.docTipo} {doc.cliente?.docNumero} · {docFecha(doc.timestamp)}</div>
+        <div style={{fontSize:13,color:"#94a3b8",marginBottom:8}}>{doc.cliente?.docTipo} {doc.cliente?.docNumero} · {docFecha(doc.timestamp)}{doc.creadoPorNombre?` · Atendió: ${doc.creadoPorNombre}`:""}</div>
         {(doc.items||[]).map((it,i)=>(
           <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#475569",padding:"3px 0",borderBottom:"1px solid #f1f5f9"}}>
             <span>{it.cantidad} {it.unidad} · {it.descripcion}</span>
@@ -3515,7 +3522,7 @@ function VerDocumentoModal({doc,onClose}){
 }
 
 // ═══ CLIENTES (mini-CRM) ═══════════════════════════════════
-function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onFusionar,onSync}){
+function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onFusionar,onSync,onEliminar}){
   const [q,setQ]=useState("");
   // Mapa: cualquier id (nombre o alias) -> id del cliente canónico
   const idToOwner={};
@@ -3553,7 +3560,10 @@ function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onFu
                     <div style={{fontWeight:800,color:"#1e293b",fontSize:16}}>{c.nombre||"—"}</div>
                     <div style={{fontSize:13,color:"#94a3b8"}}>{c.docTipo||"Doc"}: {c.docNumero||"—"}</div>
                   </div>
-                  {onEditar&&<button onClick={e=>{e.stopPropagation();onEditar(c);}} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:"#0369a1",fontSize:13,fontWeight:600}}>Editar</button>}
+                  <div style={{display:"flex",gap:6,flexShrink:0}}>
+                    {onEditar&&<button onClick={e=>{e.stopPropagation();onEditar(c);}} style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:"#0369a1",fontSize:13,fontWeight:600}}>Editar</button>}
+                    {onEliminar&&<button onClick={e=>{e.stopPropagation();onEliminar(c);}} style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:"#dc2626",fontSize:13,fontWeight:600}}>🗑</button>}
+                  </div>
                 </div>
                 <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:2,fontSize:13,color:"#475569"}}>
                   <div>📞 {c.telefono||<span style={{color:"#cbd5e1"}}>sin teléfono</span>}</div>
