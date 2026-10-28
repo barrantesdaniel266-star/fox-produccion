@@ -869,7 +869,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
         }
       }
       await setDoc(doc(db,"remisiones",id),{
-        id,tipo:d.tipo,numero,origen:d.origen||null,ordenRef:d.ordenRef||null,cotizacionRef:d.cotizacionRef||null,
+        id,tipo:d.tipo,numero,origen:d.origen||null,ordenRef:d.ordenRef||null,cotizacionRef:d.cotizacionRef||null,atendioNombre:d.atendioNombre||user.name,
         cliente:d.cliente||{},sede:d.sede||user.sede,items:d.items||[],
         subtotal:d.subtotal||0,iva:d.iva||{aplica:false,porc:0,valor:0},retefuente:d.retefuente||{aplica:false,porc:0,valor:0},reteica:d.reteica||{aplica:false,porc:0,valor:0},
         total:d.total||0,abono:d.abono||0,saldo:d.saldo||0,
@@ -2891,6 +2891,8 @@ function KardexModal({prod,onClose}){
 // ═══ VENTAS / REMISIONES / COTIZACIONES ════════════════════
 const docFecha = ts => { const d=new Date(ts||Date.now()); const p=n=>String(n).padStart(2,"0"); return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`; };
 const cop = n => "$ "+(Number(n)||0).toLocaleString("es-CO");
+// Quita textos "0 m" / "0 metros" que no aportan (p. ej. en postes)
+const sinCeroMetros = s => String(s==null?"":s).replace(/(^|[\s|·×x(])0(?:[.,]0+)?\s?(?:metros?|mts|mt|m)(?![\w²])\.?/gi,"$1").replace(/\|\s*\|/g,"|").replace(/\s{2,}/g," ").replace(/[\s|·×,-]+$/,"").trim();
 // En el impreso se omite la unidad de metros (m / m²) para no confundir
 const unidadPrint = u => /^m[²2]?$/i.test(String(u||"").trim()) ? "" : (u||"");
 const esc = s =>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -2902,7 +2904,7 @@ function buildDocHtml(doc){
   const c=doc.cliente||{};
   const rows=(doc.items||[]).map(it=>{
     const vt=it.valorTotal!=null?it.valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0);
-    return `<tr><td class="c">${esc(it.cantidad)} ${esc(unidadPrint(it.unidad))}</td><td>${esc(it.descripcion)}</td><td class="r">${cop(it.valorUnit)}</td><td class="r">${cop(vt)}</td></tr>`;
+    return `<tr><td class="c">${esc(it.cantidad)} ${esc(unidadPrint(it.unidad))}</td><td>${esc(sinCeroMetros(it.descripcion))}</td><td class="r">${cop(it.valorUnit)}</td><td class="r">${cop(vt)}</td></tr>`;
   }).join("");
   const iva=doc.iva||{}, rete=doc.retefuente||{}, ica=doc.reteica||{};
   const totLines=[
@@ -2944,7 +2946,7 @@ function buildDocHtml(doc){
 <body onload="setTimeout(function(){window.print()},250)">
   <div class="hd">
     <div><img src="${logoSrc}" alt="" style="height:46px;display:block;margin-bottom:6px" onerror="this.style.display='none'"/><div class="brand">${EMPRESA.nombre}</div>${sedes}<div style="font-size:10px">${EMPRESA.email}</div></div>
-    <div><div class="doc"><div class="t">- ${titulo} -</div><div class="n">N° ${doc.numero||"—"}</div></div><div style="font-size:11px;text-align:right;margin-top:4px">Fecha: ${docFecha(doc.timestamp)}${doc.creadoPorNombre?`<br>Atendió: <b>${esc(doc.creadoPorNombre)}</b>`:""}</div></div>
+    <div><div class="doc"><div class="t">- ${titulo} -</div><div class="n">N° ${doc.numero||"—"}</div></div><div style="font-size:11px;text-align:right;margin-top:4px">Fecha: ${docFecha(doc.timestamp)}${(doc.atendioNombre||doc.creadoPorNombre)?`<br>Atendió: <b>${esc(doc.atendioNombre||doc.creadoPorNombre)}</b>`:""}</div></div>
   </div>
   <table class="cli"><tr>
     <td style="width:60%"><b>Cliente:</b> ${esc(c.nombre)}</td>
@@ -2969,7 +2971,7 @@ function buildTirillaHtml(doc){
   const money=n=>cop(n);
   const items=(doc.items||[]).map(it=>{
     const vt=it.valorTotal!=null?it.valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0);
-    return `<div class="it"><div class="d">${esc(it.descripcion)}</div><div class="q">${esc(it.cantidad)} ${esc(unidadPrint(it.unidad))} x ${money(it.valorUnit)}<span class="v">${money(vt)}</span></div></div>`;
+    return `<div class="it"><div class="d">${esc(sinCeroMetros(it.descripcion))}</div><div class="q">${esc(it.cantidad)} ${esc(unidadPrint(it.unidad))} x ${money(it.valorUnit)}<span class="v">${money(vt)}</span></div></div>`;
   }).join("");
   const iva=doc.iva||{}, rete=doc.retefuente||{}, ica=doc.reteica||{};
   const tot=[
@@ -3016,7 +3018,7 @@ function buildTirillaHtml(doc){
   <div class="sep"></div>
   <div class="doc"><span>${titulo}</span><span>N° ${doc.numero||"—"}</span></div>
   <div class="cli">Fecha: ${docFecha(doc.timestamp)}</div>
-  ${doc.creadoPorNombre?`<div class="cli">Atendió: ${esc(doc.creadoPorNombre)}</div>`:""}
+  ${(doc.atendioNombre||doc.creadoPorNombre)?`<div class="cli">Atendió: ${esc(doc.atendioNombre||doc.creadoPorNombre)}</div>`:""}
   <div class="cli">Cliente: ${esc(c.nombre)}</div>
   <div class="cli">${c.docTipo||"Doc"}: ${esc(c.docNumero)}${c.telefono?` · Tel: ${esc(c.telefono)}`:""}</div>
   ${c.direccion?`<div class="cli">Dir: ${esc(c.direccion)}</div>`:""}
@@ -3125,6 +3127,7 @@ function NuevaVentaModal({tipo:tipoInit,desde=null,user,inventario,orders,remisi
   const esRem=tipo==="remision";
   const [origen,setOrigen]=useState("stock");
   const [ordenRef,setOrdenRef]=useState(null);
+  const [ordenVend,setOrdenVend]=useState(null); // vendedora de la orden de producción elegida
   const [sede,setSede]=useState(desde?.sede||(user.sede==="Ambas Sedes"||!SEDES.includes(user.sede)?"Centro":user.sede));
   const [cli,setCli]=useState(desde?{docTipo:"NIT",docNumero:"",nombre:"",telefono:"",email:"",direccion:"",...(desde.cliente||{})}:{docTipo:"NIT",docNumero:"",nombre:"",telefono:"",email:"",direccion:""});
   // Cada ítem se enlaza al producto del inventario (por id o por nombre) para poder descontar stock
@@ -3172,7 +3175,7 @@ function NuevaVentaModal({tipo:tipoInit,desde=null,user,inventario,orders,remisi
     .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0))
     .slice(0,20);
   const pickOrden=o=>{
-    setOrdenRef(o.orden);
+    setOrdenRef(o.orden);setOrdenVend(o.vendedoraName||null);
     const found=findClienteByNombre(clientes,o.cliente);
     setCli(c=>found?{docTipo:found.docTipo||"NIT",docNumero:found.docNumero||"",nombre:o.cliente||c.nombre,telefono:found.telefono||"",email:found.email||"",direccion:found.direccion||""}:{...c,nombre:o.cliente||c.nombre});
     const its=normalizeItems(o).map(it=>{
@@ -3180,7 +3183,7 @@ function NuevaVentaModal({tipo:tipoInit,desde=null,user,inventario,orders,remisi
       const pv=Number(it.precioVenta||0);
       // precioVenta ya es por m² / por unidad -> se usa directo como valor unitario
       const unit=pv;
-      return {productoId:null,skuKey:null,descripcion:`${labelProducto(it.producto)} — ${resumenItem(it)}`,cantidad:it.metros||it.cantidad||"",unidad:it.producto==="postes"?"unidades":"m²",valorUnit:unit||""};
+      return {productoId:null,skuKey:null,descripcion:sinCeroMetros(`${labelProducto(it.producto)} — ${resumenItem(it)}`),cantidad:it.metros||it.cantidad||"",unidad:it.producto==="postes"?"unidades":"m²",valorUnit:unit||""};
     });
     setItems(its.length?its:[{productoId:null,skuKey:null,descripcion:"",cantidad:"",unidad:"",valorUnit:""}]);
     setQOrden("");
@@ -3222,7 +3225,7 @@ function NuevaVentaModal({tipo:tipoInit,desde=null,user,inventario,orders,remisi
     if(it.producto){
       const uni=it.producto==="postes"?"un":"m²";
       const cant=effCant(it);
-      return {productoId:null,skuKey:null,descripcion:descMalla(it),cantidad:cant,unidad:uni,valorUnit:Number(it.valorUnit)||0,valorTotal:cant*(Number(it.valorUnit)||0)};
+      return {productoId:null,skuKey:null,descripcion:sinCeroMetros(descMalla(it)),cantidad:cant,unidad:uni,valorUnit:Number(it.valorUnit)||0,valorTotal:cant*(Number(it.valorUnit)||0)};
     }
     return {productoId:it.productoId||null,skuKey:it.skuKey||null,descripcion:it.descripcion,cantidad:Number(it.cantidad)||0,unidad:it.unidad||"",valorUnit:Number(it.valorUnit)||0,valorTotal:(Number(it.cantidad)||0)*(Number(it.valorUnit)||0)};
   };
@@ -3252,6 +3255,7 @@ function NuevaVentaModal({tipo:tipoInit,desde=null,user,inventario,orders,remisi
     const data={
       tipo, origen:esRem?origen:null, ordenRef:esRem&&origen==="produccion"?ordenRef:null,
       cotizacionRef:desde?{id:desde.id,numero:desde.numero}:null,
+      atendioNombre:(esRem&&origen==="produccion"&&ordenVend)?ordenVend:user.name,
       sede, cliente:{...cli,nombre:cli.nombre.trim()},
       items:its.map(lineFromItem),
       subtotal, iva:imp.iva, retefuente:imp.retefuente, reteica:imp.reteica, base:imp.base,
@@ -3280,7 +3284,7 @@ function NuevaVentaModal({tipo:tipoInit,desde=null,user,inventario,orders,remisi
       {esRem&&(
         <div style={{display:"flex",gap:8,marginBottom:12}}>
           {[["stock","Vender desde stock"],["produccion","Desde orden de producción"]].map(([v,l])=>(
-            <button key={v} onClick={()=>{setOrigen(v);setOrdenRef(null);}} style={{flex:1,border:`2px solid ${origen===v?"#7c3aed":"#e2e8f0"}`,background:origen===v?"#f5f3ff":"#fff",borderRadius:10,padding:"7px",cursor:"pointer",fontWeight:700,fontSize:13,color:origen===v?"#7c3aed":"#334155"}}>{l}</button>
+            <button key={v} onClick={()=>{setOrigen(v);setOrdenRef(null);setOrdenVend(null);}} style={{flex:1,border:`2px solid ${origen===v?"#7c3aed":"#e2e8f0"}`,background:origen===v?"#f5f3ff":"#fff",borderRadius:10,padding:"7px",cursor:"pointer",fontWeight:700,fontSize:13,color:origen===v?"#7c3aed":"#334155"}}>{l}</button>
           ))}
         </div>
       )}
@@ -3499,10 +3503,10 @@ function VerDocumentoModal({doc,onClose}){
       </div>
       <div style={{border:"1px solid #e2e8f0",borderRadius:10,padding:14,marginBottom:14}}>
         <div style={{fontWeight:800,fontSize:16,color:"#1e293b"}}>{doc.cliente?.nombre||"—"}</div>
-        <div style={{fontSize:13,color:"#94a3b8",marginBottom:8}}>{doc.cliente?.docTipo} {doc.cliente?.docNumero} · {docFecha(doc.timestamp)}{doc.creadoPorNombre?` · Atendió: ${doc.creadoPorNombre}`:""}</div>
+        <div style={{fontSize:13,color:"#94a3b8",marginBottom:8}}>{doc.cliente?.docTipo} {doc.cliente?.docNumero} · {docFecha(doc.timestamp)}{(doc.atendioNombre||doc.creadoPorNombre)?` · Atendió: ${doc.atendioNombre||doc.creadoPorNombre}`:""}</div>
         {(doc.items||[]).map((it,i)=>(
           <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#475569",padding:"3px 0",borderBottom:"1px solid #f1f5f9"}}>
-            <span>{it.cantidad} {it.unidad} · {it.descripcion}</span>
+            <span>{it.cantidad} {it.unidad} · {sinCeroMetros(it.descripcion)}</span>
             <span style={{fontWeight:600}}>{cop(it.valorTotal)}</span>
           </div>
         ))}
