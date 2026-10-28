@@ -96,3 +96,9 @@ En Vercel lo configuras como variables de entorno (ver Paso 4).
 | rafael           | Fox2026*        | Gerencia  | Ambas       |
 | natalia          | Fox2026*        | Gerencia  | Ambas       |
 | jefe.planta      | Fox2026*        | Gerencia  | Ambas       |
+
+## Login con Microsoft (SSO) y colección `usuarios`
+- Variables (Vercel y `.env`, nunca en el repo): las `VITE_FIREBASE_*` de siempre y, opcional, `VITE_MS_TENANT_ID` (ID de directorio de Entra).
+- Roles en Firestore: colección `usuarios`, id = correo en minúscula, campos `{nombre, role, sede}` (`role`: gerencia | vendedora | logistica | viewer).
+- Sembrar el primer usuario: entra con usuario/contraseña como gerencia → pestaña "🔑 Usuarios" → agrega los correos. Alternativa: Firebase Console → Firestore → crear colección `usuarios` a mano.
+- Flags en `src/App.jsx`: `ALLOW_PASSWORD_LOGIN` (true durante la transición; al ponerlo en false se debe eliminar el objeto `USERS`).
