@@ -1,8 +1,60 @@
 rules_version = '2';
+// Reglas de producción (SSO Microsoft). Solo entra personal @telefoxsas.com que tenga
+// documento en `usuarios`. Pegar en Firebase Console → Firestore → Reglas → Publicar.
+// OJO: el cron /api/send-report y los scripts/ leen Firestore sin sesión y dejan de
+// funcionar con estas reglas (necesitan cuenta de servicio / firebase-admin).
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    function correo() { return request.auth.token.email.lower(); }
+    function esEmpresa() {
+      return request.auth != null && request.auth.token.email != null
+        && correo().matches('.*@telefoxsas[.]com');
+    }
+    function perfil() { return get(/databases/$(database)/documents/usuarios/$(correo())).data; }
+    function esStaff() { return esEmpresa() && exists(/databases/$(database)/documents/usuarios/$(correo())); }
+    function rol() { return perfil().role; }
+    function esGerencia() { return esStaff() && rol() == 'gerencia'; }
+    function puedeEscribir() { return esStaff() && rol() in ['gerencia','vendedora','logistica']; }
+
+    // Roles y sedes: cada quien lee su doc; solo gerencia administra
+    match /usuarios/{email} {
+      allow get: if esEmpresa() && (correo() == email || esGerencia());
+      allow list: if esGerencia();
+      allow write: if esGerencia();
+    }
+
+    // Colecciones operativas actuales. El viewer (TV) solo lee; solo gerencia elimina.
+    match /orders/{id}       { allow read: if esStaff(); allow create, update: if puedeEscribir(); allow delete: if esGerencia(); }
+    match /movimientos/{id}  { allow read: if esStaff(); allow create, update: if puedeEscribir(); allow delete: if esGerencia(); }
+    match /inventario/{id}   { allow read: if esStaff(); allow create, update: if puedeEscribir(); allow delete: if esGerencia(); }
+    match /remisiones/{id}   { allow read: if esStaff(); allow create, update: if puedeEscribir(); allow delete: if esGerencia(); }
+    match /clientes/{id}     { allow read: if esStaff(); allow create, update: if puedeEscribir(); allow delete: if esGerencia(); }
+
+    // Catálogo público para la web (mallasfox.com). Doc con SOLO campos seguros:
+    // nombre, categoria, medidas, unidad, precio, activo. Escribe solo gerencia.
+    match /productos/{id} {
+      allow read: if true;
+      allow write: if esGerencia()
+        && request.resource.data.keys().hasOnly(['nombre','categoria','medidas','unidad','precio','activo','actualizado']);
+      allow delete: if esGerencia();
+    }
+
+    // Chat en tiempo real (modelo listo, sin UI todavía)
+    match /conversaciones/{id} {
+      allow read, create, update: if puedeEscribir();
+      allow delete: if esGerencia();
+    }
+    match /mensajes/{id} {
+      allow read: if puedeEscribir();
+      allow create: if puedeEscribir()
+        && request.resource.data.de in ['cliente','vendedora','agente']
+        && request.resource.data.keys().hasAll(['convId','de','texto','ts']);
+      allow update, delete: if false;     // el historial no se edita (contexto para el agente IA)
+    }
+    match /presencia/{email} {
+      allow read: if puedeEscribir();
+      allow write: if puedeEscribir() && correo() == email;
     }
   }
 }

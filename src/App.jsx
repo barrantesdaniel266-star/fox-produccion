@@ -11,23 +11,11 @@ const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
 const APP_VERSION="v2026.09.23-E3";
 
 // ═══ ACCESO ═════════════════════════════════════════════════
-// Transición a SSO Microsoft: mientras sea true, el login usuario/contraseña sigue
-// activo. Cuando el SSO esté confirmado → poner en false y ELIMINAR el objeto USERS.
-const ALLOW_PASSWORD_LOGIN=true;
+// Único acceso: Microsoft 365 (Entra ID). El rol y la sede salen de la colección `usuarios`.
 const ALLOW_GOOGLE_LOGIN=false;           // botón de Google (EMAIL_USERS) apagado
 const EMAIL_DOMAIN="telefoxsas.com";
 const ROLES_VALIDOS=["gerencia","vendedora","logistica","viewer"];
 const SEDES_USUARIO=["Centro","Santa Lucia","La Granja","Ambas Sedes"];
-
-// ═══ USUARIOS (login con contraseña — TEMPORAL, ver ALLOW_PASSWORD_LOGIN) ═══
-const USERS = {
-  "mireya.centro":   { password:"Foxcentrom2026", name:"Mireya",         role:"vendedora", sede:"Centro"      },
-  "jhoana.centro":   { password:"Foxcentroj2026", name:"Jhoana",         role:"vendedora", sede:"Centro"      },
-  "tatiana.santal":  { password:"Foxsantat2026",  name:"Tatiana",        role:"vendedora", sede:"Santa Lucia" },
-  "carolina.santal": { password:"Foxsantac2026",  name:"Carolina",       role:"vendedora", sede:"Santa Lucia" },
-  "rafael":          { password:"Fox2026*",        name:"Rafael",         role:"gerencia",  sede:"Ambas Sedes" },
-  "natalia":         { password:"Fox2026*",        name:"Natalia",        role:"gerencia",  sede:"Ambas Sedes" },
-};
 
 // ═══ SSO (Google) ═══════════════════════════════════════════
 // Mapea el correo de Google autorizado a su perfil. Un correo que no esté
@@ -404,7 +392,7 @@ const btnG={background:GREEN,border:"none",borderRadius:10,padding:"11px 20px",f
 // ═══ ROOT ══════════════════════════════════════════════════
 export default function App(){
   const [user,setUser]=useState(()=>{
-    try{ const s=localStorage.getItem("fox_session"); return s?JSON.parse(s):null; }catch{return null;}
+    try{ const s=JSON.parse(localStorage.getItem("fox_session")||"null"); if(s&&s.authMethod!=="microsoft"){ localStorage.removeItem("fox_session"); return null; } return s; }catch{return null;}
   });
   const [orders,setOrders]=useState([]);
   const [ready,setReady]=useState(false);
@@ -470,7 +458,7 @@ export default function App(){
   },[orders]);
 
   // Sesión SSO: debe existir sesión de Firebase Auth y el doc en `usuarios` (refresca el rol
-  // o expulsa si la cuenta fue removida). Las sesiones por contraseña no se tocan.
+  // o expulsa si la cuenta fue removida).
   useEffect(()=>{
     if(!user||user.authMethod!=="microsoft") return;
     let vivo=true;
@@ -522,9 +510,8 @@ function Splash({error}){
 
 // ═══ LOGIN ═════════════════════════════════════════════════
 function Login({onLogin}){
-  const [u,setU]=useState("");const [p,setP]=useState("");const [err,setErr]=useState("");const [show,setShow]=useState(false);
+  const [err,setErr]=useState("");
   const [ssoLoading,setSsoLoading]=useState(false);
-  const attempt=()=>{if(!ALLOW_PASSWORD_LOGIN)return;const d=USERS[u.trim().toLowerCase()];if(d&&d.password===p)onLogin({username:u.trim().toLowerCase(),...d});else setErr("Usuario o contraseña incorrectos");};
   const attemptMicrosoft=async()=>{
     setErr("");setSsoLoading(true);
     try{
@@ -582,27 +569,7 @@ function Login({onLogin}){
           <svg width="18" height="18" viewBox="0 0 21 21"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
           {ssoLoading?"Conectando...":"Iniciar sesión con Microsoft"}
         </button>
-        {!ALLOW_PASSWORD_LOGIN&&err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"9px 13px",color:"#dc2626",fontSize:14,marginTop:14}}>⚠ {err}</div>}
-        {ALLOW_PASSWORD_LOGIN&&<>
-        <div style={{display:"flex",alignItems:"center",gap:10,margin:"18px 0"}}>
-          <div style={{flex:1,height:1,background:"#e2e8f0"}}/>
-          <span style={{fontSize:12,color:"#94a3b8",fontWeight:600}}>o</span>
-          <div style={{flex:1,height:1,background:"#e2e8f0"}}/>
-        </div>
-        <div style={{marginBottom:14}}>
-          <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Usuario</label>
-          <input style={inp} value={u} onChange={e=>{setU(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&attempt()} autoComplete="username"/>
-        </div>
-        <div style={{marginBottom:16}}>
-          <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Contraseña</label>
-          <div style={{position:"relative"}}>
-            <input type={show?"text":"password"} style={{...inp,paddingRight:80}} value={p} onChange={e=>{setP(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&attempt()} autoComplete="current-password"/>
-            <button onClick={()=>setShow(!show)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#94a3b8",fontSize:14,fontWeight:600}}>{show?"Ocultar":"Mostrar"}</button>
-          </div>
-        </div>
-        {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"9px 13px",color:"#dc2626",fontSize:14,marginBottom:14}}>⚠ {err}</div>}
-        <button onClick={attempt} style={{...btnR,width:"100%",padding:"12px"}}>Ingresar al sistema</button>
-        </>}
+        {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"9px 13px",color:"#dc2626",fontSize:14,marginTop:14}}>⚠ {err}</div>}
         {ALLOW_GOOGLE_LOGIN&&<button onClick={attemptGoogle} disabled={ssoLoading} style={{...btnS,width:"100%",padding:"12px",display:"flex",alignItems:"center",justifyContent:"center",gap:10,opacity:ssoLoading?.6:1}}>
           <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9C16.64 14.2 17.64 11.9 17.64 9.2z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97L3.95 7.3C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
           {ssoLoading?"Conectando...":"Iniciar sesión con Google"}
