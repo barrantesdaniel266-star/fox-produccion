@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { db, auth, googleProvider } from "./firebase.js";
+import { db, auth, googleProvider, microsoftProvider } from "./firebase.js";
 import {
   collection, doc, setDoc, updateDoc, deleteDoc,
-  onSnapshot, query, orderBy, runTransaction,
+  onSnapshot, query, orderBy, runTransaction, getDoc,
 } from "firebase/firestore";
 import { signInWithPopup, signOut } from "firebase/auth";
 import logoUrl from "./assets/logo.png";
@@ -10,7 +10,16 @@ import logoUrl from "./assets/logo.png";
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
 const APP_VERSION="v2026.09.23-E3";
 
-// ═══ USUARIOS ══════════════════════════════════════════════
+// ═══ ACCESO ═════════════════════════════════════════════════
+// Transición a SSO Microsoft: mientras sea true, el login usuario/contraseña sigue
+// activo. Cuando el SSO esté confirmado → poner en false y ELIMINAR el objeto USERS.
+const ALLOW_PASSWORD_LOGIN=true;
+const ALLOW_GOOGLE_LOGIN=false;           // botón de Google (EMAIL_USERS) apagado
+const EMAIL_DOMAIN="telefoxsas.com";
+const ROLES_VALIDOS=["gerencia","vendedora","logistica","viewer"];
+const SEDES_USUARIO=["Centro","Santa Lucia","La Granja","Ambas Sedes"];
+
+// ═══ USUARIOS (login con contraseña — TEMPORAL, ver ALLOW_PASSWORD_LOGIN) ═══
 const USERS = {
   "mireya.centro":   { password:"Foxcentrom2026", name:"Mireya",         role:"vendedora", sede:"Centro"      },
   "jhoana.centro":   { password:"Foxcentroj2026", name:"Jhoana",         role:"vendedora", sede:"Centro"      },
@@ -405,33 +414,48 @@ export default function App(){
   const [ready,setReady]=useState(false);
   const [dbErr,setDbErr]=useState(false);
 
+  // Los listeners de Firestore arrancan solo con usuario; en SSO, tras restaurar la sesión de Firebase Auth
+  const [authListo,setAuthListo]=useState(false);
+  useEffect(()=>{
+    if(user?.authMethod!=="microsoft"){ setAuthListo(false); return; }
+    let vivo=true;
+    auth.authStateReady().then(()=>{ if(vivo) setAuthListo(true); });
+    return()=>{vivo=false;};
+  },[user?.username,user?.authMethod]);
+  const datosListos=!!user&&(user.authMethod!=="microsoft"||authListo);
+
   const [movimientos,setMovimientos]=useState([]);
   useEffect(()=>{
+    if(!datosListos) return;
     const q2=query(collection(db,"movimientos"),orderBy("timestamp","desc"));
     return onSnapshot(q2,snap=>setMovimientos(snap.docs.map(d=>d.data())),()=>{});
-  },[]);
+  },[datosListos]);
 
   const [inventario,setInventario]=useState([]);
   useEffect(()=>{
+    if(!datosListos) return;
     return onSnapshot(collection(db,"inventario"),snap=>setInventario(snap.docs.map(d=>d.data())),()=>{});
-  },[]);
+  },[datosListos]);
 
   const [remisiones,setRemisiones]=useState([]);
   useEffect(()=>{
+    if(!datosListos) return;
     return onSnapshot(collection(db,"remisiones"),snap=>setRemisiones(snap.docs.map(d=>normalizarDoc(d.data()))),()=>{});
-  },[]);
+  },[datosListos]);
   const [clientes,setClientes]=useState([]);
   useEffect(()=>{
+    if(!datosListos) return;
     return onSnapshot(collection(db,"clientes"),snap=>setClientes(snap.docs.map(d=>d.data())),()=>{});
-  },[]);
+  },[datosListos]);
 
   useEffect(()=>{
+    if(!datosListos) return;
     const q=query(collection(db,"orders"),orderBy("timestamp","desc"));
     return onSnapshot(q,
       snap=>{ setOrders(snap.docs.map(d=>d.data())); setReady(true); },
       err=>{ console.error(err); setDbErr(true); setReady(true); }
     );
-  },[]);
+  },[datosListos]);
 
   // Auto-reparar ordenes completadas que tienen completedAt null en Firestore
   useEffect(()=>{
@@ -449,10 +473,32 @@ export default function App(){
     });
   },[orders]);
 
+  // Sesión SSO: debe existir sesión de Firebase Auth y el doc en `usuarios` (refresca el rol
+  // o expulsa si la cuenta fue removida). Las sesiones por contraseña no se tocan.
+  useEffect(()=>{
+    if(!user||user.authMethod!=="microsoft") return;
+    let vivo=true;
+    (async()=>{
+      try{
+        await auth.authStateReady();
+        const email=(auth.currentUser?.email||"").toLowerCase();
+        if(!email||!email.endsWith("@"+EMAIL_DOMAIN)) throw new Error("sin sesión");
+        const snap=await getDoc(doc(db,"usuarios",email));
+        const d=snap.exists()?snap.data():null;
+        if(!d||!ROLES_VALIDOS.includes(d.role)) throw new Error("sin autorización");
+        if(vivo&&(d.role!==user.role||d.sede!==user.sede||d.nombre!==user.name)){
+          login({...user,name:d.nombre,role:d.role,sede:d.sede});
+        }
+      }catch(e){ if(vivo) logout(); }
+    })();
+    return()=>{vivo=false;};
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[user?.username]);
+
   const login=u=>{ setUser(u); localStorage.setItem("fox_session",JSON.stringify(u)); };
   const logout=()=>{ setUser(null); localStorage.removeItem("fox_session"); signOut(auth).catch(()=>{}); };
 
-  if(!ready)return <Splash error={dbErr}/>;
+  if(user&&!ready)return <Splash error={dbErr}/>;
   if(!user)return <Login onLogin={login}/>;
   return <Shell user={user} onLogout={logout} orders={orders} movimientos={movimientos} inventario={inventario} remisiones={remisiones} clientes={clientes}/>;
 }
@@ -482,7 +528,31 @@ function Splash({error}){
 function Login({onLogin}){
   const [u,setU]=useState("");const [p,setP]=useState("");const [err,setErr]=useState("");const [show,setShow]=useState(false);
   const [ssoLoading,setSsoLoading]=useState(false);
-  const attempt=()=>{const d=USERS[u.trim().toLowerCase()];if(d&&d.password===p)onLogin({username:u.trim().toLowerCase(),...d});else setErr("Usuario o contraseña incorrectos");};
+  const attempt=()=>{if(!ALLOW_PASSWORD_LOGIN)return;const d=USERS[u.trim().toLowerCase()];if(d&&d.password===p)onLogin({username:u.trim().toLowerCase(),...d});else setErr("Usuario o contraseña incorrectos");};
+  const attemptMicrosoft=async()=>{
+    setErr("");setSsoLoading(true);
+    try{
+      const cred=await signInWithPopup(auth,microsoftProvider);
+      const email=(cred.user.email||cred.user.providerData?.[0]?.email||"").toLowerCase();
+      if(!email.endsWith("@"+EMAIL_DOMAIN)){
+        await signOut(auth);
+        setErr(`Solo se permiten cuentas @${EMAIL_DOMAIN}.`);
+        return;
+      }
+      const snap=await getDoc(doc(db,"usuarios",email));
+      const d=snap.exists()?snap.data():null;
+      if(!d||!ROLES_VALIDOS.includes(d.role)){
+        await signOut(auth);
+        setErr("Tu cuenta no está autorizada, contacta a gerencia.");
+        return;
+      }
+      onLogin({username:email,email,name:d.nombre||cred.user.displayName||email,role:d.role,sede:d.sede||"Ambas Sedes",authMethod:"microsoft"});
+    }catch(e){
+      if(e?.code!=="auth/popup-closed-by-user"&&e?.code!=="auth/cancelled-popup-request") setErr("No se pudo iniciar sesión con Microsoft: "+(e.message||e));
+    }finally{
+      setSsoLoading(false);
+    }
+  };
   const attemptGoogle=async()=>{
     setErr("");setSsoLoading(true);
     try{
@@ -512,6 +582,17 @@ function Login({onLogin}){
       </div>
       <div style={{background:"#fff",borderRadius:20,padding:"28px 32px",boxShadow:"0 25px 50px rgba(0,0,0,.5)",width:"100%",maxWidth:420}}>
         <h2 style={{fontSize:17,fontWeight:700,color:"#1e293b",marginBottom:20,marginTop:0,textAlign:"center"}}>Iniciar sesión</h2>
+        <button onClick={attemptMicrosoft} disabled={ssoLoading} style={{...btnR,width:"100%",padding:"12px",display:"flex",alignItems:"center",justifyContent:"center",gap:10,opacity:ssoLoading?.6:1}}>
+          <svg width="18" height="18" viewBox="0 0 21 21"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+          {ssoLoading?"Conectando...":"Iniciar sesión con Microsoft"}
+        </button>
+        {!ALLOW_PASSWORD_LOGIN&&err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"9px 13px",color:"#dc2626",fontSize:14,marginTop:14}}>⚠ {err}</div>}
+        {ALLOW_PASSWORD_LOGIN&&<>
+        <div style={{display:"flex",alignItems:"center",gap:10,margin:"18px 0"}}>
+          <div style={{flex:1,height:1,background:"#e2e8f0"}}/>
+          <span style={{fontSize:12,color:"#94a3b8",fontWeight:600}}>o</span>
+          <div style={{flex:1,height:1,background:"#e2e8f0"}}/>
+        </div>
         <div style={{marginBottom:14}}>
           <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Usuario</label>
           <input style={inp} value={u} onChange={e=>{setU(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&attempt()} autoComplete="username"/>
@@ -525,15 +606,11 @@ function Login({onLogin}){
         </div>
         {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"9px 13px",color:"#dc2626",fontSize:14,marginBottom:14}}>⚠ {err}</div>}
         <button onClick={attempt} style={{...btnR,width:"100%",padding:"12px"}}>Ingresar al sistema</button>
-        <div style={{display:"flex",alignItems:"center",gap:10,margin:"18px 0"}}>
-          <div style={{flex:1,height:1,background:"#e2e8f0"}}/>
-          <span style={{fontSize:12,color:"#94a3b8",fontWeight:600}}>o</span>
-          <div style={{flex:1,height:1,background:"#e2e8f0"}}/>
-        </div>
-        <button onClick={attemptGoogle} disabled={ssoLoading} style={{...btnS,width:"100%",padding:"12px",display:"flex",alignItems:"center",justifyContent:"center",gap:10,opacity:ssoLoading?.6:1}}>
+        </>}
+        {ALLOW_GOOGLE_LOGIN&&<button onClick={attemptGoogle} disabled={ssoLoading} style={{...btnS,width:"100%",padding:"12px",display:"flex",alignItems:"center",justifyContent:"center",gap:10,opacity:ssoLoading?.6:1}}>
           <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9C16.64 14.2 17.64 11.9 17.64 9.2z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97L3.95 7.3C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
           {ssoLoading?"Conectando...":"Iniciar sesión con Google"}
-        </button>
+        </button>}
       </div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}*{box-sizing:border-box}`}</style>
     </div>
@@ -919,6 +996,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
     {id:"inventario", label:"📦 Inventario",    count:lowStock.length},
     {id:"ventas",     label:"🧾 Ventas",         count:0},
     {id:"clientes",   label:"👤 Clientes",       count:0},
+    ...(isG?[{id:"usuarios",label:"🔑 Usuarios",count:0}]:[]),
   ];
 
   return(
@@ -995,6 +1073,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
           onFusionar={isG?(()=>setModal({t:"fusionar"})):null}
           onSync={isG?sincronizarClientes:null}
           onEliminar={isG?(c=>{if(window.confirm(`¿Eliminar al cliente "${c.nombre}"?\n\nSolo se borra su ficha. Sus órdenes, remisiones y cotizaciones NO se borran. Si vuelve a comprar, se creará de nuevo.`))eliminarCliente(c);}):null}/>}
+        {tab==="usuarios"&&isG&&<UsuariosTab user={user}/>}
         {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG}
           onDel={canDelete?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
@@ -3526,6 +3605,70 @@ function VerDocumentoModal({doc,onClose}){
 }
 
 // ═══ CLIENTES (mini-CRM) ═══════════════════════════════════
+// ═══ USUARIOS (solo gerencia): correo → rol → sede ═══════════
+function UsuariosTab({user}){
+  const [lista,setLista]=useState([]);
+  const vacio={email:"",nombre:"",role:"vendedora",sede:"Centro"};
+  const [f,setF]=useState(vacio);
+  const [edit,setEdit]=useState(false);
+  const [err,setErr]=useState("");
+  useEffect(()=>onSnapshot(collection(db,"usuarios"),
+    snap=>setLista(snap.docs.map(d=>({email:d.id,...d.data()})).sort((a,b)=>a.email.localeCompare(b.email))),
+    e=>setErr("No se pudo leer `usuarios`: "+e.message)),[]);
+  const guardar=async()=>{
+    const email=f.email.trim().toLowerCase();
+    if(!email.endsWith("@"+EMAIL_DOMAIN)||email.includes("/")) return setErr(`El correo debe ser @${EMAIL_DOMAIN}`);
+    if(!f.nombre.trim()) return setErr("Falta el nombre");
+    if(edit&&email===user.email&&f.role!=="gerencia"&&!window.confirm("Vas a quitarte el rol de gerencia a ti mismo. ¿Continuar?")) return;
+    try{
+      await setDoc(doc(db,"usuarios",email),{nombre:f.nombre.trim(),role:f.role,sede:f.sede});
+      setF(vacio);setEdit(false);setErr("");
+    }catch(e){setErr("Error al guardar: "+e.message);}
+  };
+  const quitar=async u=>{
+    if(u.email===user.email) return alert("No puedes eliminar tu propia cuenta.");
+    if(!window.confirm(`¿Quitar el acceso de ${u.nombre} (${u.email})?`)) return;
+    try{await deleteDoc(doc(db,"usuarios",u.email));}catch(e){setErr("Error al eliminar: "+e.message);}
+  };
+  const lbl={fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4};
+  return(
+    <div>
+      <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:16,boxShadow:"0 1px 3px rgba(0,0,0,.08)"}}>
+        <h3 style={{margin:"0 0 12px",fontSize:16}}>{edit?"Editar usuario":"Agregar usuario"}</h3>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:12,marginBottom:12}}>
+          <div><label style={lbl}>Correo Microsoft</label><input style={inp} value={f.email} disabled={edit} placeholder={`nombre@${EMAIL_DOMAIN}`} onChange={e=>setF({...f,email:e.target.value})}/></div>
+          <div><label style={lbl}>Nombre</label><input style={inp} value={f.nombre} onChange={e=>setF({...f,nombre:e.target.value})}/></div>
+          <div><label style={lbl}>Rol</label><select style={inp} value={f.role} onChange={e=>setF({...f,role:e.target.value})}>{ROLES_VALIDOS.map(r=><option key={r} value={r}>{r}</option>)}</select></div>
+          <div><label style={lbl}>Sede</label><select style={inp} value={f.sede} onChange={e=>setF({...f,sede:e.target.value})}>{SEDES_USUARIO.map(x=><option key={x} value={x}>{x}</option>)}</select></div>
+        </div>
+        {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"9px 13px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={guardar} style={btnG}>{edit?"Guardar cambios":"Agregar"}</button>
+          {edit&&<button onClick={()=>{setF(vacio);setEdit(false);setErr("");}} style={btnS}>Cancelar</button>}
+        </div>
+      </div>
+      <div style={{background:"#fff",borderRadius:14,overflowX:"auto",boxShadow:"0 1px 3px rgba(0,0,0,.08)"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
+          <thead><tr style={{textAlign:"left",color:"#64748b",borderBottom:"1px solid #e2e8f0"}}>{["Correo","Nombre","Rol","Sede",""].map(h=><th key={h} style={{padding:"10px 14px"}}>{h}</th>)}</tr></thead>
+          <tbody>
+            {lista.map(u=>(
+              <tr key={u.email} style={{borderBottom:"1px solid #f1f5f9"}}>
+                <td style={{padding:"10px 14px"}}>{u.email}</td><td style={{padding:"10px 14px"}}>{u.nombre}</td>
+                <td style={{padding:"10px 14px"}}>{u.role}</td><td style={{padding:"10px 14px"}}>{u.sede}</td>
+                <td style={{padding:"10px 14px",whiteSpace:"nowrap"}}>
+                  <button onClick={()=>{setF({email:u.email,nombre:u.nombre||"",role:u.role,sede:u.sede||"Ambas Sedes"});setEdit(true);setErr("");}} style={{...btnS,padding:"5px 12px",marginRight:6}}>Editar</button>
+                  <button onClick={()=>quitar(u)} style={{...btnS,padding:"5px 12px",color:RED}}>Quitar</button>
+                </td>
+              </tr>
+            ))}
+            {lista.length===0&&<tr><td colSpan={5} style={{padding:20,textAlign:"center",color:"#94a3b8"}}>Aún no hay usuarios. Agrega el primero arriba.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onFusionar,onSync,onEliminar}){
   const [q,setQ]=useState("");
   // Mapa: cualquier id (nombre o alias) -> id del cliente canónico
