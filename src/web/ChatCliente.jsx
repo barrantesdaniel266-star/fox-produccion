@@ -23,6 +23,8 @@ export default function ChatCliente({ abierto, setAbierto, solicitud, color }) {
   const sesion = async () => {
     await auth.authStateReady();
     if (!auth.currentUser) await signInAnonymously(auth);
+    // Con sesión de empleado en este mismo navegador las reglas rechazan el chat de visitante
+    if (!auth.currentUser.isAnonymous) throw new Error("sesion-empleado");
     return auth.currentUser;
   };
 
@@ -71,7 +73,12 @@ export default function ChatCliente({ abierto, setAbierto, solicitud, color }) {
       const c = await iniciar();
       if (c) await enviar(solicitud?.texto && solicitud.n !== ultimaSolicitud.current ? solicitud.texto : "Hola, quisiera información.", c);
       if (c && solicitud) ultimaSolicitud.current = solicitud.n;
-    } catch { setErr("No se pudo iniciar el chat. Intenta de nuevo."); }
+    } catch (e) {
+      console.error(e);
+      setErr(e.message === "sesion-empleado"
+        ? "Tienes sesión de empleado en este navegador. Para probar el chat abre una ventana de incógnito."
+        : "No se pudo iniciar el chat. Intenta de nuevo.");
+    }
     setEnviando(false);
   };
 

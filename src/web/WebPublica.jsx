@@ -12,6 +12,7 @@ const DISP = {
 export default function WebPublica() {
   const [data, setData] = useState({ productos: [], config: {} });
   const [cargando, setCargando] = useState(true);
+  const [errCat, setErrCat] = useState("");
   const [cat, setCat] = useState("Todas");
   const [q, setQ] = useState("");
   const [carrito, setCarrito] = useState({});          // id -> cantidad
@@ -25,9 +26,12 @@ export default function WebPublica() {
     const cargar = async () => {
       try {
         const r = await fetch("/api/catalogo");
-        const d = await r.json();
-        if (vivo && d.productos) { setData(d); setCargando(false); }
-      } catch { if (vivo) setCargando(false); }
+        const d = await r.json().catch(() => ({}));
+        if (!vivo) return;
+        if (r.ok && d.productos) { setData(d); setErrCat(""); }
+        else setErrCat(`No se pudo cargar el catálogo (${r.status}${d.error ? ": " + d.error : ""})`);
+        setCargando(false);
+      } catch { if (vivo) { setErrCat("Sin conexión con el catálogo."); setCargando(false); } }
     };
     cargar();
     const t = setInterval(cargar, 15000);
@@ -101,7 +105,8 @@ export default function WebPublica() {
           </select>
         </div>
         {cargando && <div style={{ color:"#64748b" }}>Cargando catálogo…</div>}
-        {!cargando && visibles.length === 0 && <div style={{ color:"#64748b" }}>No hay productos para mostrar. Escríbenos y te cotizamos a la medida.</div>}
+        {errCat && <div style={{ color:"#dc2626", marginBottom:12 }}>{errCat}</div>}
+        {!cargando && !errCat && visibles.length === 0 && <div style={{ color:"#64748b" }}>No hay productos para mostrar. Escríbenos y te cotizamos a la medida.</div>}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))", gap:16 }}>
           {visibles.map(p => {
             const d = DISP[p.disponibilidad] || DISP.bajo_pedido;
