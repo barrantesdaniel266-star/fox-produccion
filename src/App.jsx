@@ -6,6 +6,8 @@ import {
 } from "firebase/firestore";
 import { signInWithPopup, signOut } from "firebase/auth";
 import logoUrl from "./assets/logo.png";
+import ChatTab from "./ChatTab.jsx";
+import SitioWebTab from "./SitioWebTab.jsx";
 
 const RED="#E8262A", DARK="#1a1a1a", GREEN="#16a34a";
 const APP_VERSION="v2026.09.23-E3";
@@ -427,6 +429,13 @@ export default function App(){
     return onSnapshot(collection(db,"remisiones"),snap=>setRemisiones(snap.docs.map(d=>normalizarDoc(d.data()))),()=>{});
   },[datosListos]);
   const [clientes,setClientes]=useState([]);
+  const [conversaciones,setConversaciones]=useState([]);
+  useEffect(()=>{
+    if(!datosListos||!["gerencia","vendedora"].includes(user?.role)) return;
+    return onSnapshot(collection(db,"conversaciones"),snap=>setConversaciones(snap.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[datosListos,user?.role]);
+  const chatsSinLeer=conversaciones.filter(c=>c.sinLeerStaff&&c.estado!=="cerrada").length;
+
   useEffect(()=>{
     if(!datosListos) return;
     return onSnapshot(collection(db,"clientes"),snap=>setClientes(snap.docs.map(d=>d.data())),()=>{});
@@ -787,6 +796,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       id, nombre:d.nombre.trim(),
       categoria:d.categoria||"Otro", calibre:d.calibre||"", medida:d.medida||"", color:d.color||"",
       unidad:d.unidad, origen:d.origen, minimo:Number(d.minimo)||0, precioMin:d.precioMin===""||d.precioMin==null?"":Number(d.precioMin),
+      publicarWeb:!!d.publicarWeb, precioWeb:d.precioWeb===""||d.precioWeb==null?"":Number(d.precioWeb), imagenWeb:d.imagenWeb||"",
       stock:{ "Centro":0, "Santa Lucia":0, "La Granja":0 },
       mov:[{ts:Date.now(),tipo:"alta",sede:"—",cant:0,motivo:"Producto creado",usuario:user.name}],
       creadoPor:user.name, timestamp:Date.now(),
@@ -795,6 +805,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
   };
   const editProducto=async(id,changes)=>{
     const clean={...changes,minimo:Number(changes.minimo)||0};
+    if("precioWeb" in changes) clean.precioWeb = changes.precioWeb===""||changes.precioWeb==null ? "" : Number(changes.precioWeb);
     if("precioMin" in changes) clean.precioMin = changes.precioMin===""||changes.precioMin==null ? "" : Number(changes.precioMin);
     await withSave(()=>updateDoc(doc(db,"inventario",id),clean));
   };
@@ -959,6 +970,8 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
     {id:"inventario", label:"📦 Inventario",    count:lowStock.length},
     {id:"ventas",     label:"🧾 Ventas",         count:0},
     {id:"clientes",   label:"👤 Clientes",       count:0},
+    ...((isG||isVendedora)?[{id:"chat",label:"💬 Chat web",count:chatsSinLeer}]:[]),
+    ...(isG?[{id:"sitio",label:"🌐 Sitio Web",count:0}]:[]),
     ...(isG?[{id:"usuarios",label:"🔑 Usuarios",count:0}]:[]),
   ];
 
@@ -1037,6 +1050,8 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
           onSync={isG?sincronizarClientes:null}
           onEliminar={isG?(c=>{if(window.confirm(`¿Eliminar al cliente "${c.nombre}"?\n\nSolo se borra su ficha. Sus órdenes, remisiones y cotizaciones NO se borran. Si vuelve a comprar, se creará de nuevo.`))eliminarCliente(c);}):null}/>}
         {tab==="usuarios"&&isG&&<UsuariosTab user={user}/>}
+        {tab==="chat"&&(isG||isVendedora)&&<ChatTab conversaciones={conversaciones} user={user}/>}
+        {tab==="sitio"&&isG&&<SitioWebTab/>}
         {tab==="history"&&<HistoryTab orders={doneOrders} allOrders={orders} isG={isG}
           onDel={canDelete?(r=>{if(window.confirm(`¿Confirmas eliminar el registro #${r}?`))removeOrder(r);}):null}
           onDetail={o=>setModal({t:"detail",order:o})}
@@ -2779,6 +2794,9 @@ function ProductoModal({prod,isG,onClose,onSave}){
   const [origen,setOrigen]=useState(prod?.origen||"importado");
   const [minimo,setMinimo]=useState(prod?.minimo!=null?String(prod.minimo):"");
   const [precioMin,setPrecioMin]=useState(prod?.precioMin!=null&&prod?.precioMin!==""?String(prod.precioMin):"");
+  const [publicarWeb,setPublicarWeb]=useState(!!prod?.publicarWeb);
+  const [precioWeb,setPrecioWeb]=useState(prod?.precioWeb!=null&&prod?.precioWeb!==""?String(prod.precioWeb):"");
+  const [imagenWeb,setImagenWeb]=useState(prod?.imagenWeb||"");
   // Nombre/referencia opcional: si el producto viejo solo tenía nombre, lo conservamos
   // Al editar se conserva el nombre actual (si no, los productos importados se renombrarían a su categoría)
   const legacyNombre = editing ? (prod?.nombre||"") : "";
@@ -2792,7 +2810,7 @@ function ProductoModal({prod,isG,onClose,onSave}){
   const submit=async()=>{
     if(!nombreFinal){setErr("Escribe al menos la categoría y una medida, o un nombre");return;}
     setLoading(true);
-    const r=await onSave({nombre:nombreFinal,categoria,calibre:calibre.trim(),medida:medida.trim(),color:color.trim(),unidad,origen,minimo:Number(minimo)||0,precioMin:precioMin===""?"":Number(precioMin)});
+    const r=await onSave({nombre:nombreFinal,categoria,calibre:calibre.trim(),medida:medida.trim(),color:color.trim(),unidad,origen,minimo:Number(minimo)||0,precioMin:precioMin===""?"":Number(precioMin),...(isG?{publicarWeb,precioWeb:precioWeb===""?"":Number(precioWeb),imagenWeb:imagenWeb.trim()}:{})});
     setLoading(false);
     if(r){setErr(r);return;}
     onClose();
@@ -2826,6 +2844,20 @@ function ProductoModal({prod,isG,onClose,onSave}){
             <NumInp value={precioMin} onChange={setPrecioMin} placeholder="Ej: 13000" unit="$"/>
           </Field>
           <div style={{fontSize:11,color:"#92400e"}}>Este es el precio mínimo al que se debe vender. La vendedora lo verá como guía al crear la orden, sin saber que lo define gerencia.</div>
+        </div>
+      )}
+      {isG&&(
+        <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"10px 12px",marginBottom:6}}>
+          <label style={{display:"flex",alignItems:"center",gap:8,fontWeight:700,fontSize:14,color:"#1e40af",marginBottom:6}}>
+            <input type="checkbox" checked={publicarWeb} onChange={e=>setPublicarWeb(e.target.checked)}/> 🌐 Publicar en la web (mallasfox.com)
+          </label>
+          {publicarWeb&&<>
+            <Field label={`Precio público (por ${unidad}, IVA incluido) — vacío = «Precio por cotización»`}>
+              <NumInp value={precioWeb} onChange={setPrecioWeb} placeholder="Ej: 15000" unit="$"/>
+            </Field>
+            <Field label="Imagen (enlace https, opcional)"><input style={inp} value={imagenWeb} onChange={e=>setImagenWeb(e.target.value)} placeholder="https://…"/></Field>
+          </>}
+          <div style={{fontSize:11,color:"#1e40af"}}>La web muestra disponibilidad (disponible / pocas / bajo pedido) según el stock, nunca las cantidades ni el precio mínimo.</div>
         </div>
       )}
       <Field label="Nombre / referencia (puedes cambiarlo; si lo dejas vacío se arma solo con categoría, calibre y medida)">

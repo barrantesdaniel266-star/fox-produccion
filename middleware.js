@@ -27,6 +27,10 @@ function normalizeIp(ip) {
 }
 
 export default function middleware(request) {
+  // El sitio público (mallasfox.com y /web) es para clientes: nunca se restringe por IP.
+  const { hostname, pathname } = new URL(request.url);
+  if (/^(www\.)?mallasfox\./i.test(hostname) || pathname === "/web" || pathname.startsWith("/web/")) return next();
+
   const raw = (process.env.ALLOWED_IPS || "").trim();
   if (!raw) return next(); // sin configurar todavía -> no bloquea a nadie
 

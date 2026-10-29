@@ -40,16 +40,40 @@ service cloud.firestore {
       allow delete: if esGerencia();
     }
 
-    // Chat en tiempo real (modelo listo, sin UI todavía)
+    // Contenido editable del sitio público (lo lee /api/catalogo con cuenta de servicio)
+    match /sitio/{id} {
+      allow read: if esStaff();
+      allow write: if esGerencia();
+    }
+
+    // Chat con clientes de la web. El visitante entra con sesión anónima de Firebase y solo
+    // ve/escribe en SU conversación (clienteUid). Las vendedoras ven todas.
+    function esAnonimo() { return request.auth != null && request.auth.token.firebase.sign_in_provider == 'anonymous'; }
+    function convDe(convId) { return get(/databases/$(database)/documents/conversaciones/$(convId)).data; }
     match /conversaciones/{id} {
-      allow read, create, update: if puedeEscribir();
+      allow get: if puedeEscribir() || (esAnonimo() && resource.data.clienteUid == request.auth.uid);
+      allow list: if puedeEscribir();
+      allow create: if esAnonimo()
+        && request.resource.data.clienteUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['clienteUid','clienteNombre','clienteContacto','vendedoraAsignada','estado','ultimoMensaje','ts','sinLeerStaff','origen'])
+        && request.resource.data.clienteNombre is string && request.resource.data.clienteNombre.size() <= 80
+        && request.resource.data.clienteContacto is string && request.resource.data.clienteContacto.size() <= 30;
+      allow create: if puedeEscribir();
+      allow update: if puedeEscribir()
+        || (esAnonimo() && resource.data.clienteUid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ultimoMensaje','ts','sinLeerStaff','estado']));
       allow delete: if esGerencia();
     }
     match /mensajes/{id} {
-      allow read: if puedeEscribir();
-      allow create: if puedeEscribir()
-        && request.resource.data.de in ['cliente','vendedora','agente']
-        && request.resource.data.keys().hasAll(['convId','de','texto','ts']);
+      allow read: if puedeEscribir() || (esAnonimo() && convDe(resource.data.convId).clienteUid == request.auth.uid);
+      allow create: if (puedeEscribir()
+          && request.resource.data.de in ['vendedora','agente']
+          && request.resource.data.keys().hasAll(['convId','de','texto','ts']))
+        || (esAnonimo()
+          && request.resource.data.de == 'cliente'
+          && request.resource.data.keys().hasOnly(['convId','de','texto','ts'])
+          && request.resource.data.texto is string && request.resource.data.texto.size() > 0 && request.resource.data.texto.size() <= 1500
+          && convDe(request.resource.data.convId).clienteUid == request.auth.uid);
       allow update, delete: if false;     // el historial no se edita (contexto para el agente IA)
     }
     match /presencia/{email} {
