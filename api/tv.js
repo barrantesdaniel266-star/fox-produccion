@@ -21,15 +21,20 @@ export default async function handler(req, res) {
     if (!getApps().length) {
       initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
     }
-    const snap = await getFirestore().collection('orders').where('status', 'in', ['queue', 'active']).get();
+    const col = getFirestore().collection('orders');
+    const [snap, hechas] = await Promise.all([
+      col.where('status', 'in', ['queue', 'active']).get(),
+      col.where('status', '==', 'completed').count().get(),
+    ]);
     const orders = snap.docs.map(d => {
       const o = d.data();
       return {
-        orden: o.orden ?? '', cliente: o.cliente ?? '', sede: o.sede ?? '',
+        orden: o.orden ?? '', cliente: o.cliente ?? '', sede: o.sede ?? '', remision: o.remision ?? '',
+        vendedoraName: o.vendedoraName ?? '', estadoEntrega: o.estadoEntrega ?? null, assignedAt: o.assignedAt ?? null,
         status: o.status, timestamp: typeof o.timestamp === 'number' ? o.timestamp : 0,
         machineId: o.machineId ?? null, machineLabel: o.machineLabel ?? null,
         items: (o.items || []).map(it => ({
-          producto: it.producto ?? '', status: it.status ?? null,
+          producto: it.producto ?? '', status: it.status ?? null, assignedAt: it.assignedAt ?? null,
           machineId: it.machineId ?? null, machineLabel: it.machineLabel ?? null,
           metros: it.metros ?? '', ancho: it.ancho ?? '', alto: it.alto ?? '',
           abertura: it.abertura ?? '', calibre: it.calibre ?? '', calibreInterno: it.calibreInterno ?? '',
@@ -37,7 +42,7 @@ export default async function handler(req, res) {
         })),
       };
     });
-    return res.status(200).json({ orders, actualizado: Date.now() });
+    return res.status(200).json({ orders, completadas: hechas.data().count, actualizado: Date.now() });
   } catch (err) {
     return res.status(500).json({ error: 'Error leyendo datos' });
   }

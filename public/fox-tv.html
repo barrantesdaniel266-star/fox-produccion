@@ -261,20 +261,10 @@ header {
 <div class="grid" id="grid"></div>
  
 <script type="module">
-import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-import { getFirestore, collection, query, orderBy, onSnapshot }
-       from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
- 
-/* ── Firebase ─────────────────────────────────────────── */
-const app = initializeApp({
-  apiKey:            "AIzaSyABPktv7Jfpc9UjmFl13QzrsSwVK34zCO0",
-  authDomain:        "fox-produccion.firebaseapp.com",
-  projectId:         "fox-produccion",
-  storageBucket:     "fox-produccion.firebasestorage.app",
-  messagingSenderId: "614815300879",
-  appId:             "1:614815300879:web:137a1e22a35e6ced7ed27a"
-});
-const db = getFirestore(app);
+/* Datos: /api/tv (token en el enlace: fox-tv.html?t=TOKEN). Las reglas de Firestore
+   ya no permiten lectura anónima, así que esta pantalla no se conecta directo a Firebase. */
+const TOKEN = new URLSearchParams(location.search).get('t') || '';
+let completadas = 0;
  
 /* ── Config ───────────────────────────────────────────── */
 const MACHINES = [
@@ -359,13 +349,12 @@ function render(orders) {
   const slActive = active.filter(it => MACHINES.some(m => m.id === it.machineId));
   const free     = MACHINES.filter(m => !active.some(it => it.machineId === m.id));
   const queueO   = orders.filter(o => derSt(norm(o)) !== 'completed');
-  const doneO    = orders.filter(o => derSt(norm(o)) === 'completed');
- 
+   
   /* stats */
   document.getElementById('sFree').textContent  = free.length;
   document.getElementById('sAct').textContent   = slActive.length;
   document.getElementById('sQ').textContent     = queueO.length;
-  document.getElementById('sDone').textContent  = doneO.length;
+  document.getElementById('sDone').textContent  = completadas;
   document.getElementById('machSummary').textContent =
     `${MACHINES.length - free.length} de ${MACHINES.length} máquinas en uso  ·  Act. ${new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}`;
  
@@ -420,15 +409,22 @@ function render(orders) {
   document.getElementById('loading').style.display = 'none';
 }
  
-/* ── Firebase listener ────────────────────────────────── */
-onSnapshot(
-  query(collection(db,'orders'), orderBy('timestamp','desc')),
-  snap => render(snap.docs.map(d => ({...d.data(), _id:d.id}))),
-  err  => {
-    document.getElementById('loading').innerHTML =
-      `<div style="color:#FF6B6B;font-size:16px">&#10060; ${err.message}</div>`;
+/* ── Carga de datos (cada 15 s) ───────────────────────── */
+async function cargar() {
+  try {
+    const r = await fetch('/api/tv?t=' + encodeURIComponent(TOKEN), { cache:'no-store' });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 401) throw new Error('Enlace no válido: falta o es incorrecto el token (?t=...)');
+    if (!r.ok || !d.orders) throw new Error('Error del servidor, reintentando…');
+    completadas = d.completadas || 0;
+    render(d.orders);
+  } catch (err) {
+    if (document.getElementById('loading').style.display !== 'none')
+      document.getElementById('loading').innerHTML =
+        `<div style="color:#FF6B6B;font-size:16px">&#10060; ${err.message}</div>`;
   }
-);
+}
+cargar(); setInterval(cargar, 15000);
 </script>
 </body>
 </html>
