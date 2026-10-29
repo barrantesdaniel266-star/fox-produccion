@@ -1,3 +1,6 @@
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+
 // api/send-report.js
 export default async function handler(req, res) {
   const cronHeader = req.headers['x-vercel-cron'];
@@ -6,28 +9,33 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'No autorizado' });
   }
   try {
-    const projectId = process.env.VITE_FIREBASE_PROJECT_ID;
-    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/orders?pageSize=500`;
-    const fr = await fetch(url);
-    const fd = await fr.json();
-    if (!fd.documents) return res.status(200).json({ message: 'Sin ordenes' });
-    const orders = fd.documents.map(doc => {
-      const f = doc.fields || {};
-      const gv = k => f[k]?.stringValue ?? f[k]?.integerValue ?? '';
-      const gt = k => f[k]?.timestampValue ? new Date(f[k].timestampValue).toLocaleString('es-CO') : '';
-      const gi = k => (f[k]?.arrayValue?.values || []).map(v => {
-        const ff = v.mapValue?.fields || {};
-        const g = x => ff[x]?.stringValue ?? ff[x]?.integerValue ?? '';
-        return { producto:g('producto'), calibre:g('calibre'), calibreInterno:g('calibreInterno'),
-          color:g('color'), ancho:g('ancho'), alto:g('alto'), metros:g('metros'),
-          abertura:g('abertura'), grosor:g('grosor'), largo:g('largo'), cantidad:g('cantidad'),
-          status:g('status'), machineLabel:g('machineLabel') };
-      });
-      return { orden:gv('orden'), cliente:gv('cliente'), sede:gv('sede'),
-        vendedoraName:gv('vendedoraName'), status:gv('status'),
-        timestamp:gt('timestamp'), completedAt:gt('completedAt'), items:gi('items') };
+    // Vercel cron corre en UTC: hay dos disparos (20:00 y 21:00 UTC) y solo envia el que
+    // coincide con las 3 PM de America/Chicago (CST/CDT). Con ?force=1 + CRON_SECRET se envia ya.
+    const forzar = req.query?.force === '1' && authHeader === `Bearer ${process.env.CRON_SECRET}`;
+    const horaChicago = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hour: 'numeric', hour12: false }).format(new Date())) % 24;
+    if (!forzar && horaChicago !== 15) return res.status(200).json({ skipped: true, horaChicago });
+
+    // Cuenta de servicio (las reglas de Firestore exigen sesion @telefoxsas.com; el admin SDK las salta)
+    if (!getApps().length) {
+      initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
+    }
+    const snap = await getFirestore().collection('orders').get();
+    if (snap.empty) return res.status(200).json({ message: 'Sin ordenes' });
+    const gv = v => v ?? '';
+    const ms = v => v?.toDate ? v.toDate().getTime() : (typeof v === 'number' ? v : 0);
+    const gt = v => ms(v) ? new Date(ms(v)).toLocaleString('es-CO', { timeZone: 'America/Bogota' }) : '';
+    const orders = snap.docs.map(doc => {
+      const f = doc.data();
+      return { orden:gv(f.orden), cliente:gv(f.cliente), sede:gv(f.sede),
+        vendedoraName:gv(f.vendedoraName), status:gv(f.status),
+        ts:ms(f.timestamp), timestamp:gt(f.timestamp), completedAt:gt(f.completedAt),
+        items:(f.items||[]).map(it => ({ producto:gv(it.producto), calibre:gv(it.calibre),
+          calibreInterno:gv(it.calibreInterno), color:gv(it.color), ancho:gv(it.ancho),
+          alto:gv(it.alto), metros:gv(it.metros), abertura:gv(it.abertura), grosor:gv(it.grosor),
+          largo:gv(it.largo), cantidad:gv(it.cantidad), status:gv(it.status),
+          machineLabel:gv(it.machineLabel) })) };
     });
-    orders.sort((a,b) => b.timestamp.localeCompare(a.timestamp));
+    orders.sort((a,b) => b.ts - a.ts);
     const map = { eslabonada:'Malla Eslabonada', pvc:'Malla PVC', postes:'Postes', tubos:'Tubos' };
     const lp = id => map[id] || id;
     const st = { queue:'En Cola', active:'En Produccion', completed:'Completada' };
