@@ -493,7 +493,7 @@ export default function App(){
 
   if(user&&!ready)return <Splash error={dbErr}/>;
   if(!user)return <Login onLogin={login}/>;
-  return <Shell user={user} onLogout={logout} orders={orders} movimientos={movimientos} inventario={inventario} remisiones={remisiones} clientes={clientes}/>;
+  return <Shell user={user} onLogout={logout} orders={orders} movimientos={movimientos} inventario={inventario} remisiones={remisiones} clientes={clientes} conversaciones={conversaciones} chatsSinLeer={chatsSinLeer}/>;
 }
 
 // ═══ SPLASH ════════════════════════════════════════════════
@@ -590,7 +590,7 @@ function Login({onLogin}){
 }
 
 // ═══ SHELL ═════════════════════════════════════════════════
-function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],clientes=[]}){
+function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],clientes=[],conversaciones=[],chatsSinLeer=0}){
   // tab init deferred below after isLogistica is defined
   const [modal,setModal]=useState(null);
   const [saving,setSaving]=useState(false);
