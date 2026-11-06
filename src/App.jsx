@@ -1074,8 +1074,8 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       {modal?.t==="newMov"     &&<NewMovimientoModal user={user} movimientos={movimientos} onClose={()=>setModal(null)} onCreate={createMovimiento}/>}
       {modal?.t==="recibirMov" &&<RecibirMovimientoModal mov={modal.mov} user={user} onClose={()=>setModal(null)} onRecibir={recibirMovimiento}/>}
       {modal?.t==="editarMov" &&<EditarMovimientoModal mov={modal.mov} onClose={()=>setModal(null)} onSave={editarMovimiento}/>}
-      {modal?.t==="invNuevo"  &&<ProductoModal isG={isG} onClose={()=>setModal(null)} onSave={createProducto}/>}
-      {modal?.t==="invEditar" &&<ProductoModal prod={modal.prod} isG={isG} onClose={()=>setModal(null)} onSave={d=>editProducto(modal.prod.id,d)}/>}
+      {modal?.t==="invNuevo"  &&<ProductoModal inventario={inventario} isG={isG} onClose={()=>setModal(null)} onSave={createProducto}/>}
+      {modal?.t==="invEditar" &&<ProductoModal inventario={inventario} prod={modal.prod} isG={isG} onClose={()=>setModal(null)} onSave={d=>editProducto(modal.prod.id,d)}/>}
       {modal?.t==="invMov"    &&<MovInventarioModal prod={modal.prod} tipo={modal.tipo} onClose={()=>setModal(null)} onSave={moverInventario}/>}
       {modal?.t==="invKardex" &&<KardexModal prod={modal.prod} onClose={()=>setModal(null)}/>}
       {modal?.t==="nuevaVenta"&&<NuevaVentaModal tipo={modal.tipo} desde={modal.desde} user={user} inventario={inventario} orders={orders} remisiones={remisiones} clientes={clientes} onClose={()=>setModal(null)} onCreate={createDocumento} onDone={doc=>setModal({t:"verDoc",doc})}/>}
@@ -1862,6 +1862,8 @@ function Suggest({value,onChange,onPick,options=[],placeholder,style,autoFocus,c
     </div>
   );
 }
+const cliOptsBy=(clientes,campo)=>(clientes||[]).filter(c=>String(c[campo]||"").trim()).map(c=>({key:c.id,label:String(c[campo]),sub:c.nombre||""}));
+const valOpts=(arr)=>[...new Set((arr||[]).map(v=>String(v||"").trim()).filter(Boolean))].sort().map(v=>({key:v,label:v}));
 const cliOpts=clientes=>(clientes||[]).map(c=>({key:c.id,label:c.nombre||"",sub:c.docNumero||c.telefono||""}));
 
 function Modal({title,onClose,children,maxWidth=560}){
@@ -2827,7 +2829,7 @@ function InventarioTab({inventario,orders=[],remisiones=[],lowStock,user,isG,can
   );
 }
 
-function ProductoModal({prod,isG,onClose,onSave}){
+function ProductoModal({prod,inventario=[],isG,onClose,onSave}){
   const editing=!!prod;
   const [categoria,setCategoria]=useState(prod?.categoria||"Malla Eslabonada");
   const [calibre,setCalibre]=useState(prod?.calibre||"");
@@ -2848,6 +2850,8 @@ function ProductoModal({prod,isG,onClose,onSave}){
 
   const auto=invLabel({categoria,calibre,medida,color});
   const nombreFinal=(ref.trim()||auto).trim();
+  const mismaCat=inventario.filter(p=>p.categoria===categoria);
+  const duplicado=!editing&&nombreFinal?inventario.find(p=>_normS(invLabel(p))===_normS(nombreFinal)):null;
   const cambioCat=v=>{ setCategoria(v); if(CAT_UNIDAD[v]) setUnidad(CAT_UNIDAD[v]); };
 
   const submit=async()=>{
@@ -2866,11 +2870,11 @@ function ProductoModal({prod,isG,onClose,onSave}){
         </select>
       </Field>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-        <Field label="Calibre"><input style={inp} value={calibre} onChange={e=>{setCalibre(e.target.value);setErr("");}} placeholder="Ej: 10.5"/></Field>
-        <Field label="Tamaño / medida"><input style={inp} value={medida} onChange={e=>{setMedida(e.target.value);setErr("");}} placeholder='Ej: 2.00×10m · 2½"'/></Field>
+        <Field label="Calibre"><Suggest value={calibre} onChange={v=>{setCalibre(v);setErr("");}} options={valOpts(mismaCat.map(p=>p.calibre))} placeholder="Ej: 10.5"/></Field>
+        <Field label="Tamaño / medida"><Suggest value={medida} onChange={v=>{setMedida(v);setErr("");}} options={valOpts(mismaCat.map(p=>p.medida))} placeholder='Ej: 2.00×10m · 2½"'/></Field>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-        <Field label="Color (opcional)"><input style={inp} value={color} onChange={e=>setColor(e.target.value)} placeholder="Verde, Negro..."/></Field>
+        <Field label="Color (opcional)"><Suggest value={color} onChange={setColor} options={valOpts(inventario.map(p=>p.color))} placeholder="Verde, Negro..."/></Field>
         <Field label="Unidad">
           <select style={inp} value={unidad} onChange={e=>setUnidad(e.target.value)}>{UNIDADES.map(u=><option key={u} value={u}>{u}</option>)}</select>
         </Field>
@@ -2904,7 +2908,8 @@ function ProductoModal({prod,isG,onClose,onSave}){
         </div>
       )}
       <Field label="Nombre / referencia (puedes cambiarlo; si lo dejas vacío se arma solo con categoría, calibre y medida)">
-        <input style={inp} value={ref} onChange={e=>{setRef(e.target.value);setErr("");}} placeholder={auto||"Nombre del producto"}/>
+        <Suggest value={ref} onChange={v=>{setRef(v);setErr("");}} options={valOpts(inventario.map(p=>p.nombre||invLabel(p)))} placeholder={auto||"Nombre del producto"}/>
+        {duplicado&&<div style={{fontSize:12,color:"#b45309",marginTop:4}}>⚠ Ya existe un producto «{invLabel(duplicado)}» en el inventario. Revisa antes de crear uno repetido.</div>}
       </Field>
       <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"10px 12px",marginBottom:12}}>
         <div style={{fontSize:12,color:"#94a3b8",marginBottom:2}}>Se guardará como</div>
@@ -3277,6 +3282,7 @@ function NuevaVentaModal({tipo:tipoInit,desde=null,user,inventario,orders,remisi
     else setCli(c=>({...c,nombre}));
     setErr("");
   };
+  const fillCli=o=>{ const f=clientes.find(x=>x.id===o.key); if(f) setCli({docTipo:f.docTipo||"NIT",docNumero:f.docNumero||"",nombre:f.nombre||"",telefono:f.telefono||"",email:f.email||"",direccion:f.direccion||""}); };
   // Buscar cliente por documento
   const buscarCli=num=>{
     setCli(c=>({...c,docNumero:num}));
@@ -3453,7 +3459,7 @@ function NuevaVentaModal({tipo:tipoInit,desde=null,user,inventario,orders,remisi
         </div>
         <div>
           <label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>N° documento</label>
-          <input style={{...inp,fontSize:13}} value={cli.docNumero} onChange={e=>buscarCli(e.target.value)} placeholder="830109420-1"/>
+          <Suggest style={{...inp,fontSize:13}} value={cli.docNumero} onChange={buscarCli} onPick={fillCli} options={cliOptsBy(clientes,"docNumero")} placeholder="830109420-1"/>
         </div>
       </div>
 
@@ -3461,11 +3467,11 @@ function NuevaVentaModal({tipo:tipoInit,desde=null,user,inventario,orders,remisi
       <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"8px 12px",fontSize:12,color:"#1d4ed8",marginBottom:8}}>Al guardar, estos datos del cliente se actualizan/guardan automáticamente (nombre, teléfono, correo, dirección).</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:6}}>
         <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Cliente *</label><Suggest value={cli.nombre} onChange={linkCliente} options={cliOpts(clientes)} placeholder="Escribe o elige un cliente" createLabel="Crear cliente nuevo"/></div>
-        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Teléfono</label><input style={inp} value={cli.telefono} onChange={e=>setCli(c=>({...c,telefono:e.target.value}))}/></div>
+        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Teléfono</label><Suggest value={cli.telefono} onChange={v=>setCli(c=>({...c,telefono:v}))} onPick={fillCli} options={cliOptsBy(clientes,"telefono")}/></div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>E-mail</label><input style={inp} value={cli.email} onChange={e=>setCli(c=>({...c,email:e.target.value}))} placeholder="cliente@correo.com"/></div>
-        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Dirección</label><input style={inp} value={cli.direccion} onChange={e=>setCli(c=>({...c,direccion:e.target.value}))}/></div>
+        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>E-mail</label><Suggest value={cli.email} onChange={v=>setCli(c=>({...c,email:v}))} onPick={fillCli} options={cliOptsBy(clientes,"email")} placeholder="cliente@correo.com"/></div>
+        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Dirección</label><Suggest value={cli.direccion} onChange={v=>setCli(c=>({...c,direccion:v}))} onPick={fillCli} options={cliOptsBy(clientes,"direccion")}/></div>
       </div>
 
       {/* Items */}
@@ -3805,11 +3811,11 @@ function ClienteModal({cli,clientes=[],onClose,onSave}){
       </Field>
       <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:10}}>
         <Field label="Tipo"><select style={inp} value={c.docTipo} onChange={e=>set("docTipo",e.target.value)}><option value="NIT">NIT</option><option value="CC">CC</option></select></Field>
-        <Field label="N° documento"><input style={inp} value={c.docNumero} onChange={e=>set("docNumero",e.target.value)}/></Field>
+        <Field label="N° documento">{cli?<input style={inp} value={c.docNumero} onChange={e=>set("docNumero",e.target.value)}/>:<Suggest value={c.docNumero} onChange={v=>set("docNumero",v)} onPick={elegir} options={cliOptsBy(clientes,"docNumero")}/>}</Field>
       </div>
-      <Field label="Teléfono"><input style={inp} value={c.telefono} onChange={e=>set("telefono",e.target.value)}/></Field>
-      <Field label="E-mail"><input style={inp} value={c.email} onChange={e=>set("email",e.target.value)}/></Field>
-      <Field label="Dirección"><input style={inp} value={c.direccion} onChange={e=>set("direccion",e.target.value)}/></Field>
+      <Field label="Teléfono">{cli?<input style={inp} value={c.telefono} onChange={e=>set("telefono",e.target.value)}/>:<Suggest value={c.telefono} onChange={v=>set("telefono",v)} onPick={elegir} options={cliOptsBy(clientes,"telefono")}/>}</Field>
+      <Field label="E-mail">{cli?<input style={inp} value={c.email} onChange={e=>set("email",e.target.value)}/>:<Suggest value={c.email} onChange={v=>set("email",v)} onPick={elegir} options={cliOptsBy(clientes,"email")}/>}</Field>
+      <Field label="Dirección">{cli?<input style={inp} value={c.direccion} onChange={e=>set("direccion",e.target.value)}/>:<Suggest value={c.direccion} onChange={v=>set("direccion",v)} onPick={elegir} options={cliOptsBy(clientes,"direccion")}/>}</Field>
       {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
       <div style={{display:"flex",gap:10}}>
         <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
