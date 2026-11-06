@@ -3778,19 +3778,31 @@ function ClienteModal({cli,clientes=[],onClose,onSave}){
   const [c,setC]=useState({docTipo:cli?.docTipo||"NIT",docNumero:cli?.docNumero||"",nombre:cli?.nombre||"",telefono:cli?.telefono||"",email:cli?.email||"",direccion:cli?.direccion||""});
   const [loading,setLoading]=useState(false);const [err,setErr]=useState("");
   const set=(k,v)=>setC(p=>({...p,[k]:v}));
+  const [sel,setSel]=useState(null); // cliente existente elegido del dropdown
+  const elegir=o=>{
+    const f=clientes.find(x=>x.id===o.key); if(!f) return;
+    setSel(f);
+    setC({docTipo:f.docTipo||"NIT",docNumero:f.docNumero||"",nombre:f.nombre||"",telefono:f.telefono||"",email:f.email||"",direccion:f.direccion||""});
+    setErr("");
+  };
   const submit=async()=>{
     if(!c.nombre.trim()){setErr("El nombre no puede quedar vacío");return;}
     const nombre=c.nombre.trim();
-    const id=cli?.id||clienteId(nombre);
+    const id=cli?.id||sel?.id||clienteId(nombre);
     if(!id){setErr("Nombre inválido");return;}
-    if(!cli&&clientes.some(x=>x.id===id)){setErr("Ya existe un cliente con ese nombre");return;}
+    if(!cli&&!sel&&clientes.some(x=>x.id===id)){setErr("Ya existe un cliente con ese nombre");return;}
     setLoading(true);
-    await onSave({...(cli||{}),...c,nombre,id});
+    await onSave({...(cli||sel||{}),...c,nombre,id});
     setLoading(false);onClose();
   };
   return(
     <Modal title={cli?"Editar cliente":"Nuevo cliente"} onClose={onClose} maxWidth={480}>
-      <Field label="Nombre *"><input style={inp} value={c.nombre} onChange={e=>{set("nombre",e.target.value);setErr("");}}/></Field>
+      <Field label="Nombre *">
+        {cli?<input style={inp} value={c.nombre} onChange={e=>{set("nombre",e.target.value);setErr("");}}/>
+          :<Suggest value={c.nombre} options={cliOpts(clientes)} createLabel="Crear cliente nuevo" placeholder="Escribe para buscar o crear"
+             onChange={v=>{set("nombre",v);setSel(null);setErr("");}} onPick={elegir}/>}
+        {sel&&<div style={{fontSize:12,color:"#b45309",marginTop:4}}>Este cliente ya existe: se cargaron sus datos. Al guardar se actualiza su ficha.</div>}
+      </Field>
       <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:10}}>
         <Field label="Tipo"><select style={inp} value={c.docTipo} onChange={e=>set("docTipo",e.target.value)}><option value="NIT">NIT</option><option value="CC">CC</option></select></Field>
         <Field label="N° documento"><input style={inp} value={c.docNumero} onChange={e=>set("docNumero",e.target.value)}/></Field>
