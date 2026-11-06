@@ -1046,6 +1046,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
         {tab==="clientes"&&<ClientesTab clientes={clientes} remisiones={remisiones} orders={orders} isG={isG} canProd={canProd}
           onVer={c=>setModal({t:"clienteDetalle",cli:c})}
           onEditar={canProd?(c=>setModal({t:"cliente",cli:c})):null}
+          onNuevo={()=>setModal({t:"cliente",cli:null})}
           onFusionar={isG?(()=>setModal({t:"fusionar"})):null}
           onSync={isG?sincronizarClientes:null}
           onEliminar={isG?(c=>{if(window.confirm(`¿Eliminar al cliente "${c.nombre}"?\n\nSolo se borra su ficha. Sus órdenes, remisiones y cotizaciones NO se borran. Si vuelve a comprar, se creará de nuevo.`))eliminarCliente(c);}):null}/>}
@@ -1080,7 +1081,7 @@ function Shell({user,onLogout,orders,movimientos=[],inventario=[],remisiones=[],
       {modal?.t==="nuevaVenta"&&<NuevaVentaModal tipo={modal.tipo} desde={modal.desde} user={user} inventario={inventario} orders={orders} remisiones={remisiones} clientes={clientes} onClose={()=>setModal(null)} onCreate={createDocumento} onDone={doc=>setModal({t:"verDoc",doc})}/>}
       {modal?.t==="verDoc"    &&<VerDocumentoModal doc={modal.doc} onClose={()=>setModal(null)}/>}
       {modal?.t==="pasarInv"  &&<PasarInventarioModal order={modal.order} inventario={inventario} onClose={()=>setModal(null)} onSave={pasarOrdenAInventario}/>}
-      {modal?.t==="cliente"   &&<ClienteModal cli={modal.cli} onClose={()=>setModal(null)} onSave={saveCliente}/>}
+      {modal?.t==="cliente"   &&<ClienteModal cli={modal.cli} clientes={clientes} onClose={()=>setModal(null)} onSave={saveCliente}/>}
       {modal?.t==="fusionar"  &&<FusionarClientesModal clientes={clientes} onClose={()=>setModal(null)} onMerge={fusionarClientes}/>}
       {modal?.t==="clienteDetalle"&&<ClienteDetalleModal cli={modal.cli} orders={orders} remisiones={remisiones} onClose={()=>setModal(null)} onEditar={canProd?(c=>setModal({t:"cliente",cli:c})):null} onVerOrden={o=>setModal({t:"detail",order:o})}/>}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}*{box-sizing:border-box}`}</style>
@@ -1819,6 +1820,50 @@ function HistoryTab({orders,allOrders,isG,onDel,onDetail,onQuickEdit,onSetEntreg
 }
 
 // ═══ MODAL BASE / FIELD / NUMINP ═══════════════════════════
+// ═══ INPUT PREDICTIVO (dropdown de coincidencias) ═════════════
+// options: [{key,label,sub}] · onChange(texto) mientras escribe · onPick(opción) al elegir
+const _normS=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+function Suggest({value,onChange,onPick,options=[],placeholder,style,autoFocus,createLabel,max=8}){
+  const [open,setOpen]=useState(false);
+  const [hi,setHi]=useState(0);
+  const q=_normS(value).trim();
+  const words=q.split(/\s+/).filter(Boolean);
+  const matches=words.length?options
+    .map(o=>{const t=_normS(o.label+" "+(o.sub||""));return words.every(w=>t.includes(w))?{o,r:_normS(o.label).startsWith(q)?0:1}:null;})
+    .filter(Boolean).sort((a,b)=>a.r-b.r).slice(0,max).map(x=>x.o):[];
+  const exacto=!!q&&options.some(o=>_normS(o.label).trim()===q);
+  const showCreate=!!createLabel&&!!q&&!exacto;
+  const pick=o=>{onPick?onPick(o):onChange(o.label);setOpen(false);};
+  const onKey=e=>{
+    if(!open&&(e.key==="ArrowDown")){setOpen(true);return;}
+    if(e.key==="ArrowDown"){e.preventDefault();setHi(h=>Math.min(h+1,matches.length-1));}
+    else if(e.key==="ArrowUp"){e.preventDefault();setHi(h=>Math.max(h-1,0));}
+    else if(e.key==="Enter"&&open&&matches[hi]){e.preventDefault();pick(matches[hi]);}
+    else if(e.key==="Escape"){setOpen(false);}
+  };
+  const visible=open&&(matches.length>0||showCreate);
+  return(
+    <div style={{position:"relative"}}>
+      <input style={style||inp} value={value} placeholder={placeholder} autoFocus={autoFocus} autoComplete="off"
+        onChange={e=>{onChange(e.target.value);setOpen(true);setHi(0);}}
+        onFocus={()=>setOpen(true)} onBlur={()=>setTimeout(()=>setOpen(false),120)} onKeyDown={onKey}/>
+      {visible&&(
+        <div style={{position:"absolute",left:0,right:0,top:"100%",marginTop:4,zIndex:50,background:"#fff",border:"1.5px solid #e2e8f0",borderRadius:10,boxShadow:"0 10px 24px -6px rgba(15,23,42,.25)",maxHeight:240,overflowY:"auto"}}>
+          {matches.map((o,i)=>(
+            <div key={o.key??o.label} onMouseDown={e=>{e.preventDefault();pick(o);}} onMouseEnter={()=>setHi(i)}
+              style={{padding:"8px 12px",cursor:"pointer",background:i===hi?"#eff6ff":"#fff",display:"flex",justifyContent:"space-between",gap:10,alignItems:"baseline"}}>
+              <span style={{fontSize:14,color:"#1e293b",fontWeight:600}}>{o.label}</span>
+              {o.sub&&<span style={{fontSize:12,color:"#94a3b8",whiteSpace:"nowrap"}}>{o.sub}</span>}
+            </div>
+          ))}
+          {showCreate&&<div style={{padding:"8px 12px",fontSize:13,color:"#15803d",background:"#f0fdf4",borderTop:matches.length?"1px solid #e2e8f0":"none"}}>＋ {createLabel}: <b>{value.trim()}</b></div>}
+        </div>
+      )}
+    </div>
+  );
+}
+const cliOpts=clientes=>(clientes||[]).map(c=>({key:c.id,label:c.nombre||"",sub:c.docNumero||c.telefono||""}));
+
 function Modal({title,onClose,children,maxWidth=560}){
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16}}>
@@ -2059,8 +2104,7 @@ function NewOrderModal({user,orders,clientes=[],remisionOpts=[],inventario=[],on
         <div><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>No. Orden *</label><input style={inp} value={orden} onChange={e=>setOrden(e.target.value)}/></div>
         <div>
           <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente *</label>
-          <input style={inp} value={cliente} onChange={e=>setCliente(e.target.value)} placeholder="Nombre del cliente" list="new-order-clientes"/>
-          <datalist id="new-order-clientes">{clientes.map(c=><option key={c.id} value={c.nombre}/>)}</datalist>
+          <Suggest value={cliente} onChange={setCliente} options={cliOpts(clientes)} placeholder="Escribe el nombre del cliente" createLabel="Crear cliente nuevo"/>
           <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
             <button type="button" onClick={selectStock} style={{background:cliente==="Inventario (Stock)"?"#7c3aed":"#f5f3ff",border:"1.5px solid #7c3aed",borderRadius:8,padding:"4px 10px",cursor:"pointer",color:cliente==="Inventario (Stock)"?"#fff":"#7c3aed",fontSize:14,fontWeight:700}}>📦 Inventario (Stock)</button>
           </div>
@@ -2133,8 +2177,7 @@ function QuickEditModal({order,clientes=[],remisionOpts=[],onClose,onSave}){
       </div>
       <div style={{marginBottom:12}}>
         <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente</label>
-        <input style={inp} value={cliente} onChange={e=>{setCliente(e.target.value);setErr("");}} autoFocus list="qe-cli"/>
-        <datalist id="qe-cli">{clientes.map(c=><option key={c.id} value={c.nombre}/>)}</datalist>
+        <Suggest value={cliente} onChange={v=>{setCliente(v);setErr("");}} options={cliOpts(clientes)} autoFocus createLabel="Crear cliente nuevo"/>
       </div>
       <div style={{marginBottom:14}}>
         <label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Remisión</label>
@@ -2172,7 +2215,7 @@ function EditOrderModal({order,isG,clientes=[],remisionOpts=[],inventario=[],onC
   return(
     <Modal title={`Editar Orden #${order.orden}`} onClose={onClose} maxWidth={580}>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-        <div><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente</label><input style={inp} value={cliente} onChange={e=>setCliente(e.target.value)} list="eo-cli"/><datalist id="eo-cli">{clientes.map(c=><option key={c.id} value={c.nombre}/>)}</datalist></div>
+        <div><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Cliente</label><Suggest value={cliente} onChange={setCliente} options={cliOpts(clientes)} createLabel="Crear cliente nuevo"/></div>
         <div><label style={{fontSize:14,fontWeight:600,color:"#64748b",display:"block",marginBottom:5}}>Remisión</label><input style={inp} value={remision} onChange={e=>setRemision(e.target.value)} placeholder="No. de remisión" list="eo-rem"/><datalist id="eo-rem">{remisionOpts.map(r=><option key={r} value={r}/>)}</datalist></div>
       </div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
@@ -3417,7 +3460,7 @@ function NuevaVentaModal({tipo:tipoInit,desde=null,user,inventario,orders,remisi
       {/* Datos del cliente (se actualizan al imprimir) */}
       <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"8px 12px",fontSize:12,color:"#1d4ed8",marginBottom:8}}>Al guardar, estos datos del cliente se actualizan/guardan automáticamente (nombre, teléfono, correo, dirección).</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:6}}>
-        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Cliente *</label><input style={inp} value={cli.nombre} onChange={e=>linkCliente(e.target.value)} list="cli-list" placeholder="Escribe o elige un cliente"/><datalist id="cli-list">{clientes.map(c=><option key={c.id} value={c.nombre}/>)}</datalist></div>
+        <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Cliente *</label><Suggest value={cli.nombre} onChange={linkCliente} options={cliOpts(clientes)} placeholder="Escribe o elige un cliente" createLabel="Crear cliente nuevo"/></div>
         <div><label style={{fontSize:13,fontWeight:600,color:"#64748b",display:"block",marginBottom:4}}>Teléfono</label><input style={inp} value={cli.telefono} onChange={e=>setCli(c=>({...c,telefono:e.target.value}))}/></div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
@@ -3512,7 +3555,11 @@ function NuevaVentaModal({tipo:tipoInit,desde=null,user,inventario,orders,remisi
             ):(
               <>
                 {!esItemStock&&(
-                  <input style={{...inp,fontSize:13,marginBottom:6}} placeholder="Descripción del producto" value={it.descripcion} onChange={e=>setItem(i,"descripcion",e.target.value)}/>
+                  <div style={{marginBottom:6}}><Suggest style={{...inp,fontSize:13}} placeholder="Descripción del producto (escribe para buscar)" value={it.descripcion}
+                    options={catSource.map(p=>({key:p.n,label:p.n,sub:p.pm?`mín ${cop(p.pm)}/${p.u}`:p.u,p}))}
+                    onChange={v=>setItem(i,"descripcion",v)}
+                    onPick={o=>setItems(prev=>prev.map((x,idx)=>idx===i?{...x,descripcion:o.label,unidad:x.unidad||o.p.u||"",valorUnit:x.valorUnit||o.p.pm||""}:x))}
+                    createLabel="Línea libre"/></div>
                 )}
                 <div style={{display:"grid",gridTemplateColumns:esItemStock?"1fr 1fr 1fr":"1fr 1fr 1fr 1fr",gap:6,alignItems:"end"}}>
                   <div><label style={{fontSize:11,color:"#94a3b8"}}>Cantidad{esItemStock?` (${it.unidad})`:""}</label><input style={{...inp,fontSize:13}} type="number" value={it.cantidad} onChange={e=>{setItem(i,"cantidad",e.target.value);setErr("");}}/></div>
@@ -3664,7 +3711,7 @@ function UsuariosTab({user}){
   );
 }
 
-function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onFusionar,onSync,onEliminar}){
+function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onNuevo,onFusionar,onSync,onEliminar}){
   const [q,setQ]=useState("");
   // Mapa: cualquier id (nombre o alias) -> id del cliente canónico
   const idToOwner={};
@@ -3680,6 +3727,7 @@ function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onFu
     <div>
       <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
         <input style={{...inp,flex:1,minWidth:200}} placeholder="Buscar cliente por nombre o documento..." value={q} onChange={e=>setQ(e.target.value)}/>
+        {onNuevo&&<button onClick={onNuevo} style={btnR}>+ Nuevo cliente</button>}
         {onFusionar&&<button onClick={onFusionar} style={{...btnS,fontWeight:700}}>🔗 Fusionar duplicados</button>}
         {onSync&&<button onClick={onSync} style={{...btnS,fontWeight:700}}>🔄 Sincronizar desde órdenes</button>}
       </div>
@@ -3726,18 +3774,22 @@ function ClientesTab({clientes,remisiones,orders,isG,canProd,onVer,onEditar,onFu
   );
 }
 
-function ClienteModal({cli,onClose,onSave}){
+function ClienteModal({cli,clientes=[],onClose,onSave}){
   const [c,setC]=useState({docTipo:cli?.docTipo||"NIT",docNumero:cli?.docNumero||"",nombre:cli?.nombre||"",telefono:cli?.telefono||"",email:cli?.email||"",direccion:cli?.direccion||""});
   const [loading,setLoading]=useState(false);const [err,setErr]=useState("");
   const set=(k,v)=>setC(p=>({...p,[k]:v}));
   const submit=async()=>{
     if(!c.nombre.trim()){setErr("El nombre no puede quedar vacío");return;}
+    const nombre=c.nombre.trim();
+    const id=cli?.id||clienteId(nombre);
+    if(!id){setErr("Nombre inválido");return;}
+    if(!cli&&clientes.some(x=>x.id===id)){setErr("Ya existe un cliente con ese nombre");return;}
     setLoading(true);
-    await onSave({...cli,...c,nombre:c.nombre.trim(),id:cli.id});
+    await onSave({...(cli||{}),...c,nombre,id});
     setLoading(false);onClose();
   };
   return(
-    <Modal title={`Editar cliente`} onClose={onClose} maxWidth={480}>
+    <Modal title={cli?"Editar cliente":"Nuevo cliente"} onClose={onClose} maxWidth={480}>
       <Field label="Nombre *"><input style={inp} value={c.nombre} onChange={e=>{set("nombre",e.target.value);setErr("");}}/></Field>
       <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:10}}>
         <Field label="Tipo"><select style={inp} value={c.docTipo} onChange={e=>set("docTipo",e.target.value)}><option value="NIT">NIT</option><option value="CC">CC</option></select></Field>
@@ -3749,7 +3801,7 @@ function ClienteModal({cli,onClose,onSave}){
       {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",color:"#dc2626",fontSize:14,marginBottom:12}}>⚠ {err}</div>}
       <div style={{display:"flex",gap:10}}>
         <button onClick={onClose} style={{...btnS,flex:1}}>Cancelar</button>
-        <button onClick={submit} disabled={loading} style={{...btnR,flex:2}}>{loading?"Guardando...":"Guardar cambios"}</button>
+        <button onClick={submit} disabled={loading} style={{...btnR,flex:2}}>{loading?"Guardando...":cli?"Guardar cambios":"Crear cliente"}</button>
       </div>
     </Modal>
   );

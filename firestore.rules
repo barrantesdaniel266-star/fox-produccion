@@ -29,7 +29,7 @@ service cloud.firestore {
     match /movimientos/{id}  { allow read: if esStaff(); allow create, update: if puedeEscribir(); allow delete: if esGerencia(); }
     match /inventario/{id}   { allow read: if esStaff(); allow create, update: if puedeEscribir(); allow delete: if esGerencia(); }
     match /remisiones/{id}   { allow read: if esStaff(); allow create, update: if puedeEscribir(); allow delete: if esGerencia(); }
-    match /clientes/{id}     { allow read: if esStaff(); allow create, update: if puedeEscribir(); allow delete: if esGerencia(); }
+    match /clientes/{id}     { allow read: if esStaff(); allow create: if esStaff(); allow update: if puedeEscribir(); allow delete: if esGerencia(); }
 
     // Catálogo público para la web (mallasfox.com). Doc con SOLO campos seguros:
     // nombre, categoria, medidas, unidad, precio, activo. Escribe solo gerencia.
