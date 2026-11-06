@@ -1,0 +1,608 @@
+{
+  "nodes": [
+    {
+      "id": "readme_stack",
+      "label": "Tech Stack: React + Vite + Firebase Firestore + Vercel",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": "L1-L4",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_firebase_project_setup",
+      "label": "Paso 1 — Crear proyecto Firebase",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": "L8-L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_firestore_database_setup",
+      "label": "Activar Firestore Database",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": "L16-L19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_firestore_security_rules",
+      "label": "Firestore Security Rules (open read/write on /orders/{orderId})",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": "L20-L31",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_github_upload_step",
+      "label": "Paso 2 — Subir el código a GitHub",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": "L35-L42",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_env_file_config",
+      "label": "Paso 3 — Archivo .env (VITE_FIREBASE_* vars)",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": "L45-L59",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_vercel_deployment",
+      "label": "Paso 4 — Publicar en Vercel",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": "L63-L74",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_result_benefits",
+      "label": "Resultado esperado (realtime, sin costo, instalable, sesión persistente)",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": "L78-L84",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_usuarios_roles",
+      "label": "Tabla de Usuarios (roles Vendedora/Gerencia por sede)",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": "L88-L98",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "index_html_app_shell",
+      "label": "index.html App Shell (mounts /src/main.jsx)",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\index.html",
+      "source_location": "L12-L15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_dashboard",
+      "label": "Fox TV — Planta Santa Lucía Dashboard Page",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L1-L434",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_firebase_config",
+      "label": "Hardcoded Firebase Config Object",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L269-L276",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_onsnapshot_listener",
+      "label": "onSnapshot Firestore Listener on 'orders' collection",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L424-L431",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_render",
+      "label": "render(orders) function",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L356-L421",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_norm",
+      "label": "norm(o) — normalize order/items status",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L298-L309",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_derst",
+      "label": "derSt(items) — derive order status",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L311-L316",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_ago",
+      "label": "ago(ts) — relative time formatter",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L318-L325",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_params",
+      "label": "params(it) — format item production parameters",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L327-L343",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_tick",
+      "label": "tick() — clock updater",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L346-L353",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_machines",
+      "label": "MACHINES config array (SL1-SL5)",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L280-L286",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_prod",
+      "label": "PROD config object (product type labels/classes)",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L288-L293",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_lp",
+      "label": "lp(id) — product label lookup helper",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L294",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_cls",
+      "label": "cls(id) — product class lookup helper",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L295",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_fox_tv_standalone_display_pattern",
+      "label": "Standalone Static TV/Kiosk Display Pattern",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_assets_logo_logo",
+      "label": "Fox-Produccion Logo (Fox Head on 'M' Monogram)",
+      "file_type": "image",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\src\\assets\\logo.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_assets_logo_fox_motif",
+      "label": "Fox Brand Motif",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\src\\assets\\logo.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "readme_stack",
+      "target": "readme_firebase_project_setup",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_firebase_project_setup",
+      "target": "readme_firestore_database_setup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_firestore_database_setup",
+      "target": "readme_firestore_security_rules",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_firebase_project_setup",
+      "target": "readme_env_file_config",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_env_file_config",
+      "target": "readme_vercel_deployment",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_github_upload_step",
+      "target": "readme_vercel_deployment",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_result_benefits",
+      "target": "readme_stack",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_usuarios_roles",
+      "target": "readme_firestore_security_rules",
+      "relation": "conceptually_related_to",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_stack",
+      "target": "index_html_app_shell",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\index.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_env_file_config",
+      "target": "public_fox_tv_firebase_config",
+      "relation": "conceptually_related_to",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.3,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_firebase_project_setup",
+      "target": "public_fox_tv_firebase_config",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L269-L276",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_usuarios_roles",
+      "target": "public_fox_tv_dashboard",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "index_html_app_shell",
+      "target": "public_fox_tv_dashboard",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_onsnapshot_listener",
+      "target": "public_fox_tv_render",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L426",
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_render",
+      "target": "public_fox_tv_norm",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L357",
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_render",
+      "target": "public_fox_tv_derst",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L361-L362",
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_render",
+      "target": "public_fox_tv_ago",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L402",
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_render",
+      "target": "public_fox_tv_params",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L406",
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_render",
+      "target": "public_fox_tv_lp",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L401",
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_render",
+      "target": "public_fox_tv_cls",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L401",
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_lp",
+      "target": "public_fox_tv_prod",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L294",
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_cls",
+      "target": "public_fox_tv_prod",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L295",
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_render",
+      "target": "public_fox_tv_machines",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L374",
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_onsnapshot_listener",
+      "target": "readme_firestore_security_rules",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": "L425",
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_standalone_display_pattern",
+      "target": "public_fox_tv_firebase_config",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "public_fox_tv_standalone_display_pattern",
+      "target": "public_fox_tv_dashboard",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_assets_logo_logo",
+      "target": "src_assets_logo_fox_motif",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\src\\assets\\logo.png",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "firebase_integration_flow",
+      "label": "Firebase Setup-to-Config Integration Flow",
+      "nodes": [
+        "readme_firebase_project_setup",
+        "readme_env_file_config",
+        "public_fox_tv_firebase_config",
+        "index_html_app_shell"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md"
+    },
+    {
+      "id": "realtime_dashboard_render_pipeline",
+      "label": "Real-time Machine Status Render Pipeline",
+      "nodes": [
+        "public_fox_tv_onsnapshot_listener",
+        "public_fox_tv_render",
+        "public_fox_tv_norm",
+        "public_fox_tv_derst",
+        "public_fox_tv_machines"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\public\\fox-tv.html"
+    },
+    {
+      "id": "deployment_pipeline",
+      "label": "GitHub-to-Vercel Deployment Pipeline",
+      "nodes": [
+        "readme_github_upload_step",
+        "readme_vercel_deployment",
+        "readme_env_file_config"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\README.md"
+    }
+  ],
+  "input_tokens": 114772,
+  "output_tokens": 0
+}

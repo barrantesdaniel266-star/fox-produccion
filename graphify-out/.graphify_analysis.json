@@ -1,0 +1,405 @@
+{
+  "communities": {
+    "0": [
+      "ref_assets_logo_png",
+      "ref_firebase_js",
+      "src_assets_app",
+      "src_assets_app_abertura_sizes",
+      "src_assets_app_app",
+      "src_assets_app_assignordermodal",
+      "src_assets_app_btng",
+      "src_assets_app_btnr",
+      "src_assets_app_btns",
+      "src_assets_app_calcm2",
+      "src_assets_app_completeitemmodal",
+      "src_assets_app_deriveorderstatus",
+      "src_assets_app_detailmodal",
+      "src_assets_app_editordermodal",
+      "src_assets_app_enrichitem",
+      "src_assets_app_exportexcel",
+      "src_assets_app_field",
+      "src_assets_app_fmtdate",
+      "src_assets_app_getmachineitem",
+      "src_assets_app_historytab",
+      "src_assets_app_infoproducto",
+      "src_assets_app_inp",
+      "src_assets_app_itemcard",
+      "src_assets_app_itemfields",
+      "src_assets_app_itemstatusbadge",
+      "src_assets_app_labelproducto",
+      "src_assets_app_login",
+      "src_assets_app_machcard",
+      "src_assets_app_machines",
+      "src_assets_app_machinestab",
+      "src_assets_app_modal",
+      "src_assets_app_newemptyitem",
+      "src_assets_app_newordermodal",
+      "src_assets_app_normalizeitems",
+      "src_assets_app_numinp",
+      "src_assets_app_pickitemmodal",
+      "src_assets_app_productobadges",
+      "src_assets_app_productos",
+      "src_assets_app_queuetab",
+      "src_assets_app_resumenitem",
+      "src_assets_app_shell",
+      "src_assets_app_splash",
+      "src_assets_app_timeago",
+      "src_assets_app_users",
+      "src_assets_app_validaritem"
+    ],
+    "1": [
+      "src_app",
+      "src_app_abertura_sizes",
+      "src_app_btng",
+      "src_app_btnr",
+      "src_app_btns",
+      "src_app_cat_unidad",
+      "src_app_catalogo",
+      "src_app_clientemodal",
+      "src_app_editarmovimientomodal",
+      "src_app_empresa",
+      "src_app_entrega_estados",
+      "src_app_field",
+      "src_app_fusionarclientesmodal",
+      "src_app_inp",
+      "src_app_inv_categorias",
+      "src_app_itemstatusbadge",
+      "src_app_login",
+      "src_app_machines",
+      "src_app_modal",
+      "src_app_mov_estados",
+      "src_app_mov_productos",
+      "src_app_movinventariomodal",
+      "src_app_newmovimientomodal",
+      "src_app_numinp",
+      "src_app_opc_abertura",
+      "src_app_opc_alto",
+      "src_app_opc_ancho",
+      "src_app_opc_calibre",
+      "src_app_opc_color",
+      "src_app_opc_grosor",
+      "src_app_opc_largo",
+      "src_app_order_st",
+      "src_app_origen_info",
+      "src_app_productos",
+      "src_app_quickeditmodal",
+      "src_app_sedes",
+      "src_app_selectopc",
+      "src_app_splash",
+      "src_app_unidades",
+      "src_app_users",
+      "src_assets_logo"
+    ],
+    "2": [
+      "package",
+      "package_dependencies",
+      "package_dependencies_firebase",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_devdependencies",
+      "package_devdependencies_vite",
+      "package_devdependencies_vitejs_plugin_react",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_preview",
+      "package_type",
+      "package_version",
+      "ref_firebase",
+      "ref_react",
+      "ref_react_dom",
+      "ref_vite",
+      "ref_vitejs_plugin_react",
+      "src_firebase",
+      "src_firebase_app",
+      "src_firebase_db",
+      "src_firebase_firebaseconfig",
+      "src_main",
+      "vite_config"
+    ],
+    "3": [
+      "src_app_app",
+      "src_app_assignordermodal",
+      "src_app_completeitemmodal",
+      "src_app_deriveorderstatus",
+      "src_app_detailmodal",
+      "src_app_entregainfo",
+      "src_app_exportexcel",
+      "src_app_fmtdate",
+      "src_app_fmtmoney",
+      "src_app_historytab",
+      "src_app_infoproducto",
+      "src_app_itemcard",
+      "src_app_kardexmodal",
+      "src_app_labelproducto",
+      "src_app_machcard",
+      "src_app_movimientostab",
+      "src_app_normalizeitems",
+      "src_app_nuevaventamodal",
+      "src_app_orderdisplaystatus",
+      "src_app_orderstinfo",
+      "src_app_pasarinventariomodal",
+      "src_app_pickitemmodal",
+      "src_app_productobadges",
+      "src_app_queuetab",
+      "src_app_recibirmovimientomodal",
+      "src_app_resumenitem",
+      "src_app_timeago"
+    ],
+    "4": [
+      "index_html_app_shell",
+      "public_fox_tv_ago",
+      "public_fox_tv_cls",
+      "public_fox_tv_dashboard",
+      "public_fox_tv_derst",
+      "public_fox_tv_firebase_config",
+      "public_fox_tv_lp",
+      "public_fox_tv_machines",
+      "public_fox_tv_norm",
+      "public_fox_tv_onsnapshot_listener",
+      "public_fox_tv_params",
+      "public_fox_tv_prod",
+      "public_fox_tv_render",
+      "public_fox_tv_standalone_display_pattern",
+      "readme_env_file_config",
+      "readme_firebase_project_setup",
+      "readme_firestore_database_setup",
+      "readme_firestore_security_rules",
+      "readme_github_upload_step",
+      "readme_result_benefits",
+      "readme_stack",
+      "readme_usuarios_roles",
+      "readme_vercel_deployment"
+    ],
+    "5": [
+      "src_app_clientedetallemodal",
+      "src_app_clienteid",
+      "src_app_clientematchids",
+      "src_app_clientestab",
+      "src_app_editordermodal",
+      "src_app_enrichitem",
+      "src_app_esstockcliente",
+      "src_app_findclientebynombre",
+      "src_app_makelog",
+      "src_app_newemptyitem",
+      "src_app_newordermodal",
+      "src_app_shell",
+      "src_app_validaritem"
+    ],
+    "6": [
+      "src_app_builddochtml",
+      "src_app_buildtirillahtml",
+      "src_app_cop",
+      "src_app_docfecha",
+      "src_app_esc",
+      "src_app_imprimirdocumento",
+      "src_app_mailtodoc",
+      "src_app_ventastab",
+      "src_app_verdocumentomodal",
+      "src_app_wadoclink"
+    ],
+    "7": [
+      "src_app_computeinventario",
+      "src_app_fracn",
+      "src_app_normdisp",
+      "src_app_normkey",
+      "src_app_numn"
+    ],
+    "8": [
+      "src_app_calcm2",
+      "src_app_itemfields",
+      "src_app_pricefields"
+    ],
+    "9": [
+      "src_app_getmachineitem",
+      "src_app_getmachineitems",
+      "src_app_machinestab"
+    ],
+    "10": [
+      "src_app_inventariotab",
+      "src_app_invlabel",
+      "src_app_productomodal"
+    ],
+    "11": [
+      "vercel",
+      "vercel_crons",
+      "vercel_rewrites"
+    ],
+    "12": [
+      "api_send_report",
+      "api_send_report_handler"
+    ],
+    "13": [
+      "src_assets_logo_fox_motif",
+      "src_assets_logo_logo"
+    ],
+    "14": [
+      "public_fox_tv_tick"
+    ]
+  },
+  "cohesion": {
+    "0": 0.09595959595959595,
+    "1": 0.04878048780487805,
+    "2": 0.07977207977207977,
+    "3": 0.15384615384615385,
+    "4": 0.10276679841897234,
+    "5": 0.28205128205128205,
+    "6": 0.4,
+    "7": 0.6,
+    "8": 0.6666666666666666,
+    "9": 0.6666666666666666,
+    "10": 0.6666666666666666,
+    "11": 0.6666666666666666,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0
+  },
+  "gods": [
+    {
+      "id": "src_app_normalizeitems",
+      "label": "normalizeItems()",
+      "degree": 18
+    },
+    {
+      "id": "src_app_labelproducto",
+      "label": "labelProducto()",
+      "degree": 13
+    },
+    {
+      "id": "src_app_cop",
+      "label": "cop()",
+      "degree": 12
+    },
+    {
+      "id": "src_assets_app_normalizeitems",
+      "label": "normalizeItems()",
+      "degree": 12
+    },
+    {
+      "id": "src_app_computeinventario",
+      "label": "computeInventario()",
+      "degree": 11
+    },
+    {
+      "id": "src_app_nuevaventamodal",
+      "label": "NuevaVentaModal()",
+      "degree": 11
+    },
+    {
+      "id": "src_app_fmtdate",
+      "label": "fmtDate()",
+      "degree": 10
+    },
+    {
+      "id": "src_assets_app_labelproducto",
+      "label": "labelProducto()",
+      "degree": 10
+    },
+    {
+      "id": "src_app_esstockcliente",
+      "label": "esStockCliente()",
+      "degree": 9
+    },
+    {
+      "id": "src_app_detailmodal",
+      "label": "DetailModal()",
+      "degree": 9
+    }
+  ],
+  "surprises": [
+    {
+      "source": "index.html App Shell (mounts /src/main.jsx)",
+      "target": "Fox TV — Planta Santa Lucía Dashboard Page",
+      "source_files": [
+        "index.html",
+        "public/fox-tv.html"
+      ],
+      "confidence": "INFERRED",
+      "relation": "semantically_similar_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; semantically similar concepts with no structural link"
+    },
+    {
+      "source": "Paso 3 — Archivo .env (VITE_FIREBASE_* vars)",
+      "target": "Hardcoded Firebase Config Object",
+      "source_files": [
+        "README.md",
+        "public/fox-tv.html"
+      ],
+      "confidence": "AMBIGUOUS",
+      "relation": "conceptually_related_to",
+      "why": "ambiguous connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "Tech Stack: React + Vite + Firebase Firestore + Vercel",
+      "target": "index.html App Shell (mounts /src/main.jsx)",
+      "source_files": [
+        "README.md",
+        "index.html"
+      ],
+      "confidence": "INFERRED",
+      "relation": "implements",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "Paso 1 — Crear proyecto Firebase",
+      "target": "Hardcoded Firebase Config Object",
+      "source_files": [
+        "README.md",
+        "public/fox-tv.html"
+      ],
+      "confidence": "INFERRED",
+      "relation": "references",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "onSnapshot Firestore Listener on 'orders' collection",
+      "target": "Firestore Security Rules (open read/write on /orders/{orderId})",
+      "source_files": [
+        "public/fox-tv.html",
+        "README.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "shares_data_with",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    }
+  ],
+  "questions": [
+    {
+      "type": "ambiguous_edge",
+      "question": "What is the exact relationship between `Firestore Security Rules (open read/write on /orders/{orderId})` and `Tabla de Usuarios (roles Vendedora/Gerencia por sede)`?",
+      "why": "Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low."
+    },
+    {
+      "type": "ambiguous_edge",
+      "question": "What is the exact relationship between `Paso 3 — Archivo .env (VITE_FIREBASE_* vars)` and `Hardcoded Firebase Config Object`?",
+      "why": "Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `firebase` connect `Community 2` to `Community 0`, `Community 1`?",
+      "why": "High betweenness centrality (0.189) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `react` connect `Community 2` to `Community 0`, `Community 1`?",
+      "why": "High betweenness centrality (0.183) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `name`, `private`, `version` to the rest of the system?",
+      "why": "59 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.09595959595959595 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.04878048780487805 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

@@ -1,0 +1,5501 @@
+{
+  "nodes": [
+    {
+      "id": "api_send_report",
+      "label": "send-report.js",
+      "file_type": "code",
+      "source_file": "api/send-report.js",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_send_report_handler",
+      "label": "handler()",
+      "file_type": "code",
+      "source_file": "api/send-report.js",
+      "source_location": "L2",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "package",
+      "label": "package.json",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L2",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_private",
+      "label": "private",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_version",
+      "label": "version",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_type",
+      "label": "type",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_scripts_dev",
+      "label": "dev",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_scripts_build",
+      "label": "build",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L8",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_scripts_preview",
+      "label": "preview",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_dependencies",
+      "label": "dependencies",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L11",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_dependencies_firebase",
+      "label": "firebase",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L12",
+      "_origin": "ast"
+    },
+    {
+      "id": "ref_firebase",
+      "label": "firebase",
+      "file_type": "concept",
+      "source_file": "package.json",
+      "source_location": "L12",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_dependencies_react",
+      "label": "react",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "ref_react",
+      "label": "react",
+      "file_type": "concept",
+      "source_file": "package.json",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_dependencies_react_dom",
+      "label": "react-dom",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "ref_react_dom",
+      "label": "react-dom",
+      "file_type": "concept",
+      "source_file": "package.json",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_devdependencies",
+      "label": "devDependencies",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L16",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_devdependencies_vitejs_plugin_react",
+      "label": "@vitejs/plugin-react",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L17",
+      "_origin": "ast"
+    },
+    {
+      "id": "ref_vitejs_plugin_react",
+      "label": "@vitejs/plugin-react",
+      "file_type": "concept",
+      "source_file": "package.json",
+      "source_location": "L17",
+      "_origin": "ast"
+    },
+    {
+      "id": "package_devdependencies_vite",
+      "label": "vite",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L18",
+      "_origin": "ast"
+    },
+    {
+      "id": "ref_vite",
+      "label": "vite",
+      "file_type": "concept",
+      "source_file": "package.json",
+      "source_location": "L18",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app",
+      "label": "App.jsx",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_users",
+      "label": "USERS",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_machines",
+      "label": "MACHINES",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_productos",
+      "label": "PRODUCTOS",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L36",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_sedes",
+      "label": "SEDES",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L42",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_empresa",
+      "label": "EMPRESA",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L45",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_mov_productos",
+      "label": "MOV_PRODUCTOS",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L61",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_abertura_sizes",
+      "label": "ABERTURA_SIZES",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L73",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_opc_calibre",
+      "label": "OPC_CALIBRE",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L75",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_opc_abertura",
+      "label": "OPC_ABERTURA",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L76",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_opc_alto",
+      "label": "OPC_ALTO",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L77",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_opc_ancho",
+      "label": "OPC_ANCHO",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L78",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_opc_grosor",
+      "label": "OPC_GROSOR",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L79",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_opc_largo",
+      "label": "OPC_LARGO",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L80",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_opc_color",
+      "label": "OPC_COLOR",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L81",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_normkey",
+      "label": "normKey()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L83",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_normdisp",
+      "label": "normDisp()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L87",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_numn",
+      "label": "numN()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L89",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_fracn",
+      "label": "fracN()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L91",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_fmtdate",
+      "label": "fmtDate()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L101",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_timeago",
+      "label": "timeAgo()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L105",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_calcm2",
+      "label": "calcM2()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L110",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_labelproducto",
+      "label": "labelProducto()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L111",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_infoproducto",
+      "label": "infoProducto()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L112",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_esstockcliente",
+      "label": "esStockCliente()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L115",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_clienteid",
+      "label": "clienteId()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L120",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_clientematchids",
+      "label": "clienteMatchIds()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L125",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_findclientebynombre",
+      "label": "findClienteByNombre()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L132",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_computeinventario",
+      "label": "computeInventario()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L140",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_fmtmoney",
+      "label": "fmtMoney()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L186",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_entrega_estados",
+      "label": "ENTREGA_ESTADOS",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L193",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_entregainfo",
+      "label": "entregaInfo()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L197",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_orderdisplaystatus",
+      "label": "orderDisplayStatus()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L203",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_order_st",
+      "label": "ORDER_ST",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L208",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_orderstinfo",
+      "label": "orderStInfo()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L214",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_makelog",
+      "label": "makeLog()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L217",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_normalizeitems",
+      "label": "normalizeItems()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L226",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_deriveorderstatus",
+      "label": "deriveOrderStatus()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L254",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_getmachineitems",
+      "label": "getMachineItems()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L262",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_getmachineitem",
+      "label": "getMachineItem()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L274",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_resumenitem",
+      "label": "resumenItem()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L279",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_exportexcel",
+      "label": "exportExcel()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L298",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_inp",
+      "label": "inp",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L356",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_btnr",
+      "label": "btnR",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L357",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_btns",
+      "label": "btnS",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L358",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_btng",
+      "label": "btnG",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L359",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_app",
+      "label": "App()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L362",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_splash",
+      "label": "Splash()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L423",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_login",
+      "label": "Login()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L444",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_shell",
+      "label": "Shell()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L478",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_itemstatusbadge",
+      "label": "ItemStatusBadge()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L977",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_productobadges",
+      "label": "ProductoBadges()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L983",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_mov_estados",
+      "label": "MOV_ESTADOS",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L999",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_movimientostab",
+      "label": "MovimientosTab()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1005",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_newmovimientomodal",
+      "label": "NewMovimientoModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1138",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_recibirmovimientomodal",
+      "label": "RecibirMovimientoModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1239",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_editarmovimientomodal",
+      "label": "EditarMovimientoModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1308",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_machinestab",
+      "label": "MachinesTab()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1390",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_machcard",
+      "label": "MachCard()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1433",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_queuetab",
+      "label": "QueueTab()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1566",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_historytab",
+      "label": "HistoryTab()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1640",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_modal",
+      "label": "Modal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1703",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_field",
+      "label": "Field()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1716",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_numinp",
+      "label": "NumInp()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1717",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_selectopc",
+      "label": "SelectOpc()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1726",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_itemfields",
+      "label": "ItemFields()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1746",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_pricefields",
+      "label": "PriceFields()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1787",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_itemcard",
+      "label": "ItemCard()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1819",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_validaritem",
+      "label": "validarItem()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1849",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_enrichitem",
+      "label": "enrichItem()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1862",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_newemptyitem",
+      "label": "newEmptyItem()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1871",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_newordermodal",
+      "label": "NewOrderModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L1874",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_quickeditmodal",
+      "label": "QuickEditModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2000",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_editordermodal",
+      "label": "EditOrderModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2035",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_assignordermodal",
+      "label": "AssignOrderModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2076",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_pickitemmodal",
+      "label": "PickItemModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2197",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_completeitemmodal",
+      "label": "CompleteItemModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2274",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_detailmodal",
+      "label": "DetailModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2416",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_unidades",
+      "label": "UNIDADES",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2517",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_catalogo",
+      "label": "CATALOGO",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2518",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_inv_categorias",
+      "label": "INV_CATEGORIAS",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2519",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_cat_unidad",
+      "label": "CAT_UNIDAD",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2520",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_invlabel",
+      "label": "invLabel()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2522",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_origen_info",
+      "label": "ORIGEN_INFO",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2527",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_inventariotab",
+      "label": "InventarioTab()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2532",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_productomodal",
+      "label": "ProductoModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2660",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_movinventariomodal",
+      "label": "MovInventarioModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2735",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_kardexmodal",
+      "label": "KardexModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2784",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_docfecha",
+      "label": "docFecha()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2821",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_cop",
+      "label": "cop()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2822",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_esc",
+      "label": "esc()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2823",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_builddochtml",
+      "label": "buildDocHtml()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2825",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_buildtirillahtml",
+      "label": "buildTirillaHtml()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2888",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_imprimirdocumento",
+      "label": "imprimirDocumento()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2954",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_wadoclink",
+      "label": "waDocLink()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2960",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_mailtodoc",
+      "label": "mailtoDoc()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2969",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_ventastab",
+      "label": "VentasTab()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L2976",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_nuevaventamodal",
+      "label": "NuevaVentaModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L3028",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_verdocumentomodal",
+      "label": "VerDocumentoModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L3381",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_clientestab",
+      "label": "ClientesTab()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L3413",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_clientemodal",
+      "label": "ClienteModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L3472",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_pasarinventariomodal",
+      "label": "PasarInventarioModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L3502",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_clientedetallemodal",
+      "label": "ClienteDetalleModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L3556",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_fusionarclientesmodal",
+      "label": "FusionarClientesModal()",
+      "file_type": "code",
+      "source_file": "src/App.jsx",
+      "source_location": "L3628",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app",
+      "label": "App.jsx",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_users",
+      "label": "USERS",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L12",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_machines",
+      "label": "MACHINES",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L22",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_productos",
+      "label": "PRODUCTOS",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L31",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_abertura_sizes",
+      "label": "ABERTURA_SIZES",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L38",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_fmtdate",
+      "label": "fmtDate()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L42",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_timeago",
+      "label": "timeAgo()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L46",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_calcm2",
+      "label": "calcM2()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L51",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_labelproducto",
+      "label": "labelProducto()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L52",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_infoproducto",
+      "label": "infoProducto()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L53",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_normalizeitems",
+      "label": "normalizeItems()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L56",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_deriveorderstatus",
+      "label": "deriveOrderStatus()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L84",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_getmachineitem",
+      "label": "getMachineItem()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L92",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_resumenitem",
+      "label": "resumenItem()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L103",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_exportexcel",
+      "label": "exportExcel()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L122",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_inp",
+      "label": "inp",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L156",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_btnr",
+      "label": "btnR",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L157",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_btns",
+      "label": "btnS",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L158",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_btng",
+      "label": "btnG",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L159",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_app",
+      "label": "App()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L162",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_splash",
+      "label": "Splash()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L187",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_login",
+      "label": "Login()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L208",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_shell",
+      "label": "Shell()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L242",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_itemstatusbadge",
+      "label": "ItemStatusBadge()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L389",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_productobadges",
+      "label": "ProductoBadges()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L395",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_machinestab",
+      "label": "MachinesTab()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L410",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_machcard",
+      "label": "MachCard()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L441",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_queuetab",
+      "label": "QueueTab()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L510",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_historytab",
+      "label": "HistoryTab()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L579",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_modal",
+      "label": "Modal()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L641",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_field",
+      "label": "Field()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L654",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_numinp",
+      "label": "NumInp()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L655",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_itemfields",
+      "label": "ItemFields()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L665",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_itemcard",
+      "label": "ItemCard()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L705",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_validaritem",
+      "label": "validarItem()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L726",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_enrichitem",
+      "label": "enrichItem()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L739",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_newemptyitem",
+      "label": "newEmptyItem()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L744",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_newordermodal",
+      "label": "NewOrderModal()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L747",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_editordermodal",
+      "label": "EditOrderModal()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L813",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_assignordermodal",
+      "label": "AssignOrderModal()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L848",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_pickitemmodal",
+      "label": "PickItemModal()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L977",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_completeitemmodal",
+      "label": "CompleteItemModal()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1054",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_assets_app_detailmodal",
+      "label": "DetailModal()",
+      "file_type": "code",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1196",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "src_firebase",
+      "label": "firebase.js",
+      "file_type": "code",
+      "source_file": "src/firebase.js",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_firebase_firebaseconfig",
+      "label": "firebaseConfig",
+      "file_type": "code",
+      "source_file": "src/firebase.js",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_firebase_app",
+      "label": "app",
+      "file_type": "code",
+      "source_file": "src/firebase.js",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_firebase_db",
+      "label": "db",
+      "file_type": "code",
+      "source_file": "src/firebase.js",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_main",
+      "label": "main.jsx",
+      "file_type": "code",
+      "source_file": "src/main.jsx",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "vercel",
+      "label": "vercel.json",
+      "file_type": "code",
+      "source_file": "vercel.json",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "vercel_crons",
+      "label": "crons",
+      "file_type": "code",
+      "source_file": "vercel.json",
+      "source_location": "L2",
+      "_origin": "ast"
+    },
+    {
+      "id": "vercel_rewrites",
+      "label": "rewrites",
+      "file_type": "code",
+      "source_file": "vercel.json",
+      "source_location": "L12",
+      "_origin": "ast"
+    },
+    {
+      "id": "vite_config",
+      "label": "vite.config.js",
+      "file_type": "code",
+      "source_file": "vite.config.js",
+      "source_location": "L1",
+      "_origin": "ast"
+    }
+  ],
+  "edges": [
+    {
+      "source": "api_send_report",
+      "target": "api_send_report_handler",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "api/send-report.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package",
+      "target": "package_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package",
+      "target": "package_private",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package",
+      "target": "package_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package",
+      "target": "package_type",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package",
+      "target": "package_scripts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package_scripts",
+      "target": "package_scripts_dev",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package_scripts",
+      "target": "package_scripts_build",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package_scripts",
+      "target": "package_scripts_preview",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package",
+      "target": "package_dependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package_dependencies",
+      "target": "package_dependencies_firebase",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package",
+      "target": "ref_firebase",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "context": "import",
+      "_origin": "ast"
+    },
+    {
+      "source": "package_dependencies",
+      "target": "package_dependencies_react",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package",
+      "target": "ref_react",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "context": "import",
+      "_origin": "ast"
+    },
+    {
+      "source": "package_dependencies",
+      "target": "package_dependencies_react_dom",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package",
+      "target": "ref_react_dom",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "context": "import",
+      "_origin": "ast"
+    },
+    {
+      "source": "package",
+      "target": "package_devdependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package_devdependencies",
+      "target": "package_devdependencies_vitejs_plugin_react",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package",
+      "target": "ref_vitejs_plugin_react",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "context": "import",
+      "_origin": "ast"
+    },
+    {
+      "source": "package_devdependencies",
+      "target": "package_devdependencies_vite",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "package",
+      "target": "ref_vite",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "context": "import",
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "ref_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_firebase",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_firebase_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "ref_firebase",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_assets_logo",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_users",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_machines",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L26",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_productos",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L36",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_sedes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L42",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_empresa",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L45",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_mov_productos",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L61",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_abertura_sizes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L73",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_opc_calibre",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L75",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_opc_abertura",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L76",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_opc_alto",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L77",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_opc_ancho",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L78",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_opc_grosor",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L79",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_opc_largo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L80",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_opc_color",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L81",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_normkey",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L83",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_normdisp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L87",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_numn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L89",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_fracn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L91",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_fmtdate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L101",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_timeago",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L105",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_calcm2",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L110",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_labelproducto",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L111",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_infoproducto",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L112",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_esstockcliente",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L115",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_clienteid",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L120",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_clientematchids",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L125",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_findclientebynombre",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L132",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_computeinventario",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L140",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_fmtmoney",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L186",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_entrega_estados",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L193",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_entregainfo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L197",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_orderdisplaystatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L203",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_order_st",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L208",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_orderstinfo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L214",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_makelog",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L217",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_normalizeitems",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L226",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_deriveorderstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L254",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_getmachineitems",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L262",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_getmachineitem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L274",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_resumenitem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L279",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_exportexcel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L298",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_inp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L356",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_btnr",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L357",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_btns",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L358",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_btng",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L359",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_app",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L362",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_splash",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L423",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_login",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L444",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_shell",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L478",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_itemstatusbadge",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L977",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_productobadges",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L983",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_mov_estados",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L999",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_movimientostab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1005",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_newmovimientomodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1138",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_recibirmovimientomodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1239",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_editarmovimientomodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1308",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_machinestab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1390",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_machcard",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1433",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_queuetab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1566",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_historytab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1640",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_modal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1703",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_field",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1716",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_numinp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1717",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_selectopc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1726",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_itemfields",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1746",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_pricefields",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1787",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_itemcard",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1819",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_validaritem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1849",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_enrichitem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1862",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_newemptyitem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1871",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_newordermodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1874",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_quickeditmodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2000",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_editordermodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2035",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_assignordermodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2076",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_pickitemmodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2197",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_completeitemmodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2274",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_detailmodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2416",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_unidades",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2517",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_catalogo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2518",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_inv_categorias",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2519",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_cat_unidad",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2520",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_invlabel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2522",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_origen_info",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2527",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_inventariotab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2532",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_productomodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2660",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_movinventariomodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2735",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_kardexmodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2784",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_docfecha",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2821",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_cop",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2822",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_esc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2823",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_builddochtml",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2825",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_buildtirillahtml",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2888",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_imprimirdocumento",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2954",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_wadoclink",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2960",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_mailtodoc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2969",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_ventastab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2976",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_nuevaventamodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3028",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_verdocumentomodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3381",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_clientestab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3413",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_clientemodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3472",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_pasarinventariomodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3502",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_clientedetallemodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3556",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app",
+      "target": "src_app_fusionarclientesmodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3628",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_numn",
+      "target": "src_app_normkey",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L89",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_fracn",
+      "target": "src_app_normkey",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L96",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_clientematchids",
+      "target": "src_app_clienteid",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L128",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_findclientebynombre",
+      "target": "src_app_clienteid",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L133",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_findclientebynombre",
+      "target": "src_app_clientematchids",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L134",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_computeinventario",
+      "target": "src_app_esstockcliente",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L143",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_computeinventario",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L147",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_computeinventario",
+      "target": "src_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L151",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_computeinventario",
+      "target": "src_app_normdisp",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L152",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_computeinventario",
+      "target": "src_app_numn",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L159",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_computeinventario",
+      "target": "src_app_fracn",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L161",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_computeinventario",
+      "target": "src_app_normkey",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L163",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_computeinventario",
+      "target": "src_app_clienteid",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L164",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_orderdisplaystatus",
+      "target": "src_app_deriveorderstatus",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L204",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_orderdisplaystatus",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L204",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_orderstinfo",
+      "target": "src_app_orderdisplaystatus",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L214",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_getmachineitems",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L265",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_getmachineitem",
+      "target": "src_app_getmachineitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L275",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_exportexcel",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L317",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_exportexcel",
+      "target": "src_app_orderdisplaystatus",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L318",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_exportexcel",
+      "target": "src_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L319",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_exportexcel",
+      "target": "src_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L331",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_app",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L402",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_app",
+      "target": "src_app_deriveorderstatus",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L403",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_shell",
+      "target": "src_app_deriveorderstatus",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L511",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_shell",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L511",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_shell",
+      "target": "src_app_makelog",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L533",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_shell",
+      "target": "src_app_esstockcliente",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L536",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_shell",
+      "target": "src_app_findclientebynombre",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L743",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_shell",
+      "target": "src_app_clienteid",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L744",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_shell",
+      "target": "src_app_getmachineitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L889",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_productobadges",
+      "target": "src_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L986",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_movimientostab",
+      "target": "src_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1070",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_recibirmovimientomodal",
+      "target": "src_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1259",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_machinestab",
+      "target": "src_app_getmachineitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1412",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_machinestab",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1415",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_machcard",
+      "target": "src_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1493",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_machcard",
+      "target": "src_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1494",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_machcard",
+      "target": "src_app_resumenitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1516",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_queuetab",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1584",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_queuetab",
+      "target": "src_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1606",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_queuetab",
+      "target": "src_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1609",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_queuetab",
+      "target": "src_app_resumenitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1610",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_queuetab",
+      "target": "src_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1616",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_historytab",
+      "target": "src_app_exportexcel",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1657",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_historytab",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1665",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_historytab",
+      "target": "src_app_orderstinfo",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1666",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_historytab",
+      "target": "src_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1667",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_historytab",
+      "target": "src_app_orderdisplaystatus",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1689",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_itemfields",
+      "target": "src_app_calcm2",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1748",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_pricefields",
+      "target": "src_app_calcm2",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1790",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_pricefields",
+      "target": "src_app_cop",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1808",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_itemcard",
+      "target": "src_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1820",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_validaritem",
+      "target": "src_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1852",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_enrichitem",
+      "target": "src_app_calcm2",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1868",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_newordermodal",
+      "target": "src_app_findclientebynombre",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1880",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_newordermodal",
+      "target": "src_app_esstockcliente",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1881",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_newordermodal",
+      "target": "src_app_newemptyitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1884",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_newordermodal",
+      "target": "src_app_validaritem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1915",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_newordermodal",
+      "target": "src_app_enrichitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L1917",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_editordermodal",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2038",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_editordermodal",
+      "target": "src_app_newemptyitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2039",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_editordermodal",
+      "target": "src_app_esstockcliente",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2041",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_editordermodal",
+      "target": "src_app_validaritem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2047",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_editordermodal",
+      "target": "src_app_enrichitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2048",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_assignordermodal",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2077",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_assignordermodal",
+      "target": "src_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2129",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_assignordermodal",
+      "target": "src_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2135",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_assignordermodal",
+      "target": "src_app_resumenitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2136",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_pickitemmodal",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2214",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_pickitemmodal",
+      "target": "src_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2223",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_pickitemmodal",
+      "target": "src_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2244",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_pickitemmodal",
+      "target": "src_app_resumenitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2254",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_completeitemmodal",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2277",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_completeitemmodal",
+      "target": "src_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2278",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_completeitemmodal",
+      "target": "src_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2299",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_completeitemmodal",
+      "target": "src_app_timeago",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2304",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_completeitemmodal",
+      "target": "src_app_resumenitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2382",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_detailmodal",
+      "target": "src_app_orderstinfo",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2418",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_detailmodal",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2419",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_detailmodal",
+      "target": "src_app_esstockcliente",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2420",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_detailmodal",
+      "target": "src_app_entregainfo",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2421",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_detailmodal",
+      "target": "src_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2426",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_detailmodal",
+      "target": "src_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2461",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_detailmodal",
+      "target": "src_app_fmtmoney",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2467",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_detailmodal",
+      "target": "src_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2473",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_inventariotab",
+      "target": "src_app_computeinventario",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2539",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_inventariotab",
+      "target": "src_app_invlabel",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2551",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_inventariotab",
+      "target": "src_app_cop",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2624",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_productomodal",
+      "target": "src_app_invlabel",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2675",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_kardexmodal",
+      "target": "src_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2808",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_builddochtml",
+      "target": "src_app_esc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2832",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_builddochtml",
+      "target": "src_app_cop",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2832",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_builddochtml",
+      "target": "src_app_docfecha",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2872",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_buildtirillahtml",
+      "target": "src_app_cop",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2894",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_buildtirillahtml",
+      "target": "src_app_esc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2897",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_buildtirillahtml",
+      "target": "src_app_docfecha",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2941",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_imprimirdocumento",
+      "target": "src_app_builddochtml",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2957",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_imprimirdocumento",
+      "target": "src_app_buildtirillahtml",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2957",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_wadoclink",
+      "target": "src_app_cop",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2964",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_mailtodoc",
+      "target": "src_app_cop",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L2972",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_ventastab",
+      "target": "src_app_cop",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3011",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_ventastab",
+      "target": "src_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3013",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_ventastab",
+      "target": "src_app_wadoclink",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3016",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_ventastab",
+      "target": "src_app_mailtodoc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3017",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_nuevaventamodal",
+      "target": "src_app_computeinventario",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3043",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_nuevaventamodal",
+      "target": "src_app_findclientebynombre",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3054",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_nuevaventamodal",
+      "target": "src_app_esstockcliente",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3069",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_nuevaventamodal",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3077",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_nuevaventamodal",
+      "target": "src_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3082",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_nuevaventamodal",
+      "target": "src_app_resumenitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3082",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_nuevaventamodal",
+      "target": "src_app_invlabel",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3092",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_nuevaventamodal",
+      "target": "src_app_calcm2",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3118",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_nuevaventamodal",
+      "target": "src_app_orderstinfo",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3195",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_nuevaventamodal",
+      "target": "src_app_cop",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3259",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_verdocumentomodal",
+      "target": "src_app_docfecha",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3390",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_verdocumentomodal",
+      "target": "src_app_cop",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3394",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_verdocumentomodal",
+      "target": "src_app_imprimirdocumento",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3400",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_verdocumentomodal",
+      "target": "src_app_wadoclink",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3403",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_verdocumentomodal",
+      "target": "src_app_mailtodoc",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3404",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_clientestab",
+      "target": "src_app_clientematchids",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3417",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_clientestab",
+      "target": "src_app_clienteid",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3418",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_clientestab",
+      "target": "src_app_esstockcliente",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3421",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_clientestab",
+      "target": "src_app_cop",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3460",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_pasarinventariomodal",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3503",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_pasarinventariomodal",
+      "target": "src_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3507",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_pasarinventariomodal",
+      "target": "src_app_resumenitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3507",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_clientedetallemodal",
+      "target": "src_app_clientematchids",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3557",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_clientedetallemodal",
+      "target": "src_app_esstockcliente",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3558",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_clientedetallemodal",
+      "target": "src_app_clienteid",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3558",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_clientedetallemodal",
+      "target": "src_app_cop",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3579",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_clientedetallemodal",
+      "target": "src_app_orderstinfo",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3588",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_clientedetallemodal",
+      "target": "src_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3588",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_clientedetallemodal",
+      "target": "src_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.jsx",
+      "source_location": "L3594",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "ref_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "ref_firebase_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "ref_firebase",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "ref_assets_logo_png",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_users",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_machines",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_productos",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_abertura_sizes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L38",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_fmtdate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L42",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_timeago",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L46",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_calcm2",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L51",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_labelproducto",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L52",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_infoproducto",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L53",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_normalizeitems",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L56",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_deriveorderstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L84",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_getmachineitem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L92",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_resumenitem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L103",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_exportexcel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L122",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_inp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L156",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_btnr",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L157",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_btns",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L158",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_btng",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L159",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_app",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L162",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_splash",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L187",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_login",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L208",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_shell",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L242",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_itemstatusbadge",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L389",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_productobadges",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L395",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_machinestab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L410",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_machcard",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L441",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_queuetab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L510",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_historytab",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L579",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_modal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L641",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_field",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L654",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_numinp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L655",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_itemfields",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L665",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_itemcard",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L705",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_validaritem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L726",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_enrichitem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L739",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_newemptyitem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L744",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_newordermodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L747",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_editordermodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L813",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_assignordermodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L848",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_pickitemmodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L977",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_completeitemmodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1054",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app",
+      "target": "src_assets_app_detailmodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1196",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_getmachineitem",
+      "target": "src_assets_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L94",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_exportexcel",
+      "target": "src_assets_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L127",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_exportexcel",
+      "target": "src_assets_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L130",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_exportexcel",
+      "target": "src_assets_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L136",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_shell",
+      "target": "src_assets_app_deriveorderstatus",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L249",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_shell",
+      "target": "src_assets_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L249",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_shell",
+      "target": "src_assets_app_getmachineitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L342",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_productobadges",
+      "target": "src_assets_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L398",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_machinestab",
+      "target": "src_assets_app_getmachineitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L428",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_machinestab",
+      "target": "src_assets_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L431",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_machcard",
+      "target": "src_assets_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L446",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_machcard",
+      "target": "src_assets_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L469",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_machcard",
+      "target": "src_assets_app_timeago",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L470",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_machcard",
+      "target": "src_assets_app_resumenitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L483",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_queuetab",
+      "target": "src_assets_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L528",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_queuetab",
+      "target": "src_assets_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L549",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_queuetab",
+      "target": "src_assets_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L552",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_queuetab",
+      "target": "src_assets_app_resumenitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L553",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_queuetab",
+      "target": "src_assets_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L559",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_historytab",
+      "target": "src_assets_app_exportexcel",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L592",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_historytab",
+      "target": "src_assets_app_deriveorderstatus",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L610",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_historytab",
+      "target": "src_assets_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L610",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_historytab",
+      "target": "src_assets_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L620",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_itemfields",
+      "target": "src_assets_app_calcm2",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L667",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_itemcard",
+      "target": "src_assets_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L706",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_validaritem",
+      "target": "src_assets_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L729",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_enrichitem",
+      "target": "src_assets_app_calcm2",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L741",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_newordermodal",
+      "target": "src_assets_app_newemptyitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L751",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_newordermodal",
+      "target": "src_assets_app_validaritem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L761",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_newordermodal",
+      "target": "src_assets_app_enrichitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L763",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_editordermodal",
+      "target": "src_assets_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L815",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_editordermodal",
+      "target": "src_assets_app_newemptyitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L816",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_editordermodal",
+      "target": "src_assets_app_validaritem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L823",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_assignordermodal",
+      "target": "src_assets_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L849",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_assignordermodal",
+      "target": "src_assets_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L909",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_assignordermodal",
+      "target": "src_assets_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L915",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_assignordermodal",
+      "target": "src_assets_app_resumenitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L916",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_pickitemmodal",
+      "target": "src_assets_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L994",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_pickitemmodal",
+      "target": "src_assets_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1003",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_pickitemmodal",
+      "target": "src_assets_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1024",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_pickitemmodal",
+      "target": "src_assets_app_resumenitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1034",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_completeitemmodal",
+      "target": "src_assets_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1057",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_completeitemmodal",
+      "target": "src_assets_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1058",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_completeitemmodal",
+      "target": "src_assets_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1079",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_completeitemmodal",
+      "target": "src_assets_app_timeago",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1084",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_completeitemmodal",
+      "target": "src_assets_app_resumenitem",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1162",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_detailmodal",
+      "target": "src_assets_app_deriveorderstatus",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1198",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_detailmodal",
+      "target": "src_assets_app_normalizeitems",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1198",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_detailmodal",
+      "target": "src_assets_app_fmtdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1203",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_detailmodal",
+      "target": "src_assets_app_infoproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1223",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_assets_app_detailmodal",
+      "target": "src_assets_app_labelproducto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/assets/App.jsx",
+      "source_location": "L1233",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_firebase",
+      "target": "ref_firebase",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/firebase.js",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_firebase",
+      "target": "ref_firebase",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/firebase.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_firebase",
+      "target": "src_firebase_firebaseconfig",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/firebase.js",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_firebase",
+      "target": "src_firebase_app",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/firebase.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_firebase",
+      "target": "src_firebase_db",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/firebase.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_main",
+      "target": "ref_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.jsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_main",
+      "target": "ref_react_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.jsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_main",
+      "target": "src_app",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.jsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "vercel",
+      "target": "vercel_crons",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "vercel.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "vercel",
+      "target": "vercel_rewrites",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "vercel.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "vite_config",
+      "target": "ref_vite",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "vite.config.js",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "vite_config",
+      "target": "ref_vitejs_plugin_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "vite.config.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_main",
+      "target": "src_app_app",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.jsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "failed_sources": [],
+  "extracted_sources": [
+    "C:\\Users\\Pc\\Documents\\fox-produccion\\api\\send-report.js",
+    "C:\\Users\\Pc\\Documents\\fox-produccion\\firebase.json",
+    "C:\\Users\\Pc\\Documents\\fox-produccion\\package.json",
+    "C:\\Users\\Pc\\Documents\\fox-produccion\\src\\App.jsx",
+    "C:\\Users\\Pc\\Documents\\fox-produccion\\src\\assets\\App.jsx",
+    "C:\\Users\\Pc\\Documents\\fox-produccion\\src\\firebase.js",
+    "C:\\Users\\Pc\\Documents\\fox-produccion\\src\\main.jsx",
+    "C:\\Users\\Pc\\Documents\\fox-produccion\\vercel.json",
+    "C:\\Users\\Pc\\Documents\\fox-produccion\\vite.config.js"
+  ]
+}

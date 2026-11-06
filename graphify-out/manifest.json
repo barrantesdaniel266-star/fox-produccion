@@ -1,0 +1,122 @@
+{
+  "api/send-report.js": {
+    "mtime": 1790195274.675217,
+    "seen": 1790216135.3461773,
+    "ast_hash": "9ec823d27e285600ac0687385d5f9b9b",
+    "semantic_hash": ""
+  },
+  "firebase.json": {
+    "mtime": 1790195274.675217,
+    "seen": 1790216135.3461773,
+    "ast_hash": "155bcbdb740615f7a6802b25c1827c83",
+    "semantic_hash": ""
+  },
+  "package.json": {
+    "mtime": 1790359034.9419632,
+    "seen": 1793147504.6747856,
+    "ast_hash": "3ed6b253f929d4ba2baf062d2d683f36",
+    "semantic_hash": ""
+  },
+  "scripts/import-productos.mjs": {
+    "mtime": 1790215489.5166698,
+    "seen": 1790216135.3461773,
+    "ast_hash": "fd82fc9cf39b57d9d27a2e3f652ce9e7",
+    "semantic_hash": ""
+  },
+  "src/App.jsx": {
+    "mtime": 1793147410.9686253,
+    "seen": 1793147504.6747856,
+    "ast_hash": "e63e8d5b66b6c28900d37ba578d91a22",
+    "semantic_hash": ""
+  },
+  "src/assets/App.jsx": {
+    "mtime": 1790195274.675217,
+    "seen": 1790216135.3461773,
+    "ast_hash": "271cc325d1a20daa06c13c64dac74487",
+    "semantic_hash": ""
+  },
+  "src/firebase.js": {
+    "mtime": 1790359034.9450514,
+    "seen": 1793147504.6747856,
+    "ast_hash": "3d7ebe85316f01237f1b0a58cedde712",
+    "semantic_hash": ""
+  },
+  "src/main.jsx": {
+    "mtime": 1790195274.675217,
+    "seen": 1790216135.3461773,
+    "ast_hash": "263d9cee3ed005d79d1aeeec67d63fc0",
+    "semantic_hash": ""
+  },
+  "vercel.json": {
+    "mtime": 1790195274.675217,
+    "seen": 1790216135.3461773,
+    "ast_hash": "009c895be5820bd9314c4380bc84b7ee",
+    "semantic_hash": ""
+  },
+  "vite.config.js": {
+    "mtime": 1790195274.675217,
+    "seen": 1790216135.3461773,
+    "ast_hash": "32bec7159b46a6c8aa43f889d202ba9f",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1790197243.0164387,
+    "seen": 1790216135.3461773,
+    "ast_hash": "ab701609465d53f73bd61d2e1696ad31",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1790195274.675217,
+    "seen": 1790216135.3461773,
+    "ast_hash": "35dbc908fbb90e5cc4119a4b90d4cf7a",
+    "semantic_hash": ""
+  },
+  "index.html": {
+    "mtime": 1790195274.675217,
+    "seen": 1790216135.3461773,
+    "ast_hash": "8b8bfddb5a7cd55f91d7d13973723780",
+    "semantic_hash": ""
+  },
+  "public/fox-tv.html": {
+    "mtime": 1790195274.675217,
+    "seen": 1790216135.3461773,
+    "ast_hash": "467fb09805d73284bd27e272c72f95b1",
+    "semantic_hash": ""
+  },
+  "src/assets/logo.png": {
+    "mtime": 1790195274.675217,
+    "seen": 1790216135.3461773,
+    "ast_hash": "098a801aadc9647d26a083cced9d8653",
+    "semantic_hash": ""
+  },
+  "middleware.js": {
+    "mtime": 1790359034.939354,
+    "seen": 1793147504.6747856,
+    "ast_hash": "fd5ca4510f9f83a08447aecc55f1b692",
+    "semantic_hash": ""
+  },
+  "scripts/actualizar-catalogo.mjs": {
+    "mtime": 1793147410.9686253,
+    "seen": 1793147504.6747856,
+    "ast_hash": "9edb33af6da2ec77dea2657780a43de8",
+    "semantic_hash": ""
+  },
+  "scripts/asignar-cable-centro.mjs": {
+    "mtime": 1790216223.302358,
+    "seen": 1793147504.6747856,
+    "ast_hash": "27851bf3ea7a510f8bea30c90467b997",
+    "semantic_hash": ""
+  },
+  "GUIA_DOMINIO_SSO_SEGURIDAD.md": {
+    "mtime": 1790359034.939354,
+    "seen": 1793147504.6747856,
+    "ast_hash": "ce35e18a89aa23fc1acdf94a63287c0c",
+    "semantic_hash": ""
+  },
+  "firestore.rules.fase2-referencia.txt": {
+    "mtime": 1790359034.939354,
+    "seen": 1793147504.6747856,
+    "ast_hash": "686688655a09f1f2e67189f2c5e63e6f",
+    "semantic_hash": ""
+  }
+}

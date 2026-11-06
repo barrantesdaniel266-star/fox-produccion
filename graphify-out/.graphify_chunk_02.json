@@ -1,0 +1,41 @@
+{
+  "nodes": [
+    {
+      "id": "src_assets_logo_logo",
+      "label": "Fox-Produccion Logo (Fox Head on 'M' Monogram)",
+      "file_type": "image",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\src\\assets\\logo.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_assets_logo_fox_motif",
+      "label": "Fox Brand Motif",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\src\\assets\\logo.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "src_assets_logo_logo",
+      "target": "src_assets_logo_fox_motif",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "C:\\Users\\Pc\\Documents\\fox-produccion\\src\\assets\\logo.png",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 45498,
+  "output_tokens": 0
+}
